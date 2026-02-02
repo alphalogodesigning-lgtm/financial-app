@@ -804,5 +804,135 @@
 
         ReactDOM.render(<Insights />, document.getElementById('root'));
     </script>
+
+<!-- AI Finance Assistant Bubble -->
+<style>
+#ai-bubble {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f5c542, #e0a800);
+  color: #000;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 9999;
+}
+
+#ai-chat {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  width: 340px;
+  max-height: 480px;
+  background: #0e0e0e;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  display: none;
+  flex-direction: column;
+  z-index: 9999;
+}
+
+#ai-chat header {
+  padding: 12px;
+  border-bottom: 1px solid #2a2a2a;
+  font-weight: 600;
+}
+
+#ai-messages {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  font-size: 14px;
+}
+
+#ai-input {
+  display: flex;
+  border-top: 1px solid #2a2a2a;
+}
+
+#ai-input input {
+  flex: 1;
+  padding: 10px;
+  background: #111;
+  color: #fff;
+  border: none;
+  outline: none;
+}
+
+#ai-input button {
+  padding: 0 16px;
+  background: #f5c542;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+</style>
+
+<div id="ai-bubble">AI</div>
+
+<div id="ai-chat">
+  <header>Financial Assistant</header>
+  <div id="ai-messages"></div>
+  <div id="ai-input">
+    <input id="ai-text" placeholder="Ask about your finances..." />
+    <button id="ai-send">Send</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const bubble = document.getElementById('ai-bubble');
+  const chat = document.getElementById('ai-chat');
+  const sendBtn = document.getElementById('ai-send');
+  const input = document.getElementById('ai-text');
+  const messages = document.getElementById('ai-messages');
+
+  bubble.onclick = () => {
+    chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
+  };
+
+  function addMessage(role, text){
+    const div = document.createElement('div');
+    div.style.marginBottom = '8px';
+    div.innerHTML = '<strong>' + role + ':</strong><br>' + text.replace(/\n/g,'<br>');
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  async function send(){
+    const text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    addMessage('You', text);
+
+    try{
+      const res = await fetch('/api/finance-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          data: JSON.parse(localStorage.getItem('financialData') || '{}')
+        })
+      });
+
+      const json = await res.json();
+      addMessage('AI', json.reply || 'No response.');
+    }catch(e){
+      addMessage('AI', 'Error contacting AI service.');
+    }
+  }
+
+  sendBtn.onclick = send;
+  input.addEventListener('keydown', e => e.key === 'Enter' && send());
+})();
+</script>
+
 </body>
 </html>
