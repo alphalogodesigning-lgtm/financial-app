@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insights - The Therapy Session</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #E0E0E0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            min-height: 100vh;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding: 16px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #888;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-link:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border-color: #D4AF37;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header-subtitle {
+            color: #888;
+            font-size: 1.125rem;
+        }
+
+        .gold-text { color: #D4AF37; }
+        .soft-blue-text { color: #89ABE3; }
+        .green-text { color: #66BB6A; }
+        .red-text { color: #FF6B6B; }
+        .purple-text { color: #9C27B0; }
+
+        /* Health Score */
+        .health-score-container {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .health-score-ring {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 24px;
+        }
+
+        .health-score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: 800;
+        }
+
+        .health-score-label {
+            font-size: 1rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .health-grade {
+            font-size: 5rem;
+            font-weight: 800;
+            margin: 20px 0;
+            text-shadow: 0 0 40px currentColor;
+        }
+
+        /* Insight Cards */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%);
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #D4AF37 0%, #FFD700 100%);
+        }
+
+        .insight-card:hover {
+            transform: translateY(-4px);
+            border-color: #D4AF37;
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
+        }
+
+        .insight-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .insight-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .insight-description {
+            font-size: 1rem;
+            color: #E0E0E0;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .insight-stat {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #D4AF37;
+            margin: 12px 0;
+        }
+
+        .insight-recommendation {
+            background: #0a0a0a;
+            border-left: 3px solid #D4AF37;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: #888;
+            font-style: italic;
+        }
+
+        /* Personality Profile */
+        .personality-container {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            border: 2px solid #D4AF37;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .personality-type {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #D4AF37;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .personality-description {
+            font-size: 1.125rem;
+            color: #E0E0E0;
+            line-height: 1.8;
+            max-width: 600px;
+            margin: 0 auto 24px;
+        }
+
+        .personality-traits {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .trait {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+
+        /* Achievements */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .achievement {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .achievement.unlocked {
+            border-color: #D4AF37;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(255, 215, 0, 0.1) 100%);
+        }
+
+        .achievement.locked {
+            opacity: 0.4;
+            filter: grayscale(100%);
+        }
+
+        .achievement:hover {
+            transform: scale(1.05);
+        }
+
+        .achievement-icon {
+            font-size: 3rem;
+            margin-bottom: 8px;
+        }
+
+        .achievement-name {
+            font-weight: 700;
+            color: #fff;
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+        }
+
+        .achievement-description {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        /* Pattern Cards */
+        .pattern-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .pattern-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .pattern-label {
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .pattern-value {
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: #D4AF37;
+        }
+
+        .pattern-bar {
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .pattern-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #D4AF37 0%, #FFD700 100%);
+            transition: width 0.5s ease;
+        }
+
+        /* Brutal Honesty Box */
+        .brutal-box {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 107, 107, 0.2) 100%);
+            border: 2px solid #FF6B6B;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .brutal-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #FF6B6B;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brutal-text {
+            font-size: 1.125rem;
+            color: #E0E0E0;
+            line-height: 1.8;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-box {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a3a;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const INITIAL_DATA = {
+            income: 5000,
+            fixedExpenses: [],
+            variableExpenses: [],
+            streak: 0
+        };
+
+        function Insights() {
+            const [data, setData] = useState(() => {
+                const saved = localStorage.getItem('budgetTrackerData');
+                return saved ? JSON.parse(saved) : INITIAL_DATA;
+            });
+
+            const fixedExpenses = data.fixedExpenses || [];
+            const variableExpenses = data.variableExpenses || [];
+            
+            // Core calculations
+            const totalFixed = fixedExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalVariable = variableExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalSpent = totalFixed + totalVariable;
+            const savingsRate = ((data.income - totalSpent) / data.income) * 100;
+            const regretMoney = variableExpenses.filter(e => e.regret).reduce((sum, e) => sum + e.amount, 0);
+
+            // Time-based patterns
+            const weekendSpending = variableExpenses.filter(exp => {
+                const date = new Date(exp.date);
+                const day = date.getDay();
+                return day === 0 || day === 6;
+            }).reduce((sum, exp) => sum + exp.amount, 0);
+
+            const weekdaySpending = variableExpenses.filter(exp => {
+                const date = new Date(exp.date);
+                const day = date.getDay();
+                return day > 0 && day < 6;
+            }).reduce((sum, exp) => sum + exp.amount, 0);
+
+            const weekendCount = variableExpenses.filter(exp => {
+                const date = new Date(exp.date);
+                const day = date.getDay();
+                return day === 0 || day === 6;
+            }).length;
+
+            const weekdayCount = variableExpenses.filter(exp => {
+                const date = new Date(exp.date);
+                const day = date.getDay();
+                return day > 0 && day < 6;
+            }).length;
+
+            const avgWeekendSpend = weekendCount > 0 ? weekendSpending / weekendCount : 0;
+            const avgWeekdaySpend = weekdayCount > 0 ? weekdaySpending / weekdayCount : 0;
+
+            // Night owl analysis
+            const lateNightSpending = variableExpenses.filter(exp => {
+                const hour = parseInt(exp.time.split(':')[0]);
+                return hour >= 22 || hour <= 4;
+            }).reduce((sum, exp) => sum + exp.amount, 0);
+
+            // Category addiction
+            const categoryTotals = {};
+            variableExpenses.forEach(exp => {
+                categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + exp.amount;
+            });
+            
+            const topCategory = Object.entries(categoryTotals).reduce((top, [cat, amount]) => {
+                return amount > top.amount ? { name: cat, amount } : top;
+            }, { name: 'None', amount: 0 });
+
+            const categoryAddictionScore = topCategory.amount > 0 
+                ? (topCategory.amount / totalVariable) * 100 
+                : 0;
+
+            // Merchant loyalty
+            const merchantTotals = {};
+            variableExpenses.forEach(exp => {
+                if (exp.merchant) {
+                    merchantTotals[exp.merchant] = (merchantTotals[exp.merchant] || 0) + 1;
+                }
+            });
+
+            const topMerchant = Object.entries(merchantTotals).reduce((top, [merchant, count]) => {
+                return count > top.count ? { name: merchant, count } : top;
+            }, { name: 'None', count: 0 });
+
+            // Financial Health Score (0-100)
+            let healthScore = 100;
+            if (savingsRate < 10) healthScore -= 30;
+            else if (savingsRate < 20) healthScore -= 15;
+            if (regretMoney > totalVariable * 0.2) healthScore -= 20;
+            if (avgWeekendSpend > avgWeekdaySpend * 2) healthScore -= 15;
+            if (categoryAddictionScore > 50) healthScore -= 10;
+            if (totalSpent > data.income) healthScore -= 25;
+            healthScore = Math.max(0, healthScore);
+
+            const getGrade = (score) => {
+                if (score >= 90) return { grade: 'A+', color: '#66BB6A', text: 'Financial Zen Master' };
+                if (score >= 80) return { grade: 'A', color: '#66BB6A', text: 'Crushing It' };
+                if (score >= 70) return { grade: 'B', color: '#89ABE3', text: 'Doing Well' };
+                if (score >= 60) return { grade: 'C', color: '#D4AF37', text: 'Room for Improvement' };
+                if (score >= 50) return { grade: 'D', color: '#FF9800', text: 'Needs Work' };
+                return { grade: 'F', color: '#FF6B6B', text: 'Financial Crisis Mode' };
+            };
+
+            const gradeInfo = getGrade(healthScore);
+
+            // Spending personality
+            const getPersonality = () => {
+                if (savingsRate > 30) return {
+                    type: 'The Squirrel',
+                    description: 'You\'re a natural saver, always planning for winter. Your future self loves you.',
+                    traits: ['🐿️ Highly Disciplined', '💰 Future-Focused', '📊 Data-Driven']
+                };
+                if (regretMoney > totalVariable * 0.3) return {
+                    type: 'The Impulse Buyer',
+                    description: 'You click "Buy Now" faster than you can say "do I need this?" But hey, at least you\'re honest about it.',
+                    traits: ['🛍️ Spontaneous', '😬 Regret-Prone', '💳 YOLO Spender']
+                };
+                if (avgWeekendSpend > avgWeekdaySpend * 2.5) return {
+                    type: 'The Weekend Warrior',
+                    description: 'Monday to Friday you\'re a financial saint. Saturday hits and your wallet screams for mercy.',
+                    traits: ['🎉 Weekend Splurger', '💸 Work Hard Play Hard', '📅 Cyclical Spender']
+                };
+                if (lateNightSpending > totalVariable * 0.25) return {
+                    type: 'The Night Owl Spender',
+                    description: 'Your bank account fears the night. Nothing good happens to your wallet after 10pm.',
+                    traits: ['🌙 Late Night Shopper', '😴 Sleep-Deprived Buyer', '🦉 Nocturnal Spender']
+                };
+                if (categoryAddictionScore > 60) return {
+                    type: 'The Category Addict',
+                    description: `You have a serious ${topCategory.name} addiction. It's not a problem... it's a lifestyle choice.`,
+                    traits: [`${topCategory.name} Obsessed`, '🎯 Hyper-Focused', '💎 Quality > Quantity']
+                };
+                return {
+                    type: 'The Balanced Spender',
+                    description: 'You\'re remarkably... normal. Boring? Maybe. Financially stable? Absolutely.',
+                    traits: ['⚖️ Well-Balanced', '🎯 Moderate', '📈 Steady Eddie']
+                };
+            };
+
+            const personality = getPersonality();
+
+            // Achievements
+            const achievements = [
+                { id: 'streak_7', icon: '🔥', name: '7-Day Streak', description: 'Tracked for 7 days', unlocked: data.streak >= 7 },
+                { id: 'streak_30', icon: '💪', name: 'Month Master', description: 'Tracked for 30 days', unlocked: data.streak >= 30 },
+                { id: 'saver', icon: '💎', name: 'Super Saver', description: 'Save 30% of income', unlocked: savingsRate >= 30 },
+                { id: 'conscious', icon: '🧘', name: 'Conscious Spender', description: 'Less than 10% regret', unlocked: (regretMoney / totalVariable) * 100 < 10 },
+                { id: 'budget_king', icon: '👑', name: 'Budget King', description: 'Stay under budget', unlocked: totalSpent < data.income },
+                { id: 'organized', icon: '📊', name: 'Organized AF', description: '10+ expenses logged', unlocked: variableExpenses.length >= 10 },
+            ];
+
+            // Brutal honesty
+            const getBrutalTruth = () => {
+                if (totalSpent > data.income) {
+                    return "You're spending more than you earn. That's literally the definition of financial chaos. Time for a reality check.";
+                }
+                if (regretMoney > totalVariable * 0.4) {
+                    return `You regret $${regretMoney.toFixed(0)} worth of purchases. That's ${((regretMoney/totalVariable)*100).toFixed(0)}% of your spending. Maybe pause before clicking 'Buy'?`;
+                }
+                if (savingsRate < 5) {
+                    return "You're saving less than 5% of your income. At this rate, any emergency will destroy you. Not trying to be mean, just honest.";
+                }
+                if (avgWeekendSpend > avgWeekdaySpend * 3) {
+                    return `Your weekend spending is ${(avgWeekendSpend/avgWeekdaySpend).toFixed(1)}x your weekday spending. Your wallet needs a vacation FROM the weekend.`;
+                }
+                if (lateNightSpending > totalVariable * 0.3) {
+                    return "You spend 30% of your money after 10pm. Put your phone down and go to sleep. Your wallet will thank you.";
+                }
+                return "Actually... you're doing pretty well. Keep it up and you might actually achieve financial freedom. Crazy, right?";
+            };
+
+            return (
+                <div className="container">
+                    <nav className="main-nav">
+                        <a href="index.html" className="nav-link">📊 Dashboard</a>
+                        <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                        <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                        <a href="projections.html" className="nav-link">🔮 Projections</a>
+                        <a href="insights.html" className="nav-link active">🧠 Insights</a>
+                    </nav>
+
+                    <div className="header">
+                        <h1 className="header-title">The Therapy Session</h1>
+                        <p className="header-subtitle">Let's talk about your spending habits... honestly.</p>
+                    </div>
+
+                    {/* Financial Health Score */}
+                    <div className="health-score-container">
+                        <div className="health-grade" style={{ color: gradeInfo.color }}>
+                            {gradeInfo.grade}
+                        </div>
+                        <div className="health-score-label">{gradeInfo.text}</div>
+                        <div style={{ fontSize: '1.25rem', color: '#888', marginTop: '12px' }}>
+                            Financial Health Score: <span style={{ color: gradeInfo.color, fontWeight: '700' }}>{healthScore}/100</span>
+                        </div>
+                    </div>
+
+                    {/* Brutal Honesty */}
+                    <div className="brutal-box">
+                        <div className="brutal-title">
+                            <span>💀</span>
+                            <span>Brutal Honesty Corner</span>
+                        </div>
+                        <div className="brutal-text">
+                            {getBrutalTruth()}
+                        </div>
+                    </div>
+
+                    {/* Spending Personality */}
+                    <div className="personality-container">
+                        <div className="personality-type">{personality.type}</div>
+                        <div className="personality-description">{personality.description}</div>
+                        <div className="personality-traits">
+                            {personality.traits.map((trait, i) => (
+                                <div key={i} className="trait">{trait}</div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Key Insights */}
+                    <div className="insights-grid">
+                        <div className="insight-card">
+                            <div className="insight-icon">📅</div>
+                            <div className="insight-title">Weekend vs Weekday</div>
+                            <div className="insight-description">
+                                You spend an average of <strong style={{ color: '#D4AF37' }}>${avgWeekendSpend.toFixed(2)}</strong> per day on weekends
+                                vs <strong style={{ color: '#89ABE3' }}>${avgWeekdaySpend.toFixed(2)}</strong> on weekdays.
+                            </div>
+                            <div className="insight-stat">
+                                {avgWeekdaySpend > 0 ? `${(avgWeekendSpend/avgWeekdaySpend).toFixed(1)}x` : 'N/A'}
+                            </div>
+                            {avgWeekendSpend > avgWeekdaySpend * 2 && (
+                                <div className="insight-recommendation">
+                                    💡 Your weekends are expensive. Maybe try a free hobby?
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="insight-card">
+                            <div className="insight-icon">🌙</div>
+                            <div className="insight-title">Night Owl Analysis</div>
+                            <div className="insight-description">
+                                You've spent <strong style={{ color: '#D4AF37' }}>${lateNightSpending.toFixed(2)}</strong> between 
+                                10pm and 4am. That's {totalVariable > 0 ? ((lateNightSpending/totalVariable)*100).toFixed(0) : 0}% of your variable spending.
+                            </div>
+                            {lateNightSpending > totalVariable * 0.2 && (
+                                <div className="insight-recommendation">
+                                    💡 Nothing good happens to your wallet after 10pm. Delete those shopping apps from your home screen.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="insight-card">
+                            <div className="insight-icon">🎯</div>
+                            <div className="insight-title">Category Addiction</div>
+                            <div className="insight-description">
+                                Your top category is <strong style={{ color: '#D4AF37' }}>{topCategory.name}</strong> at ${topCategory.amount.toFixed(0)}.
+                                That's {categoryAddictionScore.toFixed(0)}% of your variable spending.
+                            </div>
+                            <div className="insight-stat">
+                                {categoryAddictionScore.toFixed(0)}%
+                            </div>
+                            {categoryAddictionScore > 50 && (
+                                <div className="insight-recommendation">
+                                    💡 You might have a {topCategory.name} problem. Or is it a passion? You decide.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="insight-card">
+                            <div className="insight-icon">😬</div>
+                            <div className="insight-title">Regret Money</div>
+                            <div className="insight-description">
+                                You've marked <strong style={{ color: '#FF6B6B' }}>${regretMoney.toFixed(2)}</strong> worth of purchases as regrets.
+                                That's money you wish you could take back.
+                            </div>
+                            <div className="insight-stat" style={{ color: '#FF6B6B' }}>
+                                ${regretMoney.toFixed(0)}
+                            </div>
+                            {regretMoney > 0 && (
+                                <div className="insight-recommendation">
+                                    💡 Imagine if you had that ${regretMoney.toFixed(0)} back. Wait 24hrs before big purchases.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="insight-card">
+                            <div className="insight-icon">🏪</div>
+                            <div className="insight-title">Merchant Loyalty</div>
+                            <div className="insight-description">
+                                Your most visited merchant is <strong style={{ color: '#D4AF37' }}>{topMerchant.name}</strong> with {topMerchant.count} visits.
+                                They should give you a loyalty card at this point.
+                            </div>
+                            <div className="insight-stat">
+                                {topMerchant.count}
+                            </div>
+                        </div>
+
+                        <div className="insight-card">
+                            <div className="insight-icon">💰</div>
+                            <div className="insight-title">Savings Rate</div>
+                            <div className="insight-description">
+                                You're saving <strong style={{ color: savingsRate >= 20 ? '#66BB6A' : '#FF6B6B' }}>{savingsRate.toFixed(1)}%</strong> of your income.
+                                Financial experts recommend 20% minimum.
+                            </div>
+                            <div className="insight-stat" style={{ color: savingsRate >= 20 ? '#66BB6A' : '#FF6B6B' }}>
+                                {savingsRate.toFixed(1)}%
+                            </div>
+                            {savingsRate < 20 && (
+                                <div className="insight-recommendation">
+                                    💡 Try to save at least 20%. Future you will be grateful.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Achievements */}
+                    <div className="card">
+                        <h2 className="card-title">Achievements Unlocked</h2>
+                        <div className="achievements-grid">
+                            {achievements.map(achievement => (
+                                <div 
+                                    key={achievement.id}
+                                    className={`achievement ${achievement.unlocked ? 'unlocked' : 'locked'}`}
+                                >
+                                    <div className="achievement-icon">{achievement.icon}</div>
+                                    <div className="achievement-name">{achievement.name}</div>
+                                    <div className="achievement-description">{achievement.description}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Weird Stats */}
+                    <div className="card">
+                        <h2 className="card-title">Weird Stats That Don't Matter But Are Fun</h2>
+                        <div className="stats-grid">
+                            <div className="stat-box">
+                                <div className="stat-value gold-text">
+                                    {variableExpenses.length}
+                                </div>
+                                <div className="stat-label">Transactions This Month</div>
+                            </div>
+                            <div className="stat-box">
+                                <div className="stat-value soft-blue-text">
+                                    ${totalVariable > 0 ? (totalVariable / variableExpenses.length).toFixed(2) : '0.00'}
+                                </div>
+                                <div className="stat-label">Avg Transaction Size</div>
+                            </div>
+                            <div className="stat-box">
+                                <div className="stat-value purple-text">
+                                    {Object.keys(merchantTotals).length}
+                                </div>
+                                <div className="stat-label">Unique Merchants</div>
+                            </div>
+                            <div className="stat-box">
+                                <div className="stat-value green-text">
+                                    {data.streak}
+                                </div>
+                                <div className="stat-label">Day Streak</div>
+                            </div>
+                            <div className="stat-box">
+                                <div className="stat-value gold-text">
+                                    ${((totalFixed + totalVariable) * 12).toFixed(0)}
+                                </div>
+                                <div className="stat-label">Annual Spending Rate</div>
+                            </div>
+                            <div className="stat-box">
+                                <div className="stat-value red-text">
+                                    {totalVariable > 0 ? Math.max(...variableExpenses.map(e => e.amount)).toFixed(2) : '0.00'}
+                                </div>
+                                <div className="stat-label">Biggest Single Purchase</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Insights />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Tracker - Command Center</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #E0E0E0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            min-height: 100vh;
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Navigation */
+        .main-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding: 16px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #888;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-link:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border-color: #D4AF37;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header-subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .gold-text { color: #D4AF37; }
+        .soft-blue-text { color: #89ABE3; }
+        .green-text { color: #66BB6A; }
+        .red-text { color: #FF6B6B; }
+
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #3a3a3a;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%);
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 100px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quick-add-btn {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            border: none;
+        }
+
+        .quick-add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
+        }
+
+        .streak-badge {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 8px;
+        }
+
+        .metric-subtext {
+            font-size: 0.875rem;
+            color: #888;
+            margin-top: 8px;
+        }
+
+        .category-item {
+            margin-bottom: 20px;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .category-amount {
+            color: #888;
+        }
+
+        .category-bar {
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .category-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #E0E0E0;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #D4AF37;
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #E0E0E0;
+            border: 1px solid #2a2a2a;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn-secondary:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-row button {
+            flex: 1;
+        }
+
+        .expense-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .expense-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .expense-category {
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        .expense-amount {
+            font-weight: 700;
+            color: #D4AF37;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .budget-ring-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ring-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-percentage {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #D4AF37;
+        }
+
+        .ring-label {
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        .budget-summary {
+            text-align: center;
+        }
+
+        .budget-total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .budget-remaining {
+            font-size: 0.875rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .chart-container {
+            height: 250px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 20px 0;
+            gap: 12px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar {
+            width: 100%;
+            background: linear-gradient(180deg, #D4AF37 0%, #FFD700 100%);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .bar:hover {
+            background: linear-gradient(180deg, #FFD700 0%, #D4AF37 100%);
+        }
+
+        .bar-label {
+            font-size: 0.75rem;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .bar-value {
+            font-size: 0.75rem;
+            color: #D4AF37;
+            font-weight: 700;
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a3a;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const CATEGORIES = {
+            'Food': { color: '#66BB6A' },
+            'Transport': { color: '#89ABE3' },
+            'Shopping': { color: '#D4AF37' },
+            'Entertainment': { color: '#9C27B0' },
+            'Health': { color: '#FF6B6B' },
+            'Other': { color: '#888' }
+        };
+
+        const INITIAL_DATA = {
+            income: 5000,
+            fixedExpenses: [
+                { id: 1, name: 'Rent', amount: 1200, dueDate: 1, category: 'Housing', mood: 'necessary', status: 'pending' },
+                { id: 2, name: 'Internet', amount: 60, dueDate: 5, category: 'Utilities', mood: 'necessary', status: 'charged' },
+                { id: 3, name: 'Phone', amount: 45, dueDate: 10, category: 'Utilities', mood: 'necessary', status: 'charged' },
+                { id: 4, name: 'Gym', amount: 50, dueDate: 15, category: 'Health', mood: 'worth', status: 'pending' },
+                { id: 5, name: 'Netflix', amount: 15, dueDate: 20, category: 'Entertainment', mood: 'neutral', status: 'charged' },
+                { id: 6, name: 'Spotify', amount: 10, dueDate: 22, category: 'Entertainment', mood: 'worth', status: 'charged' },
+            ],
+            variableExpenses: [
+                { id: 1, name: 'Groceries', amount: 85, date: '2026-02-01', time: '18:00', category: 'Food', merchant: 'Whole Foods', regret: false, notes: '', photo: null },
+                { id: 2, name: 'Coffee', amount: 6, date: '2026-01-31', time: '08:30', category: 'Food', merchant: 'Starbucks', regret: false, notes: '', photo: null },
+                { id: 3, name: 'Dinner', amount: 45, date: '2026-01-30', time: '19:30', category: 'Food', merchant: 'Restaurant', regret: false, notes: '', photo: null },
+                { id: 4, name: 'Gas', amount: 50, date: '2026-01-29', time: '16:00', category: 'Transport', merchant: 'Shell', regret: false, notes: '', photo: null },
+                { id: 5, name: 'Shopping', amount: 120, date: '2026-01-28', time: '14:00', category: 'Shopping', merchant: 'Amazon', regret: true, notes: 'Impulse buy', photo: null },
+            ],
+            streak: 12
+        };
+
+        function ProgressRing({ progress, size = 120, strokeWidth = 8, color = '#D4AF37' }) {
+            const radius = (size - strokeWidth) / 2;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - (progress / 100) * circumference;
+
+            return (
+                <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        stroke="#2a2a2a"
+                        strokeWidth={strokeWidth}
+                        fill="none"
+                    />
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        stroke={color}
+                        strokeWidth={strokeWidth}
+                        fill="none"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                    />
+                </svg>
+            );
+        }
+
+        function BarChart({ data }) {
+            const maxValue = Math.max(...data.map(d => d.amount));
+            
+            return (
+                <div className="chart-container">
+                    {data.map((item, index) => (
+                        <div key={index} className="chart-bar">
+                            <div 
+                                className="bar" 
+                                style={{ 
+                                    height: `RM{(item.amount / maxValue) * 200}px`,
+                                    minHeight: item.amount > 0 ? '20px' : '0px'
+                                }}
+                            >
+                                {item.amount > 0 && (
+                                    <span className="bar-value">RM{item.amount}</span>
+                                )}
+                            </div>
+                            <span className="bar-label">{item.day}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+
+        const CLEAN_STATE = {
+            income: 0,
+            fixedExpenses: [],
+            variableExpenses: [],
+            streak: 0,
+            categoryBudgets: {}
+        };
+
+        function Dashboard() {
+            const [data, setData] = useState(() => {
+                const saved = localStorage.getItem('budgetTrackerData');
+                return saved ? JSON.parse(saved) : CLEAN_STATE;
+            });
+            const [modalOpen, setModalOpen] = useState(false);
+            const [newExpense, setNewExpense] = useState({
+                name: '',
+                amount: '',
+                category: 'Food',
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            useEffect(() => {
+                localStorage.setItem('budgetTrackerData', JSON.stringify(data));
+            }, [data]);
+
+            const totalFixed = data.fixedExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalVariable = data.variableExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalSpent = totalFixed + totalVariable;
+            const remaining = data.income - totalSpent;
+            const daysInMonth = 30;
+            const today = new Date().getDate();
+            const dailyBurnRate = totalVariable / today;
+            const projectedSpend = totalFixed + (dailyBurnRate * daysInMonth);
+            const runway = remaining / dailyBurnRate;
+
+            const categorySpending = {};
+            data.variableExpenses.forEach(exp => {
+                categorySpending[exp.category] = (categorySpending[exp.category] || 0) + exp.amount;
+            });
+
+            const categoryBudgets = data.categoryBudgets || {};
+
+            const handleBudgetEdit = (category) => {
+                const current = categoryBudgets[category] || 0;
+                const input = prompt(`Set monthly budget for ${category} (RM):`, current);
+                if (input === null) return;
+
+                const value = parseFloat(input);
+                if (isNaN(value) || value < 0) return;
+
+                setData(prev => ({
+                    ...prev,
+                    categoryBudgets: {
+                        ...prev.categoryBudgets,
+                        [category]: value
+                    }
+                }));
+            };
+
+            const spendingTrend = Array.from({ length: 7 }, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - (6 - i));
+                const dateStr = date.toISOString().split('T')[0];
+                const daySpending = data.variableExpenses
+                    .filter(exp => exp.date === dateStr)
+                    .reduce((sum, exp) => sum + exp.amount, 0);
+                return {
+                    day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                    amount: daySpending
+                };
+            });
+
+            const handleIncomeEdit = () => {
+                const input = prompt("Enter your new monthly income:", data.income);
+                if (input === null) return;
+
+                const value = parseFloat(input);
+                if (isNaN(value) || value <= 0) return;
+
+                setData(prev => ({
+                    ...prev,
+                    income: value
+                }));
+            };
+
+            const handleAddExpense = () => {
+                if (!newExpense.name || !newExpense.amount) return;
+                
+                const expense = {
+                    id: Date.now(),
+                    name: newExpense.name,
+                    amount: parseFloat(newExpense.amount),
+                    date: newExpense.date,
+                    time: new Date().toTimeString().slice(0, 5),
+                    category: newExpense.category,
+                    merchant: '',
+                    regret: false,
+                    notes: '',
+                    photo: null
+                };
+
+                setData(prev => ({
+                    ...prev,
+                    variableExpenses: [expense, ...prev.variableExpenses],
+                    streak: prev.streak + 1
+                }));
+
+                setNewExpense({ name: '', amount: '', category: 'Food', date: new Date().toISOString().split('T')[0] });
+                setModalOpen(false);
+            };
+
+            return (
+                <div className="container">
+                    {/* Navigation */}
+                    <nav className="main-nav">
+                        <a href="index.html" className="nav-link active">📊 Dashboard</a>
+                        <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                        <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                        <a href="projections.html" className="nav-link">🔮 Projections</a>
+                        <a href="insights.html" className="nav-link">🧠 Insights</a>
+                    </nav>
+
+                    {/* Header */}
+                    <div className="header">
+                        <div>
+                            <h1 className="header-title">Command Center</h1>
+                            <p className="header-subtitle">Your financial overview at a glance</p>
+                        </div>
+                        <div className="streak-badge">
+                            🔥 {data.streak} day streak
+                        </div>
+                    </div>
+
+                    {/* Top Stats */}
+                    <div className="stats-grid">
+                        <div 
+                            className="stat-card" 
+                            onClick={handleIncomeEdit}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div className="metric-value gold-text">RM{remaining.toFixed(0)}</div>
+                            <div className="metric-label">Available</div>
+                            <div className="metric-subtext">
+                                {((remaining / data.income) * 100).toFixed(1)}% of income
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="metric-value soft-blue-text">{Math.floor(runway)}</div>
+                            <div className="metric-label">Days Runway</div>
+                            <div className="metric-subtext">At current burn rate</div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className={`metric-value RM{projectedSpend > data.income ? 'red-text' : 'green-text'}`}>
+                                RM{projectedSpend.toFixed(0)}
+                            </div>
+                            <div className="metric-label">Projected Spend</div>
+                            <div className="metric-subtext">End of month forecast</div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="metric-value green-text">RM{dailyBurnRate.toFixed(2)}</div>
+                            <div className="metric-label">Daily Burn Rate</div>
+                            <div className="metric-subtext">Average per day</div>
+                        </div>
+                    </div>
+
+                    {/* Main Content Grid */}
+                    <div className="main-grid">
+                        <div className="card">
+                            <h2 className="card-title">Category Spending</h2>
+                            {Object.entries(CATEGORIES).map(([category, config]) => {
+                                const spent = categorySpending[category] || 0;
+                                const budget = categoryBudgets[category] || 0;
+                                const progress = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+
+                                return (
+                                    <div key={category} className="category-item">
+                                        <div className="category-header">
+                                            <span className="category-name">{category}</span>
+                                            <span className="category-amount">
+                                                RM{spent.toFixed(0)} / RM{budget || 0}
+                                            </span>
+                                        </div>
+                                        <div 
+                                            className="category-bar"
+                                            onClick={() => handleBudgetEdit(category)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <div 
+                                                className="category-fill"
+                                                style={{ 
+                                                    width: `${progress}%`,
+                                                    background: spent > budget && budget > 0 ? '#FF6B6B' : config.color
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="card">
+                            <h2 className="card-title">7-Day Burn Rate</h2>
+                            <BarChart data={spendingTrend} />
+                        </div>
+
+                        <div className="card">
+                            <h2 className="card-title">Recent Expenses</h2>
+                            <div className="expense-list">
+                                {data.variableExpenses.length === 0 && (
+                                    <div style={{ color: '#888', textAlign: 'center', padding: '24px 0' }}>
+                                        No expenses yet. Good job 👍
+                                    </div>
+                                )}
+                                {data.variableExpenses.slice(0, 5).map(exp => (
+                                    <div key={exp.id} className="expense-item">
+                                        <div>
+                                            <div className="expense-name">{exp.name}</div>
+                                            <div className="expense-category">{exp.category}</div>
+                                        </div>
+                                        <div className="expense-amount">
+                                            RM{exp.amount.toFixed(2)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="card budget-ring-container">
+                            <h2 className="card-title">Monthly Budget</h2>
+                            <div className="ring-wrapper">
+                                <ProgressRing progress={(totalSpent / data.income) * 100} size={180} strokeWidth={12} />
+                                <div className="ring-center">
+                                    <div className="ring-percentage">
+                                        {((totalSpent / data.income) * 100).toFixed(0)}%
+                                    </div>
+                                    <div className="ring-label">Used</div>
+                                </div>
+                            </div>
+                            <div className="budget-summary">
+                                <div className="budget-total">
+                                    RM{totalSpent.toFixed(0)} / RM{data.income}
+                                </div>
+                                <div className="budget-remaining">
+                                    RM{remaining.toFixed(0)} remaining
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button className="quick-add-btn" onClick={() => setModalOpen(true)}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="3" strokeLinecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+
+                    <div className={`modal ${modalOpen ? 'active' : ''}`} onClick={(e) => e.target.className.includes('modal') && setModalOpen(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <h2 className="modal-title">Add Expense</h2>
+                            <div className="form-group">
+                                <label className="form-label">Name</label>
+                                <input 
+                                    type="text" 
+                                    value={newExpense.name}
+                                    onChange={(e) => setNewExpense({ ...newExpense, name: e.target.value })}
+                                    placeholder="Coffee, groceries, etc."
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Amount</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    value={newExpense.amount}
+                                    onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Category</label>
+                                <select 
+                                    value={newExpense.category}
+                                    onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
+                                >
+                                    {Object.keys(CATEGORIES).map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="btn-row">
+                                <button className="btn-primary" onClick={handleAddExpense}>
+                                    Add Expense
+                                </button>
+                                <button className="btn-secondary" onClick={() => setModalOpen(false)}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

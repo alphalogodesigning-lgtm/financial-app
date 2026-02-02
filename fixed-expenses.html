@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Expenses - The Anchors</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #E0E0E0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            min-height: 100vh;
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Navigation */
+        .main-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding: 16px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #888;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-link:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border-color: #D4AF37;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header-subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-tab:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border-color: #D4AF37;
+        }
+
+        .gold-text { color: #D4AF37; }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%);
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 8px;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+        }
+
+        .card:hover {
+            border-color: #3a3a3a;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.75rem;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover {
+            border-color: #D4AF37;
+        }
+
+        .calendar-day.has-expense {
+            border-color: #D4AF37;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(255, 215, 0, 0.1) 100%);
+        }
+
+        .day-number {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .day-expenses {
+            font-size: 0.65rem;
+            color: #D4AF37;
+        }
+
+        .expense-card {
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: move;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .expense-card:hover {
+            border-color: #D4AF37;
+            transform: translateY(-2px);
+        }
+
+        .expense-card.dragging {
+            opacity: 0.5;
+        }
+
+        .expense-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .expense-name {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .expense-amount {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #D4AF37;
+        }
+
+        .expense-details {
+            display: flex;
+            gap: 16px;
+            font-size: 0.875rem;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .expense-detail {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mood-selector {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .mood-btn {
+            padding: 6px 12px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #888;
+        }
+
+        .mood-btn:hover {
+            border-color: #D4AF37;
+        }
+
+        .mood-btn.active {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .mood-btn.necessary {
+            border-color: #FF6B6B;
+            color: #FF6B6B;
+        }
+
+        .mood-btn.worth {
+            border-color: #66BB6A;
+            color: #66BB6A;
+        }
+
+        .mood-btn.neutral {
+            border-color: #89ABE3;
+            color: #89ABE3;
+        }
+
+        .status-toggle {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .status-btn {
+            flex: 1;
+            padding: 8px 16px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .status-btn.active.charged {
+            background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+            color: #0a0a0a;
+            border-color: #66BB6A;
+        }
+
+        .status-btn.active.pending {
+            background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
+            color: #0a0a0a;
+            border-color: #FFD700;
+        }
+
+        .chop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .chop-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .chop-savings {
+            color: #66BB6A;
+            font-weight: 700;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #E0E0E0;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #D4AF37;
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #E0E0E0;
+            border: 1px solid #2a2a2a;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn-secondary:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-row button {
+            flex: 1;
+        }
+
+        .quick-add-btn {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            border: none;
+        }
+
+        .quick-add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 44px;
+            right: 16px;
+            background: transparent;
+            border: none;
+            color: #FF6B6B;
+            cursor: pointer;
+            padding: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .expense-card:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            color: #ff4444;
+        }
+
+        @media (max-width: 968px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a3a;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const INITIAL_DATA = {
+            income: 5000,
+            fixedExpenses: [],
+            variableExpenses: [],
+            streak: 0
+        };
+
+        function FixedExpenses() {
+            const [data, setData] = useState(() => {
+                const saved = localStorage.getItem('budgetTrackerData');
+                return saved ? JSON.parse(saved) : INITIAL_DATA;
+            });
+            const [modalOpen, setModalOpen] = useState(false);
+            const [editingExpense, setEditingExpense] = useState(null);
+            const [newExpense, setNewExpense] = useState({
+                name: '',
+                amount: '',
+                dueDate: 1,
+                category: 'Utilities',
+                mood: 'neutral',
+                status: 'pending'
+            });
+            const [draggedItem, setDraggedItem] = useState(null);
+            const [viewMode, setViewMode] = useState('list');
+
+            useEffect(() => {
+                localStorage.setItem('budgetTrackerData', JSON.stringify(data));
+            }, [data]);
+
+            const expenses = data.fixedExpenses || [];
+            const totalMonthly = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalAnnual = totalMonthly * 12;
+            const charged = expenses.filter(e => e.status === 'charged').reduce((sum, exp) => sum + exp.amount, 0);
+            const pending = expenses.filter(e => e.status === 'pending').reduce((sum, exp) => sum + exp.amount, 0);
+
+            const handleAddExpense = () => {
+                if (!newExpense.name || !newExpense.amount) return;
+
+                if (editingExpense) {
+                    setData(prev => ({
+                        ...prev,
+                        fixedExpenses: prev.fixedExpenses.map(exp => 
+                            exp.id === editingExpense.id 
+                                ? { ...editingExpense, ...newExpense, amount: parseFloat(newExpense.amount) }
+                                : exp
+                        )
+                    }));
+                    setEditingExpense(null);
+                } else {
+                    const expense = {
+                        id: Date.now(),
+                        ...newExpense,
+                        amount: parseFloat(newExpense.amount)
+                    };
+                    setData(prev => ({
+                        ...prev,
+                        fixedExpenses: [...prev.fixedExpenses, expense]
+                    }));
+                }
+
+                setNewExpense({ name: '', amount: '', dueDate: 1, category: 'Utilities', mood: 'neutral', status: 'pending' });
+                setModalOpen(false);
+            };
+
+            const handleEditExpense = (expense) => {
+                setEditingExpense(expense);
+                setNewExpense({
+                    name: expense.name,
+                    amount: expense.amount.toString(),
+                    dueDate: expense.dueDate,
+                    category: expense.category,
+                    mood: expense.mood,
+                    status: expense.status
+                });
+                setModalOpen(true);
+            };
+
+            const handleDeleteExpense = (id) => {
+                if (confirm('Delete this expense?')) {
+                    setData(prev => ({
+                        ...prev,
+                        fixedExpenses: prev.fixedExpenses.filter(exp => exp.id !== id)
+                    }));
+                }
+            };
+
+            const updateExpenseMood = (id, mood) => {
+                setData(prev => ({
+                    ...prev,
+                    fixedExpenses: prev.fixedExpenses.map(exp => exp.id === id ? { ...exp, mood } : exp)
+                }));
+            };
+
+            const updateExpenseStatus = (id, status) => {
+                setData(prev => ({
+                    ...prev,
+                    fixedExpenses: prev.fixedExpenses.map(exp => exp.id === id ? { ...exp, status } : exp)
+                }));
+            };
+
+            const handleDragStart = (e, expense) => {
+                setDraggedItem(expense);
+                e.currentTarget.classList.add('dragging');
+            };
+
+            const handleDragEnd = (e) => {
+                e.currentTarget.classList.remove('dragging');
+                setDraggedItem(null);
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+            };
+
+            const handleDrop = (e, targetExpense) => {
+                e.preventDefault();
+                if (!draggedItem || draggedItem.id === targetExpense.id) return;
+
+                const draggedIndex = expenses.findIndex(exp => exp.id === draggedItem.id);
+                const targetIndex = expenses.findIndex(exp => exp.id === targetExpense.id);
+
+                const newExpenses = [...expenses];
+                newExpenses.splice(draggedIndex, 1);
+                newExpenses.splice(targetIndex, 0, draggedItem);
+
+                setData(prev => ({
+                    ...prev,
+                    fixedExpenses: newExpenses
+                }));
+            };
+
+            const daysInMonth = 31;
+            const calendarDays = Array.from({ length: daysInMonth }, (_, i) => {
+                const day = i + 1;
+                const dayExpenses = expenses.filter(exp => exp.dueDate === day);
+                const total = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+                return { day, expenses: dayExpenses, total };
+            });
+
+            const chopList = [...expenses].sort((a, b) => b.amount - a.amount);
+
+            return (
+                <div className="container">
+                    {/* Navigation */}
+                    <nav className="main-nav">
+                        <a href="index.html" className="nav-link">📊 Dashboard</a>
+                        <a href="fixed-expenses.html" className="nav-link active">⚓ Fixed Expenses</a>
+                        <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                        <a href="projections.html" className="nav-link">🔮 Projections</a>
+                        <a href="insights.html" className="nav-link">🧠 Insights</a>
+                    </nav>
+
+                    <div className="header">
+                        <div>
+                            <h1 className="header-title">The Anchors</h1>
+                            <p className="header-subtitle">Your fixed monthly expenses</p>
+                        </div>
+                    </div>
+
+                    <div className="nav-tabs">
+                        <button className={`nav-tab ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
+                            📋 List View
+                        </button>
+                        <button className={`nav-tab ${viewMode === 'calendar' ? 'active' : ''}`} onClick={() => setViewMode('calendar')}>
+                            📅 Calendar
+                        </button>
+                        <button className={`nav-tab ${viewMode === 'chop' ? 'active' : ''}`} onClick={() => setViewMode('chop')}>
+                            🪓 Chop Block
+                        </button>
+                    </div>
+
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="metric-value gold-text">RM{totalMonthly.toFixed(0)}</div>
+                            <div className="metric-label">Monthly Total</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="metric-value" style={{ color: '#FF6B6B' }}>RM{totalAnnual.toFixed(0)}</div>
+                            <div className="metric-label">Annual Damage</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="metric-value" style={{ color: '#66BB6A' }}>RM{charged.toFixed(0)}</div>
+                            <div className="metric-label">Charged</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="metric-value" style={{ color: '#89ABE3' }}>RM{pending.toFixed(0)}</div>
+                            <div className="metric-label">Pending</div>
+                        </div>
+                    </div>
+
+                    {viewMode === 'list' && (
+                        <div className="card">
+                            <h2 className="card-title">All Expenses (Drag to reorder by priority)</h2>
+                            {expenses.length === 0 ? (
+                                <p style={{ color: '#888', textAlign: 'center', padding: '40px' }}>
+                                    No fixed expenses yet. Click the + button to add one.
+                                </p>
+                            ) : (
+                                expenses.map(expense => (
+                                    <div 
+                                        key={expense.id}
+                                        className="expense-card"
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, expense)}
+                                        onDragEnd={handleDragEnd}
+                                        onDragOver={handleDragOver}
+                                        onDrop={(e) => handleDrop(e, expense)}
+                                        onClick={() => handleEditExpense(expense)}
+                                    >
+                                        <button 
+                                            className="delete-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteExpense(expense.id);
+                                            }}
+                                        >
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                        <div className="expense-header">
+                                            <div className="expense-name">{expense.name}</div>
+                                            <div className="expense-amount">RM{expense.amount}</div>
+                                        </div>
+                                        <div className="expense-details">
+                                            <div className="expense-detail">
+                                                <span>📅 Due: Day {expense.dueDate}</span>
+                                            </div>
+                                            <div className="expense-detail">
+                                                <span>📂 {expense.category}</span>
+                                            </div>
+                                            <div className="expense-detail">
+                                                <span>💰 Annual: RM{(expense.amount * 12).toFixed(0)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="mood-selector" onClick={(e) => e.stopPropagation()}>
+                                            <button 
+                                                className={`mood-btn ${expense.mood === 'necessary' ? 'active necessary' : ''}`}
+                                                onClick={() => updateExpenseMood(expense.id, 'necessary')}
+                                            >
+                                                😤 Necessary Evil
+                                            </button>
+                                            <button 
+                                                className={`mood-btn ${expense.mood === 'worth' ? 'active worth' : ''}`}
+                                                onClick={() => updateExpenseMood(expense.id, 'worth')}
+                                            >
+                                                ✨ Worth It
+                                            </button>
+                                            <button 
+                                                className={`mood-btn ${expense.mood === 'neutral' ? 'active neutral' : ''}`}
+                                                onClick={() => updateExpenseMood(expense.id, 'neutral')}
+                                            >
+                                                😐 Neutral
+                                            </button>
+                                        </div>
+                                        <div className="status-toggle" onClick={(e) => e.stopPropagation()}>
+                                            <button 
+                                                className={`status-btn ${expense.status === 'charged' ? 'active charged' : ''}`}
+                                                onClick={() => updateExpenseStatus(expense.id, 'charged')}
+                                            >
+                                                ✓ Charged
+                                            </button>
+                                            <button 
+                                                className={`status-btn ${expense.status === 'pending' ? 'active pending' : ''}`}
+                                                onClick={() => updateExpenseStatus(expense.id, 'pending')}
+                                            >
+                                                ⏳ Pending
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+
+                    {viewMode === 'calendar' && (
+                        <div className="card">
+                            <h2 className="card-title">Monthly Payment Calendar</h2>
+                            <div className="calendar">
+                                {calendarDays.map(({ day, expenses: dayExpenses, total }) => (
+                                    <div 
+                                        key={day}
+                                        className={`calendar-day ${dayExpenses.length > 0 ? 'has-expense' : ''}`}
+                                    >
+                                        <div className="day-number">{day}</div>
+                                        {dayExpenses.length > 0 && (
+                                            <div className="day-expenses">
+                                                {dayExpenses.map(exp => (
+                                                    <div key={exp.id} style={{ fontSize: '0.65rem', marginBottom: '2px' }}>
+                                                        {exp.name}: RM{exp.amount}
+                                                    </div>
+                                                ))}
+                                                <div style={{ fontWeight: '700', marginTop: '4px' }}>
+                                                    Total: RM{total}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {viewMode === 'chop' && (
+                        <div className="card">
+                            <h2 className="card-title">🪓 Chop Block Analysis</h2>
+                            <p style={{ color: '#888', marginBottom: '20px' }}>
+                                See which subscriptions you could cut to save money each month
+                            </p>
+                            {chopList.map((expense, index) => {
+                                const monthlySavings = expense.amount;
+                                const annualSavings = monthlySavings * 12;
+                                return (
+                                    <div key={expense.id} className="chop-item">
+                                        <div>
+                                            <div className="chop-name">
+                                                #{index + 1} - {expense.name}
+                                            </div>
+                                            <div style={{ fontSize: '0.875rem', color: '#888', marginTop: '4px' }}>
+                                                RM{monthlySavings}/mo • RM{annualSavings}/yr
+                                            </div>
+                                        </div>
+                                        <div className="chop-savings">
+                                            Save RM{monthlySavings}/mo
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    <button className="quick-add-btn" onClick={() => {
+                        setEditingExpense(null);
+                        setNewExpense({ name: '', amount: '', dueDate: 1, category: 'Utilities', mood: 'neutral', status: 'pending' });
+                        setModalOpen(true);
+                    }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="3" strokeLinecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+
+                    <div className={`modal ${modalOpen ? 'active' : ''}`} onClick={(e) => e.target.className.includes('modal') && setModalOpen(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <h2 className="modal-title">
+                                {editingExpense ? 'Edit Expense' : 'Add Fixed Expense'}
+                            </h2>
+                            <div className="form-group">
+                                <label className="form-label">Name</label>
+                                <input 
+                                    type="text" 
+                                    value={newExpense.name}
+                                    onChange={(e) => setNewExpense({ ...newExpense, name: e.target.value })}
+                                    placeholder="Rent, Netflix, etc."
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Amount</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    value={newExpense.amount}
+                                    onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Due Date (Day of Month)</label>
+                                <input 
+                                    type="number" 
+                                    min="1"
+                                    max="31"
+                                    value={newExpense.dueDate}
+                                    onChange={(e) => setNewExpense({ ...newExpense, dueDate: parseInt(e.target.value) })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Category</label>
+                                <select 
+                                    value={newExpense.category}
+                                    onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
+                                >
+                                    <option value="Housing">Housing</option>
+                                    <option value="Utilities">Utilities</option>
+                                    <option value="Health">Health</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Transportation">Transportation</option>
+                                    <option value="Insurance">Insurance</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div className="btn-row">
+                                <button className="btn-primary" onClick={handleAddExpense}>
+                                    {editingExpense ? 'Update' : 'Add'} Expense
+                                </button>
+                                <button className="btn-secondary" onClick={() => {
+                                    setModalOpen(false);
+                                    setEditingExpense(null);
+                                }}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<FixedExpenses />, document.getElementById('root'));
+    </script>
+</body>
+</html>

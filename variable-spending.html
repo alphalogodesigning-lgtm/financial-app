@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variable Spending - The Chaos Zone</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #E0E0E0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            min-height: 100vh;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Navigation */
+        .main-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding: 16px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #888;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-link:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border-color: #D4AF37;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header-subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .gold-text { color: #D4AF37; }
+        .soft-blue-text { color: #89ABE3; }
+        .green-text { color: #66BB6A; }
+        .red-text { color: #FF6B6B; }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-tab:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border-color: #D4AF37;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+        }
+
+        .card:hover {
+            border-color: #3a3a3a;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%);
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 8px;
+        }
+
+        /* Heatmap */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .heatmap-cell:hover {
+            border-color: #D4AF37;
+        }
+
+        .heatmap-cell.level-0 { background: #0a0a0a; }
+        .heatmap-cell.level-1 { background: rgba(212, 175, 55, 0.2); }
+        .heatmap-cell.level-2 { background: rgba(212, 175, 55, 0.4); }
+        .heatmap-cell.level-3 { background: rgba(212, 175, 55, 0.6); }
+        .heatmap-cell.level-4 { background: rgba(212, 175, 55, 0.8); }
+        .heatmap-cell.level-5 { background: rgba(212, 175, 55, 1); }
+
+        .day-label {
+            font-weight: 600;
+            color: #888;
+            font-size: 0.65rem;
+        }
+
+        .day-amount {
+            font-weight: 700;
+            color: #D4AF37;
+            font-size: 0.7rem;
+            margin-top: 4px;
+        }
+
+        /* Expense Item */
+        .expense-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            background: #0a0a0a;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid #2a2a2a;
+        }
+
+        .expense-item:hover {
+            border-color: #D4AF37;
+            transform: translateY(-2px);
+        }
+
+        .expense-item.regret {
+            border-color: #FF6B6B;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, rgba(255, 107, 107, 0.1) 100%);
+        }
+
+        .expense-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .expense-content {
+            flex: 1;
+        }
+
+        .expense-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .expense-name {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.125rem;
+        }
+
+        .expense-amount {
+            font-weight: 800;
+            color: #D4AF37;
+            font-size: 1.25rem;
+        }
+
+        .expense-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.875rem;
+            color: #888;
+            flex-wrap: wrap;
+        }
+
+        .expense-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .tag.regret {
+            border-color: #FF6B6B;
+            color: #FF6B6B;
+        }
+
+        .regret-toggle {
+            position: absolute;
+            top: 48px;
+            right: 16px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .regret-toggle:hover {
+            border-color: #FF6B6B;
+        }
+
+        .regret-toggle.active {
+            background: #FF6B6B;
+            border-color: #FF6B6B;
+        }
+
+        /* Merchant List */
+        .merchant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .merchant-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .merchant-stats {
+            text-align: right;
+        }
+
+        .merchant-count {
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        .merchant-total {
+            font-weight: 700;
+            color: #D4AF37;
+        }
+
+        /* Category Pills */
+        .category-pills {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .category-pill {
+            padding: 8px 16px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        .category-pill:hover {
+            border-color: #D4AF37;
+        }
+
+        .category-pill.active {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border-color: #D4AF37;
+        }
+
+        /* Comparison View */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .comparison-card {
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .comparison-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        .comparison-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .comparison-stat:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-label {
+            color: #888;
+            font-size: 0.875rem;
+        }
+
+        .comparison-value {
+            font-weight: 700;
+            color: #D4AF37;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #E0E0E0;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #D4AF37;
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0a0a0a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #E0E0E0;
+            border: 1px solid #2a2a2a;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn-secondary:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-row button {
+            flex: 1;
+        }
+
+        .quick-add-btn {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            border: none;
+        }
+
+        .quick-add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: #FF6B6B;
+            cursor: pointer;
+            padding: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .expense-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .photo-upload {
+            width: 100%;
+            height: 120px;
+            background: #0a0a0a;
+            border: 2px dashed #2a2a2a;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .photo-upload:hover {
+            border-color: #D4AF37;
+        }
+
+        .photo-upload input {
+            display: none;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 968px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a3a;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const CATEGORIES = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Health', 'Other'];
+
+        const INITIAL_DATA = {
+            income: 5000,
+            fixedExpenses: [],
+            variableExpenses: [],
+            streak: 0
+        };
+
+        function VariableSpending() {
+            const [data, setData] = useState(() => {
+                const saved = localStorage.getItem('budgetTrackerData');
+                return saved ? JSON.parse(saved) : INITIAL_DATA;
+            });
+            const expenses = data.variableExpenses || [];
+            const [modalOpen, setModalOpen] = useState(false);
+            const [editingExpense, setEditingExpense] = useState(null);
+            const [newExpense, setNewExpense] = useState({
+                name: '',
+                amount: '',
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toTimeString().slice(0, 5),
+                category: 'Food',
+                merchant: '',
+                notes: '',
+                regret: false,
+                photo: null
+            });
+            const [viewMode, setViewMode] = useState('all'); // 'all', 'heatmap', 'merchants', 'regrets', 'compare'
+            const [filterCategory, setFilterCategory] = useState('all');
+            const [photoPreview, setPhotoPreview] = useState(null);
+
+            useEffect(() => {
+                localStorage.setItem('budgetTrackerData', JSON.stringify(data));
+            }, [data]);
+
+            const totalSpent = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const regretSpent = expenses.filter(e => e.regret).reduce((sum, exp) => sum + exp.amount, 0);
+            const avgPerDay = totalSpent / 30; // Simplified
+            const topCategory = CATEGORIES.reduce((top, cat) => {
+                const catTotal = expenses.filter(e => e.category === cat).reduce((sum, e) => sum + e.amount, 0);
+                return catTotal > top.amount ? { name: cat, amount: catTotal } : top;
+            }, { name: '', amount: 0 });
+
+            // Filter expenses
+            const filteredExpenses = filterCategory === 'all' 
+                ? expenses 
+                : expenses.filter(e => e.category === filterCategory);
+
+            // Sort by date (newest first)
+            const sortedExpenses = [...filteredExpenses].sort((a, b) => {
+                const dateA = new Date(`RM{a.date} RM{a.time}`);
+                const dateB = new Date(`RM{b.date} RM{b.time}`);
+                return dateB - dateA;
+            });
+
+            // Heatmap data (last 30 days)
+            const heatmapData = Array.from({ length: 30 }, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - (29 - i));
+                const dateStr = date.toISOString().split('T')[0];
+                const dayExpenses = expenses.filter(e => e.date === dateStr);
+                const total = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                return { date: dateStr, day: dayName, total, count: dayExpenses.length };
+            });
+
+            // Determine heatmap levels
+            const maxSpending = Math.max(...heatmapData.map(d => d.total));
+            const getHeatLevel = (amount) => {
+                if (amount === 0) return 0;
+                if (amount < maxSpending * 0.2) return 1;
+                if (amount < maxSpending * 0.4) return 2;
+                if (amount < maxSpending * 0.6) return 3;
+                if (amount < maxSpending * 0.8) return 4;
+                return 5;
+            };
+
+            // Merchant frequency
+            const merchantData = {};
+            expenses.forEach(exp => {
+                if (!merchantData[exp.merchant]) {
+                    merchantData[exp.merchant] = { count: 0, total: 0 };
+                }
+                merchantData[exp.merchant].count++;
+                merchantData[exp.merchant].total += exp.amount;
+            });
+            const merchantList = Object.entries(merchantData)
+                .map(([name, data]) => ({ name, ...data }))
+                .sort((a, b) => b.total - a.total);
+
+            // Comparison data (This week vs Last week)
+            const today = new Date();
+            const thisWeekStart = new Date(today);
+            thisWeekStart.setDate(today.getDate() - today.getDay());
+            const lastWeekStart = new Date(thisWeekStart);
+            lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+
+            const thisWeekExpenses = expenses.filter(e => {
+                const expDate = new Date(e.date);
+                return expDate >= thisWeekStart;
+            });
+            const lastWeekExpenses = expenses.filter(e => {
+                const expDate = new Date(e.date);
+                return expDate >= lastWeekStart && expDate < thisWeekStart;
+            });
+
+            const thisWeekTotal = thisWeekExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const lastWeekTotal = lastWeekExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const weekDiff = thisWeekTotal - lastWeekTotal;
+            const weekDiffPercent = lastWeekTotal > 0 ? ((weekDiff / lastWeekTotal) * 100) : 0;
+
+            const handleAddExpense = () => {
+                if (!newExpense.name || !newExpense.amount) return;
+
+                if (editingExpense) {
+                    setData(prev => ({
+                        ...prev,
+                        variableExpenses: prev.variableExpenses.map(exp =>
+                            exp.id === editingExpense.id
+                                ? { ...editingExpense, ...newExpense, amount: parseFloat(newExpense.amount) }
+                                : exp
+                        )
+                    }));
+                    setEditingExpense(null);
+                } else {
+                    const expense = {
+                        id: Date.now(),
+                        ...newExpense,
+                        amount: parseFloat(newExpense.amount)
+                    };
+                    setData(prev => ({
+                        ...prev,
+                        variableExpenses: [expense, ...prev.variableExpenses],
+                        streak: prev.streak + 1
+                    }));
+                }
+
+                setNewExpense({
+                    name: '',
+                    amount: '',
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toTimeString().slice(0, 5),
+                    category: 'Food',
+                    merchant: '',
+                    notes: '',
+                    regret: false,
+                    photo: null
+                });
+                
+                setModalOpen(false);
+            };
+
+            const handleEditExpense = (expense) => {
+                setEditingExpense(expense);
+                setNewExpense({
+                    name: expense.name,
+                    amount: expense.amount.toString(),
+                    date: expense.date,
+                    time: expense.time,
+                    category: expense.category,
+                    merchant: expense.merchant,
+                    notes: expense.notes || '',
+                    regret: expense.regret,
+                    photo: expense.photo
+                });
+                setPhotoPreview(expense.photo);
+                setModalOpen(true);
+            };
+
+            const handleDeleteExpense = (id) => {
+                if (confirm('Delete this expense?')) {
+                    setData(prev => ({
+                        ...prev,
+                        variableExpenses: prev.variableExpenses.filter(exp => exp.id !== id)
+                    }));
+                }
+            };
+
+            const toggleRegret = (id) => {
+                setData(prev => ({
+                    ...prev,
+                    variableExpenses: prev.variableExpenses.map(exp =>
+                        exp.id === id ? { ...exp, regret: !exp.regret } : exp
+                    )
+                }));
+            };
+
+            const handlePhotoUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setPhotoPreview(reader.result);
+                        setNewExpense({ ...newExpense, photo: reader.result });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            return (
+                <div className="container">
+                    {/* Navigation */}
+                    <nav className="main-nav">
+                        <a href="index.html" className="nav-link">📊 Dashboard</a>
+                        <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                        <a href="variable-spending.html" className="nav-link active">💸 Variable Spending</a>
+                        <a href="projections.html" className="nav-link">🔮 Projections</a>
+                        <a href="insights.html" className="nav-link">🧠 Insights</a>
+                    </nav>
+
+                    {/* Header */}
+                    <div className="header">
+                        <div>
+                            <h1 className="header-title">The Chaos Zone</h1>
+                            <p className="header-subtitle">Track your daily spending habits</p>
+                        </div>
+                    </div>
+
+                    {/* View Mode Tabs */}
+                    <div className="nav-tabs">
+                        <button className={`nav-tab RM{viewMode === 'all' ? 'active' : ''}`} onClick={() => setViewMode('all')}>
+                            📋 All Expenses
+                        </button>
+                        <button className={`nav-tab RM{viewMode === 'heatmap' ? 'active' : ''}`} onClick={() => setViewMode('heatmap')}>
+                            🔥 Spending Heatmap
+                        </button>
+                        <button className={`nav-tab RM{viewMode === 'merchants' ? 'active' : ''}`} onClick={() => setViewMode('merchants')}>
+                            🏪 Merchant Frequency
+                        </button>
+                        <button className={`nav-tab RM{viewMode === 'regrets' ? 'active' : ''}`} onClick={() => setViewMode('regrets')}>
+                            😬 Regret Tracker
+                        </button>
+                        <button className={`nav-tab RM{viewMode === 'compare' ? 'active' : ''}`} onClick={() => setViewMode('compare')}>
+                            📊 Comparison
+                        </button>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="metric-value gold-text">RM{totalSpent.toFixed(0)}</div>
+                            <div className="metric-label">Total Spent</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="metric-value red-text">RM{regretSpent.toFixed(0)}</div>
+                            <div className="metric-label">Regret Money</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="metric-value soft-blue-text">RM{avgPerDay.toFixed(2)}</div>
+                            <div className="metric-label">Avg Per Day</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="metric-value green-text">{topCategory.name}</div>
+                            <div className="metric-label">Top Category</div>
+                        </div>
+                    </div>
+
+                    {/* ALL EXPENSES VIEW */}
+                    {viewMode === 'all' && (
+                        <>
+                            <div className="category-pills">
+                                <button 
+                                    className={`category-pill RM{filterCategory === 'all' ? 'active' : ''}`}
+                                    onClick={() => setFilterCategory('all')}
+                                >
+                                    All
+                                </button>
+                                {CATEGORIES.map(cat => (
+                                    <button 
+                                        key={cat}
+                                        className={`category-pill RM{filterCategory === cat ? 'active' : ''}`}
+                                        onClick={() => setFilterCategory(cat)}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="card">
+                                <h2 className="card-title">Recent Purchases</h2>
+                                {sortedExpenses.length === 0 ? (
+                                    <p style={{ color: '#888', textAlign: 'center', padding: '40px' }}>
+                                        No expenses yet. Click the + button to add one.
+                                    </p>
+                                ) : (
+                                    sortedExpenses.map(expense => (
+                                        <div 
+                                            key={expense.id}
+                                            className={`expense-item RM{expense.regret ? 'regret' : ''}`}
+                                            onClick={() => handleEditExpense(expense)}
+                                        >
+                                            {expense.photo ? (
+                                                <img src={expense.photo} alt="Receipt" className="expense-photo" />
+                                            ) : (
+                                                <div className="expense-photo">📄</div>
+                                            )}
+                                            <div className="expense-content">
+                                                <div className="expense-header-row">
+                                                    <div className="expense-name">{expense.name}</div>
+                                                    <div className="expense-amount">RM{expense.amount.toFixed(2)}</div>
+                                                </div>
+                                                <div className="expense-meta">
+                                                    <span>📅 {expense.date}</span>
+                                                    <span>🕐 {expense.time}</span>
+                                                    <span>📂 {expense.category}</span>
+                                                    {expense.merchant && <span>🏪 {expense.merchant}</span>}
+                                                </div>
+                                                {expense.notes && (
+                                                    <p style={{ fontSize: '0.875rem', color: '#888', marginTop: '8px' }}>
+                                                        {expense.notes}
+                                                    </p>
+                                                )}
+                                                <div className="expense-tags">
+                                                    {expense.regret && <span className="tag regret">😬 Regret</span>}
+                                                </div>
+                                            </div>
+                                            <button 
+                                                className={`regret-toggle RM{expense.regret ? 'active' : ''}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleRegret(expense.id);
+                                                }}
+                                            >
+                                                😬
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {/* HEATMAP VIEW */}
+                    {viewMode === 'heatmap' && (
+                        <div className="card">
+                            <h2 className="card-title">30-Day Spending Heatmap</h2>
+                            <p style={{ color: '#888', marginBottom: '20px' }}>
+                                Darker cells = more spending that day
+                            </p>
+                            <div className="heatmap-grid">
+                                {heatmapData.map((day, index) => (
+                                    <div 
+                                        key={index}
+                                        className={`heatmap-cell level-RM{getHeatLevel(day.total)}`}
+                                    >
+                                        <div className="day-label">{day.day}</div>
+                                        {day.total > 0 && (
+                                            <div className="day-amount">RM{day.total.toFixed(0)}</div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MERCHANTS VIEW */}
+                    {viewMode === 'merchants' && (
+                        <div className="card">
+                            <h2 className="card-title">Merchant Frequency</h2>
+                            <p style={{ color: '#888', marginBottom: '20px' }}>
+                                Which places are eating your money?
+                            </p>
+                            {merchantList.map(merchant => (
+                                <div key={merchant.name} className="merchant-item">
+                                    <div>
+                                        <div className="merchant-name">{merchant.name}</div>
+                                        <div className="merchant-count">{merchant.count} purchases</div>
+                                    </div>
+                                    <div className="merchant-stats">
+                                        <div className="merchant-total">RM{merchant.total.toFixed(2)}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* REGRETS VIEW */}
+                    {viewMode === 'regrets' && (
+                        <div className="card">
+                            <h2 className="card-title">Regret Tracker</h2>
+                            <p style={{ color: '#888', marginBottom: '20px' }}>
+                                Expenses you wish you could take back
+                            </p>
+                            {expenses.filter(e => e.regret).length === 0 ? (
+                                <p style={{ color: '#888', textAlign: 'center', padding: '40px' }}>
+                                    No regrets yet! (That's good... or you're in denial 😅)
+                                </p>
+                            ) : (
+                                expenses.filter(e => e.regret).map(expense => (
+                                    <div key={expense.id} className="expense-item regret">
+                                        {expense.photo ? (
+                                            <img src={expense.photo} alt="Receipt" className="expense-photo" />
+                                        ) : (
+                                            <div className="expense-photo">📄</div>
+                                        )}
+                                        <div className="expense-content">
+                                            <div className="expense-header-row">
+                                                <div className="expense-name">{expense.name}</div>
+                                                <div className="expense-amount">RM{expense.amount.toFixed(2)}</div>
+                                            </div>
+                                            <div className="expense-meta">
+                                                <span>📅 {expense.date}</span>
+                                                <span>🏪 {expense.merchant}</span>
+                                            </div>
+                                            {expense.notes && (
+                                                <p style={{ fontSize: '0.875rem', color: '#FF6B6B', marginTop: '8px' }}>
+                                                    "{expense.notes}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+
+                    {/* COMPARISON VIEW */}
+                    {viewMode === 'compare' && (
+                        <div className="card">
+                            <h2 className="card-title">This Week vs Last Week</h2>
+                            <div className="comparison-grid">
+                                <div className="comparison-card">
+                                    <div className="comparison-title">This Week</div>
+                                    <div className="comparison-stat">
+                                        <span className="comparison-label">Total Spent</span>
+                                        <span className="comparison-value">RM{thisWeekTotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="comparison-stat">
+                                        <span className="comparison-label">Transactions</span>
+                                        <span className="comparison-value">{thisWeekExpenses.length}</span>
+                                    </div>
+                                    <div className="comparison-stat">
+                                        <span className="comparison-label">Avg per Transaction</span>
+                                        <span className="comparison-value">
+                                            RM{thisWeekExpenses.length > 0 ? (thisWeekTotal / thisWeekExpenses.length).toFixed(2) : '0.00'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="comparison-card">
+                                    <div className="comparison-title">Last Week</div>
+                                    <div className="comparison-stat">
+                                        <span className="comparison-label">Total Spent</span>
+                                        <span className="comparison-value">RM{lastWeekTotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="comparison-stat">
+                                        <span className="comparison-label">Transactions</span>
+                                        <span className="comparison-value">{lastWeekExpenses.length}</span>
+                                    </div>
+                                    <div className="comparison-stat">
+                                        <span className="comparison-label">Avg per Transaction</span>
+                                        <span className="comparison-value">
+                                            RM{lastWeekExpenses.length > 0 ? (lastWeekTotal / lastWeekExpenses.length).toFixed(2) : '0.00'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ 
+                                marginTop: '24px', 
+                                padding: '20px', 
+                                background: '#0a0a0a', 
+                                borderRadius: '12px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '0.875rem', color: '#888', marginBottom: '8px' }}>
+                                    Difference
+                                </div>
+                                <div style={{ 
+                                    fontSize: '2rem', 
+                                    fontWeight: '800',
+                                    color: weekDiff > 0 ? '#FF6B6B' : '#66BB6A'
+                                }}>
+                                    {weekDiff > 0 ? '+' : ''}{weekDiff >= 0 ? 'RM' : '-RM'}{Math.abs(weekDiff).toFixed(2)}
+                                </div>
+                                <div style={{ fontSize: '1rem', color: '#888', marginTop: '4px' }}>
+                                    ({weekDiffPercent > 0 ? '+' : ''}{weekDiffPercent.toFixed(1)}%)
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quick Add Button */}
+                    <button className="quick-add-btn" onClick={() => {
+                        setEditingExpense(null);
+                        setNewExpense({
+                            name: '',
+                            amount: '',
+                            date: new Date().toISOString().split('T')[0],
+                            time: new Date().toTimeString().slice(0, 5),
+                            category: 'Food',
+                            merchant: '',
+                            notes: '',
+                            regret: false,
+                            photo: null
+                        });
+                        
+                        setModalOpen(true);
+                    }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="3" strokeLinecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+
+                    {/* Add/Edit Expense Modal */}
+                    <div className={`modal ${modalOpen ? 'active' : ''}`} onClick={(e) => e.target.className.includes('modal') && setModalOpen(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <h2 className="modal-title">
+                                {editingExpense ? 'Edit Expense' : 'Add Expense'}
+                            </h2>
+
+                            
+
+                            <div className="form-group">
+                                <label className="form-label">Name</label>
+                                <input 
+                                    type="text" 
+                                    value={newExpense.name}
+                                    onChange={(e) => setNewExpense({ ...newExpense, name: e.target.value })}
+                                    placeholder="Coffee, lunch, etc."
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Amount</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    value={newExpense.amount}
+                                    onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Date</label>
+                                <input 
+                                    type="date"
+                                    value={newExpense.date}
+                                    onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Time</label>
+                                <input 
+                                    type="time"
+                                    value={newExpense.time}
+                                    onChange={(e) => setNewExpense({ ...newExpense, time: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Category</label>
+                                <select 
+                                    value={newExpense.category}
+                                    onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
+                                >
+                                    {CATEGORIES.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Merchant (Optional)</label>
+                                <input 
+                                    type="text"
+                                    value={newExpense.merchant}
+                                    onChange={(e) => setNewExpense({ ...newExpense, merchant: e.target.value })}
+                                    placeholder="Starbucks, Amazon, etc."
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Notes (Optional)</label>
+                                <textarea
+                                    value={newExpense.notes}
+                                    onChange={(e) => setNewExpense({ ...newExpense, notes: e.target.value })}
+                                    placeholder="Why did you buy this?"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                    <input 
+                                        type="checkbox"
+                                        checked={newExpense.regret}
+                                        onChange={(e) => setNewExpense({ ...newExpense, regret: e.target.checked })}
+                                        style={{ width: 'auto' }}
+                                    />
+                                    <span style={{ color: '#FF6B6B', fontSize: '1rem' }}>😬 I regret this purchase</span>
+                                </label>
+                            </div>
+                            <div className="btn-row">
+                                <button className="btn-primary" onClick={handleAddExpense}>
+                                    {editingExpense ? 'Update' : 'Add'} Expense
+                                </button>
+                                <button className="btn-secondary" onClick={() => {
+                                    setModalOpen(false);
+                                    setEditingExpense(null);
+                                    
+                                }}>
+                                    Cancel
+                                </button>
+                            </div>
+                            {editingExpense && (
+                                <button 
+                                    className="btn-secondary"
+                                    style={{ width: '100%', marginTop: '12px', borderColor: '#FF6B6B', color: '#FF6B6B' }}
+                                    onClick={() => {
+                                        handleDeleteExpense(editingExpense.id);
+                                        setModalOpen(false);
+                                        setEditingExpense(null);
+                                    }}
+                                >
+                                    Delete Expense
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<VariableSpending />, document.getElementById('root'));
+    </script>
+</body>
+</html>
