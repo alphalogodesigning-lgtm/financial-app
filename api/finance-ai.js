@@ -1,64 +1,55 @@
 import OpenAI from "openai";
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    const { message, data } = req.body;
 
-    // Accept BOTH old and new payload shapes safely
-    const message =
-      req.body.message ||
-      req.body.question ||
-      "";
-
-    const financialData =
-      req.body.data ||
-      req.body.financialData ||
-      null;
-
-    if (!message) {
-      return res.status(400).json({ error: "Missing message" });
+    if (!message || !data) {
+      return res.status(400).json({ error: "Missing input data" });
     }
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
         {
           role: "system",
           content: `
 You are a private financial intelligence assistant embedded inside a personal money tracker app.
 
-You are NOT a generic chatbot.
-You are calm, analytical, practical.
-
-RULES:
-- Base advice ONLY on provided data
-- Quantify recommendations when possible
-- Ask ONE precise follow-up question if data is missing
-- Avoid fluff, shame, or moralizing
-          `.trim(),
+You are calm, analytical, practical, and strict-but-supportive.
+You give realistic, quantified advice.
+You ONLY use the provided financial data.
+No fluff. No emojis. No slang.
+`
         },
         {
           role: "user",
-          content: JSON.stringify({
-            question: message,
-            financial_data: financialData,
-          }),
-        },
+          content: `
+User question:
+${message}
+
+User financial data (JSON):
+${JSON.stringify(data, null, 2)}
+`
+        }
       ],
+      temperature: 0.3
     });
 
-    res.status(200).json({
-      reply: response.output_text || "No response generated.",
-    });
+    const reply = completion.choices[0].message.content;
+
+    return res.status(200).json({ reply });
 
   } catch (err) {
     console.error("AI ERROR:", err);
-    res.status(500).json({ error: "AI service failure" });
+    return res.status(500).json({ error: "AI service failure" });
   }
 }
