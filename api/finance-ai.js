@@ -10,10 +10,19 @@ export default async function handler(req, res) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const { question, financialData } = req.body;
+    // Accept BOTH old and new payload shapes safely
+    const message =
+      req.body.message ||
+      req.body.question ||
+      "";
 
-    if (!question || !financialData) {
-      return res.status(400).json({ error: "Missing input data" });
+    const financialData =
+      req.body.data ||
+      req.body.financialData ||
+      null;
+
+    if (!message) {
+      return res.status(400).json({ error: "Missing message" });
     }
 
     const response = await client.responses.create({
@@ -24,25 +33,28 @@ export default async function handler(req, res) {
           content: `
 You are a private financial intelligence assistant embedded inside a personal money tracker app.
 
+You are NOT a generic chatbot.
 You are calm, analytical, practical.
-Base advice ONLY on provided data.
-Quantify recommendations.
-Ask ONE follow-up question if data is missing.
-Avoid fluff and moralizing.
-          `.trim()
+
+RULES:
+- Base advice ONLY on provided data
+- Quantify recommendations when possible
+- Ask ONE precise follow-up question if data is missing
+- Avoid fluff, shame, or moralizing
+          `.trim(),
         },
         {
           role: "user",
           content: JSON.stringify({
-            question,
-            financial_data: financialData
-          })
-        }
-      ]
+            question: message,
+            financial_data: financialData,
+          }),
+        },
+      ],
     });
 
     res.status(200).json({
-      reply: response.output_text
+      reply: response.output_text || "No response generated.",
     });
 
   } catch (err) {
