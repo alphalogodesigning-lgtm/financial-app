@@ -1,8 +1,0 @@
-{
-  "name": "financial-app",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "openai": "^4.0.0"
-  }
-}
