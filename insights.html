@@ -400,6 +400,54 @@
             }
         }
 
+        /* Mobile-only header/navigation optimization (desktop unchanged) */
+        @media (max-width: 640px) {
+            .main-nav {
+                padding: 10px;
+                margin-bottom: 20px;
+                gap: 8px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x mandatory;
+            }
+
+            .main-nav::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-link {
+                flex: 0 0 auto;
+                white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 40px;
+                padding: 10px 14px;
+                border-radius: 999px;
+                font-size: 13px;
+                scroll-snap-align: start;
+            }
+
+            .nav-link.active {
+                box-shadow: 0 6px 18px rgba(212, 175, 55, 0.22);
+            }
+
+            .header {
+                margin-bottom: 20px;
+            }
+
+            .header-title {
+                font-size: 1.9rem;
+                line-height: 1.15;
+            }
+
+            .header-subtitle {
+                font-size: 1rem;
+            }
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -439,12 +487,39 @@
 
             const fixedExpenses = data.fixedExpenses || [];
             const variableExpenses = data.variableExpenses || [];
+
+            const START_MESSAGE = "Set income to begin";
+            const income = Number.isFinite(data.income) ? data.income : 0;
+            const incomeSet = income > 0;
+
+            if (!incomeSet) {
+                return (
+                    <div className="container">
+                        <nav className="main-nav">
+                            <a href="index.html" className="nav-link">📊 Dashboard</a>
+                            <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                            <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                            <a href="projections.html" className="nav-link">🔮 Projections</a>
+                            <a href="insights.html" className="nav-link active">🧠 Insights</a>
+                        </nav>
+
+                        <div className="header">
+                            <h1 className="header-title">The Therapy Session</h1>
+                            <p className="header-subtitle">Let's talk about your spending habits... honestly.</p>
+                        </div>
+
+                        <div className="card" style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 800, color: '#D4AF37' }}>
+                            {START_MESSAGE}
+                        </div>
+                    </div>
+                );
+            }
             
             // Core calculations
             const totalFixed = fixedExpenses.reduce((sum, exp) => sum + exp.amount, 0);
             const totalVariable = variableExpenses.reduce((sum, exp) => sum + exp.amount, 0);
             const totalSpent = totalFixed + totalVariable;
-            const savingsRate = ((data.income - totalSpent) / data.income) * 100;
+            const savingsRate = ((income - totalSpent) / income) * 100;
             const regretMoney = variableExpenses.filter(e => e.regret).reduce((sum, e) => sum + e.amount, 0);
 
             // Time-based patterns
@@ -514,7 +589,7 @@
             if (regretMoney > totalVariable * 0.2) healthScore -= 20;
             if (avgWeekendSpend > avgWeekdaySpend * 2) healthScore -= 15;
             if (categoryAddictionScore > 50) healthScore -= 10;
-            if (totalSpent > data.income) healthScore -= 25;
+            if (totalSpent > income) healthScore -= 25;
             healthScore = Math.max(0, healthScore);
 
             const getGrade = (score) => {
@@ -570,17 +645,17 @@
                 { id: 'streak_30', icon: '💪', name: 'Month Master', description: 'Tracked for 30 days', unlocked: data.streak >= 30 },
                 { id: 'saver', icon: '💎', name: 'Super Saver', description: 'Save 30% of income', unlocked: savingsRate >= 30 },
                 { id: 'conscious', icon: '🧘', name: 'Conscious Spender', description: 'Less than 10% regret', unlocked: (regretMoney / totalVariable) * 100 < 10 },
-                { id: 'budget_king', icon: '👑', name: 'Budget King', description: 'Stay under budget', unlocked: totalSpent < data.income },
+                { id: 'budget_king', icon: '👑', name: 'Budget King', description: 'Stay under budget', unlocked: totalSpent < income },
                 { id: 'organized', icon: '📊', name: 'Organized AF', description: '10+ expenses logged', unlocked: variableExpenses.length >= 10 },
             ];
 
             // Brutal honesty
             const getBrutalTruth = () => {
-                if (totalSpent > data.income) {
+                if (totalSpent > income) {
                     return "You're spending more than you earn. That's literally the definition of financial chaos. Time for a reality check.";
                 }
                 if (regretMoney > totalVariable * 0.4) {
-                    return `You regret $${regretMoney.toFixed(0)} worth of purchases. That's ${((regretMoney/totalVariable)*100).toFixed(0)}% of your spending. Maybe pause before clicking 'Buy'?`;
+                    return `You regret RM${regretMoney.toFixed(0)} worth of purchases. That's ${((regretMoney/totalVariable)*100).toFixed(0)}% of your spending. Maybe pause before clicking 'Buy'?`;
                 }
                 if (savingsRate < 5) {
                     return "You're saving less than 5% of your income. At this rate, any emergency will destroy you. Not trying to be mean, just honest.";
@@ -648,8 +723,8 @@
                             <div className="insight-icon">📅</div>
                             <div className="insight-title">Weekend vs Weekday</div>
                             <div className="insight-description">
-                                You spend an average of <strong style={{ color: '#D4AF37' }}>${avgWeekendSpend.toFixed(2)}</strong> per day on weekends
-                                vs <strong style={{ color: '#89ABE3' }}>${avgWeekdaySpend.toFixed(2)}</strong> on weekdays.
+                                You spend an average of <strong style={{ color: '#D4AF37' }}>RM{avgWeekendSpend.toFixed(2)}</strong> per day on weekends
+                                vs <strong style={{ color: '#89ABE3' }}>RM{avgWeekdaySpend.toFixed(2)}</strong> on weekdays.
                             </div>
                             <div className="insight-stat">
                                 {avgWeekdaySpend > 0 ? `${(avgWeekendSpend/avgWeekdaySpend).toFixed(1)}x` : 'N/A'}
@@ -665,7 +740,7 @@
                             <div className="insight-icon">🌙</div>
                             <div className="insight-title">Night Owl Analysis</div>
                             <div className="insight-description">
-                                You've spent <strong style={{ color: '#D4AF37' }}>${lateNightSpending.toFixed(2)}</strong> between 
+                                You've spent <strong style={{ color: '#D4AF37' }}>RM{lateNightSpending.toFixed(2)}</strong> between 
                                 10pm and 4am. That's {totalVariable > 0 ? ((lateNightSpending/totalVariable)*100).toFixed(0) : 0}% of your variable spending.
                             </div>
                             {lateNightSpending > totalVariable * 0.2 && (
@@ -679,7 +754,7 @@
                             <div className="insight-icon">🎯</div>
                             <div className="insight-title">Category Addiction</div>
                             <div className="insight-description">
-                                Your top category is <strong style={{ color: '#D4AF37' }}>{topCategory.name}</strong> at ${topCategory.amount.toFixed(0)}.
+                                Your top category is <strong style={{ color: '#D4AF37' }}>{topCategory.name}</strong> at RM{topCategory.amount.toFixed(0)}.
                                 That's {categoryAddictionScore.toFixed(0)}% of your variable spending.
                             </div>
                             <div className="insight-stat">
@@ -696,15 +771,15 @@
                             <div className="insight-icon">😬</div>
                             <div className="insight-title">Regret Money</div>
                             <div className="insight-description">
-                                You've marked <strong style={{ color: '#FF6B6B' }}>${regretMoney.toFixed(2)}</strong> worth of purchases as regrets.
+                                You've marked <strong style={{ color: '#FF6B6B' }}>RM{regretMoney.toFixed(2)}</strong> worth of purchases as regrets.
                                 That's money you wish you could take back.
                             </div>
                             <div className="insight-stat" style={{ color: '#FF6B6B' }}>
-                                ${regretMoney.toFixed(0)}
+                                RM{regretMoney.toFixed(0)}
                             </div>
                             {regretMoney > 0 && (
                                 <div className="insight-recommendation">
-                                    💡 Imagine if you had that ${regretMoney.toFixed(0)} back. Wait 24hrs before big purchases.
+                                    💡 Imagine if you had that RM{regretMoney.toFixed(0)} back. Wait 24hrs before big purchases.
                                 </div>
                             )}
                         </div>
@@ -768,7 +843,7 @@
                             </div>
                             <div className="stat-box">
                                 <div className="stat-value soft-blue-text">
-                                    ${totalVariable > 0 ? (totalVariable / variableExpenses.length).toFixed(2) : '0.00'}
+                                    RM{totalVariable > 0 ? (totalVariable / variableExpenses.length).toFixed(2) : '0.00'}
                                 </div>
                                 <div className="stat-label">Avg Transaction Size</div>
                             </div>
@@ -786,7 +861,7 @@
                             </div>
                             <div className="stat-box">
                                 <div className="stat-value gold-text">
-                                    ${((totalFixed + totalVariable) * 12).toFixed(0)}
+                                    RM{((totalFixed + totalVariable) * 12).toFixed(0)}
                                 </div>
                                 <div className="stat-label">Annual Spending Rate</div>
                             </div>
@@ -804,135 +879,5 @@
 
         ReactDOM.render(<Insights />, document.getElementById('root'));
     </script>
-
-<!-- AI Finance Assistant Bubble -->
-<style>
-#ai-bubble {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f5c542, #e0a800);
-  color: #000;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  z-index: 9999;
-}
-
-#ai-chat {
-  position: fixed;
-  bottom: 96px;
-  right: 24px;
-  width: 340px;
-  max-height: 480px;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  border-radius: 12px;
-  display: none;
-  flex-direction: column;
-  z-index: 9999;
-}
-
-#ai-chat header {
-  padding: 12px;
-  border-bottom: 1px solid #2a2a2a;
-  font-weight: 600;
-}
-
-#ai-messages {
-  padding: 12px;
-  overflow-y: auto;
-  flex: 1;
-  font-size: 14px;
-}
-
-#ai-input {
-  display: flex;
-  border-top: 1px solid #2a2a2a;
-}
-
-#ai-input input {
-  flex: 1;
-  padding: 10px;
-  background: #111;
-  color: #fff;
-  border: none;
-  outline: none;
-}
-
-#ai-input button {
-  padding: 0 16px;
-  background: #f5c542;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-}
-</style>
-
-<div id="ai-bubble">AI</div>
-
-<div id="ai-chat">
-  <header>Financial Assistant</header>
-  <div id="ai-messages"></div>
-  <div id="ai-input">
-    <input id="ai-text" placeholder="Ask about your finances..." />
-    <button id="ai-send">Send</button>
-  </div>
-</div>
-
-<script>
-(function(){
-  const bubble = document.getElementById('ai-bubble');
-  const chat = document.getElementById('ai-chat');
-  const sendBtn = document.getElementById('ai-send');
-  const input = document.getElementById('ai-text');
-  const messages = document.getElementById('ai-messages');
-
-  bubble.onclick = () => {
-    chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
-  };
-
-  function addMessage(role, text){
-    const div = document.createElement('div');
-    div.style.marginBottom = '8px';
-    div.innerHTML = '<strong>' + role + ':</strong><br>' + text.replace(/\n/g,'<br>');
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  async function send(){
-    const text = input.value.trim();
-    if(!text) return;
-    input.value = '';
-    addMessage('You', text);
-
-    try{
-      const res = await fetch('/api/finance-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          data: JSON.parse(localStorage.getItem('financialData') || '{}')
-        })
-      });
-
-      const json = await res.json();
-      addMessage('AI', json.reply || 'No response.');
-    }catch(e){
-      addMessage('AI', 'Error contacting AI service.');
-    }
-  }
-
-  sendBtn.onclick = send;
-  input.addEventListener('keydown', e => e.key === 'Enter' && send());
-})();
-</script>
-
 </body>
 </html>

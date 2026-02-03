@@ -134,6 +134,62 @@
             }
         }
 
+        /* Mobile-only header/navigation optimization (desktop unchanged) */
+        @media (max-width: 640px) {
+            .main-nav {
+                padding: 10px;
+                margin-bottom: 20px;
+                gap: 8px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x mandatory;
+            }
+
+            .main-nav::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-link {
+                flex: 0 0 auto;
+                white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 40px;
+                padding: 10px 14px;
+                border-radius: 999px;
+                font-size: 13px;
+                scroll-snap-align: start;
+            }
+
+            .nav-link.active {
+                box-shadow: 0 6px 18px rgba(212, 175, 55, 0.22);
+            }
+
+            .header {
+                margin-bottom: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .header-title {
+                font-size: 1.6rem;
+                line-height: 1.15;
+            }
+
+            .header-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .streak-badge {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+
         .quick-add-btn {
             position: fixed;
             bottom: 32px;
@@ -511,9 +567,10 @@
         };
 
         function ProgressRing({ progress, size = 120, strokeWidth = 8, color = '#D4AF37' }) {
+            const safeProgress = Number.isFinite(progress) ? Math.min(Math.max(progress, 0), 100) : 0;
             const radius = (size - strokeWidth) / 2;
             const circumference = radius * 2 * Math.PI;
-            const offset = circumference - (progress / 100) * circumference;
+            const offset = circumference - (safeProgress / 100) * circumference;
 
             return (
                 <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
@@ -542,7 +599,8 @@
         }
 
         function BarChart({ data }) {
-            const maxValue = Math.max(...data.map(d => d.amount));
+            // Avoid division by 0 / NaN when there's no spending yet
+            const maxValue = Math.max(1, ...data.map(d => d.amount));
             
             return (
                 <div className="chart-container">
@@ -551,7 +609,7 @@
                             <div 
                                 className="bar" 
                                 style={{ 
-                                    height: `RM{(item.amount / maxValue) * 200}px`,
+                                    height: `${(item.amount / maxValue) * 200}px`,
                                     minHeight: item.amount > 0 ? '20px' : '0px'
                                 }}
                             >
@@ -592,15 +650,23 @@
                 localStorage.setItem('budgetTrackerData', JSON.stringify(data));
             }, [data]);
 
-            const totalFixed = data.fixedExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-            const totalVariable = data.variableExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const START_MESSAGE = "Set income to begin";
+
+            const income = Number.isFinite(data.income) ? data.income : 0;
+            const incomeSet = income > 0;
+
+            const totalFixed = (data.fixedExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+            const totalVariable = (data.variableExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
             const totalSpent = totalFixed + totalVariable;
-            const remaining = data.income - totalSpent;
+            const remaining = income - totalSpent;
             const daysInMonth = 30;
             const today = new Date().getDate();
-            const dailyBurnRate = totalVariable / today;
+            const dailyBurnRate = today > 0 ? totalVariable / today : 0;
             const projectedSpend = totalFixed + (dailyBurnRate * daysInMonth);
-            const runway = remaining / dailyBurnRate;
+            const runway = dailyBurnRate > 0 ? remaining / dailyBurnRate : null;
+
+            const availablePct = incomeSet ? (remaining / income) * 100 : null;
+            const budgetPct = incomeSet ? (totalSpent / income) * 100 : null;
 
             const categorySpending = {};
             data.variableExpenses.forEach(exp => {
@@ -707,21 +773,33 @@
                             onClick={handleIncomeEdit}
                             style={{ cursor: 'pointer' }}
                         >
-                            <div className="metric-value gold-text">RM{remaining.toFixed(0)}</div>
+                            <div
+                                className="metric-value gold-text"
+                                style={!incomeSet ? { fontSize: '1.25rem', lineHeight: 1.2 } : undefined}
+                            >
+                                {incomeSet ? `RM${remaining.toFixed(0)}` : START_MESSAGE}
+                            </div>
                             <div className="metric-label">Available</div>
                             <div className="metric-subtext">
-                                {((remaining / data.income) * 100).toFixed(1)}% of income
+                                {incomeSet ? `${availablePct.toFixed(1)}% of income` : START_MESSAGE}
                             </div>
                         </div>
 
                         <div className="stat-card">
-                            <div className="metric-value soft-blue-text">{Math.floor(runway)}</div>
+                            <div
+                                className="metric-value soft-blue-text"
+                                style={!incomeSet ? { fontSize: '1.25rem', lineHeight: 1.2 } : undefined}
+                            >
+                                {incomeSet ? (runway === null ? "∞" : Math.max(0, Math.floor(runway))) : START_MESSAGE}
+                            </div>
                             <div className="metric-label">Days Runway</div>
-                            <div className="metric-subtext">At current burn rate</div>
+                            <div className="metric-subtext">
+                                {incomeSet ? (dailyBurnRate > 0 ? "At current burn rate" : "No spending yet") : START_MESSAGE}
+                            </div>
                         </div>
 
                         <div className="stat-card">
-                            <div className={`metric-value RM{projectedSpend > data.income ? 'red-text' : 'green-text'}`}>
+                            <div className={`metric-value ${projectedSpend > income ? 'red-text' : 'green-text'}`}>
                                 RM{projectedSpend.toFixed(0)}
                             </div>
                             <div className="metric-label">Projected Spend</div>
@@ -800,20 +878,20 @@
                         <div className="card budget-ring-container">
                             <h2 className="card-title">Monthly Budget</h2>
                             <div className="ring-wrapper">
-                                <ProgressRing progress={(totalSpent / data.income) * 100} size={180} strokeWidth={12} />
+                                <ProgressRing progress={incomeSet ? budgetPct : 0} size={180} strokeWidth={12} />
                                 <div className="ring-center">
                                     <div className="ring-percentage">
-                                        {((totalSpent / data.income) * 100).toFixed(0)}%
+                                        {incomeSet ? `${budgetPct.toFixed(0)}%` : START_MESSAGE}
                                     </div>
                                     <div className="ring-label">Used</div>
                                 </div>
                             </div>
                             <div className="budget-summary">
                                 <div className="budget-total">
-                                    RM{totalSpent.toFixed(0)} / RM{data.income}
+                                    {incomeSet ? `RM${totalSpent.toFixed(0)} / RM${income}` : START_MESSAGE}
                                 </div>
                                 <div className="budget-remaining">
-                                    RM{remaining.toFixed(0)} remaining
+                                    {incomeSet ? `RM${remaining.toFixed(0)} remaining` : START_MESSAGE}
                                 </div>
                             </div>
                         </div>

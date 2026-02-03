@@ -124,6 +124,57 @@
             }
         }
 
+        /* Mobile-only header/navigation optimization (desktop unchanged) */
+        @media (max-width: 640px) {
+            .main-nav {
+                padding: 10px;
+                margin-bottom: 20px;
+                gap: 8px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x mandatory;
+            }
+
+            .main-nav::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-link {
+                flex: 0 0 auto;
+                white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 40px;
+                padding: 10px 14px;
+                border-radius: 999px;
+                font-size: 13px;
+                scroll-snap-align: start;
+            }
+
+            .nav-link.active {
+                box-shadow: 0 6px 18px rgba(212, 175, 55, 0.22);
+            }
+
+            .header {
+                margin-bottom: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .header-title {
+                font-size: 1.6rem;
+                line-height: 1.15;
+            }
+
+            .header-subtitle {
+                font-size: 0.95rem;
+            }
+        }
+
         /* Slider */
         .slider-group {
             margin-bottom: 24px;
@@ -447,8 +498,12 @@
                 return saved ? JSON.parse(saved) : INITIAL_DATA;
             });
 
+            const START_MESSAGE = "Set income to begin";
+            const income = Number.isFinite(data.income) ? data.income : 0;
+            const incomeSet = income > 0;
+
             // What-if scenario state
-            const [scenarioIncome, setScenarioIncome] = useState(data.income);
+            const [scenarioIncome, setScenarioIncome] = useState(incomeSet ? income : 1000);
             const [scenarioVariableSpend, setScenarioVariableSpend] = useState(100);
             const [activeScenario, setActiveScenario] = useState(null);
 
@@ -457,10 +512,37 @@
             const [monthlySavings, setMonthlySavings] = useState(500);
 
             useEffect(() => {
-                setScenarioIncome(data.income);
-                const currentVariableTotal = data.variableExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+                if (Number.isFinite(data.income) && data.income > 0) setScenarioIncome(data.income);
+                const currentVariableTotal = (data.variableExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
                 setScenarioVariableSpend(currentVariableTotal > 0 ? 100 : 100);
             }, [data]);
+
+            if (!incomeSet) {
+                return (
+                    <div className="container">
+                        {/* Navigation */}
+                        <nav className="main-nav">
+                            <a href="index.html" className="nav-link">📊 Dashboard</a>
+                            <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                            <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                            <a href="projections.html" className="nav-link active">🔮 Projections</a>
+                            <a href="insights.html" className="nav-link">🧠 Insights</a>
+                        </nav>
+
+                        {/* Header */}
+                        <div className="header">
+                            <div>
+                                <h1 className="header-title">The Crystal Ball</h1>
+                                <p className="header-subtitle">Play with scenarios and see your financial future</p>
+                            </div>
+                        </div>
+
+                        <div className="card" style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 800, color: '#D4AF37' }}>
+                            {START_MESSAGE}
+                        </div>
+                    </div>
+                );
+            }
 
             // Calculations
             const fixedExpenses = data.fixedExpenses || [];
@@ -499,7 +581,7 @@
                         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                         expenses: dayExpenses,
                         total,
-                        isCluster: dayExpenses.length >= 3 || total > data.income * 0.3
+                        isCluster: dayExpenses.length >= 3 || total > income * 0.3
                     });
                 }
             }
@@ -531,10 +613,10 @@
                     title: '📈 Got a Raise',
                     description: 'Income increases by 10%',
                     action: () => {
-                        setScenarioIncome(data.income * 1.1);
+                        setScenarioIncome(income * 1.1);
                         setActiveScenario('raise');
                     },
-                    impact: (data.income * 0.1)
+                    impact: (income * 0.1)
                 },
                 {
                     id: 'splurge',

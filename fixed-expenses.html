@@ -510,6 +510,85 @@
             }
         }
 
+        /* Mobile-only header/navigation optimization (desktop unchanged) */
+        @media (max-width: 640px) {
+            .main-nav {
+                padding: 10px;
+                margin-bottom: 20px;
+                gap: 8px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x mandatory;
+            }
+
+            .main-nav::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-link {
+                flex: 0 0 auto;
+                white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 40px;
+                padding: 10px 14px;
+                border-radius: 999px;
+                font-size: 13px;
+                scroll-snap-align: start;
+            }
+
+            .nav-link.active {
+                box-shadow: 0 6px 18px rgba(212, 175, 55, 0.22);
+            }
+
+            .header {
+                margin-bottom: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .header-title {
+                font-size: 1.6rem;
+                line-height: 1.15;
+            }
+
+            .header-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .nav-tabs {
+                margin-bottom: 20px;
+                gap: 8px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x mandatory;
+                padding-bottom: 4px;
+            }
+
+            .nav-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-tab {
+                flex: 0 0 auto;
+                white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 40px;
+                padding: 10px 14px;
+                border-radius: 999px;
+                font-size: 13px;
+                scroll-snap-align: start;
+            }
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
         }
