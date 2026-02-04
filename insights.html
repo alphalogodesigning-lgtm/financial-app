@@ -7,6 +7,7 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
@@ -472,6 +473,46 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const STORAGE_TABLE = 'budget_tracker_state';
+        const DEVICE_ID_KEY = 'budgetTrackerDeviceId';
+
+        const supabaseClient = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
+
+        const getDeviceId = () => {
+            const existing = localStorage.getItem(DEVICE_ID_KEY);
+            if (existing) return existing;
+            const generated = (crypto?.randomUUID?.() || `device-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+            localStorage.setItem(DEVICE_ID_KEY, generated);
+            return generated;
+        };
+
+        const loadBudgetData = async () => {
+            const fallback = localStorage.getItem('budgetTrackerData');
+            if (!supabaseClient) {
+                return fallback ? JSON.parse(fallback) : null;
+            }
+            try {
+                const deviceId = getDeviceId();
+                const { data, error } = await supabaseClient
+                    .from(STORAGE_TABLE)
+                    .select('data')
+                    .eq('device_id', deviceId)
+                    .maybeSingle();
+                if (error) throw error;
+                if (data?.data) {
+                    localStorage.setItem('budgetTrackerData', JSON.stringify(data.data));
+                    return data.data;
+                }
+            } catch (err) {
+                console.warn('Supabase load failed, using local data.', err);
+            }
+            return fallback ? JSON.parse(fallback) : null;
+        };
+
         const INITIAL_DATA = {
             income: 5000,
             fixedExpenses: [],
@@ -480,10 +521,22 @@
         };
 
         function Insights() {
-            const [data, setData] = useState(() => {
-                const saved = localStorage.getItem('budgetTrackerData');
-                return saved ? JSON.parse(saved) : INITIAL_DATA;
-            });
+            const [data, setData] = useState(INITIAL_DATA);
+            const [isHydrated, setIsHydrated] = useState(false);
+
+            useEffect(() => {
+                let isMounted = true;
+                loadBudgetData().then((saved) => {
+                    if (!isMounted) return;
+                    if (saved) {
+                        setData(saved);
+                    }
+                    setIsHydrated(true);
+                });
+                return () => {
+                    isMounted = false;
+                };
+            }, []);
 
             const fixedExpenses = data.fixedExpenses || [];
             const variableExpenses = data.variableExpenses || [];
