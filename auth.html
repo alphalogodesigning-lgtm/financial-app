@@ -3,30 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Budget Tracker - Login</title>
+    <title>Budget Tracker - Welcome</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js"></script>
     <style>
-        body { margin: 0; font-family: Inter, system-ui, sans-serif; background:#0a0a0a; color:#E0E0E0; }
-        .wrap { min-height: 100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
-        .card { width:100%; max-width:420px; background:#1a1a1a; border:1px solid #2a2a2a; border-radius:16px; padding:24px; }
-        h1 { margin:0 0 10px; color:#fff; }
-        p { color:#aaa; margin:0 0 18px; }
-        .tabs { display:flex; gap:10px; margin-bottom:16px; }
-        .tab { flex:1; padding:10px; border-radius:8px; border:1px solid #2a2a2a; background:transparent; color:#bbb; cursor:pointer; }
-        .tab.active { background:linear-gradient(135deg,#D4AF37,#FFD700); color:#111; border-color:#D4AF37; font-weight:700; }
-        input { width:100%; padding:12px; border-radius:8px; border:1px solid #2a2a2a; background:#111; color:#fff; margin-bottom:12px; }
-        button.primary { width:100%; padding:12px; border:none; border-radius:8px; background:linear-gradient(135deg,#D4AF37,#FFD700); color:#111; font-weight:700; cursor:pointer; }
-        .status { margin-top:12px; font-size:14px; color:#89ABE3; min-height:20px; }
-        .small { margin-top:16px; text-align:center; }
-        a { color:#D4AF37; }
+        :root {
+            --bg-0: #07090f;
+            --bg-1: #0e1322;
+            --card: rgba(16, 20, 33, 0.72);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-main: #f8f9fc;
+            --text-soft: #b9c2d6;
+            --gold-1: #ffd44d;
+            --gold-2: #ffb703;
+            --accent: #70e3ff;
+            --danger: #ff8f8f;
+            --success: #90f2b9;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            color: var(--text-main);
+            background:
+                radial-gradient(1200px 700px at 10% 10%, #1b2a55 0%, transparent 55%),
+                radial-gradient(900px 600px at 90% 25%, #3e1f62 0%, transparent 55%),
+                radial-gradient(800px 500px at 50% 95%, #0d3b3e 0%, transparent 50%),
+                linear-gradient(140deg, var(--bg-0), var(--bg-1));
+            overflow-x: hidden;
+        }
+
+        .fx-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .orb {
+            position: absolute;
+            filter: blur(30px);
+            border-radius: 50%;
+            opacity: 0.36;
+            animation: drift 18s ease-in-out infinite;
+        }
+
+        .orb.one {
+            width: 320px;
+            height: 320px;
+            left: -60px;
+            top: 25%;
+            background: #4e8dff;
+        }
+
+        .orb.two {
+            width: 260px;
+            height: 260px;
+            right: 8%;
+            top: 8%;
+            background: #a26cff;
+            animation-delay: -4s;
+        }
+
+        .orb.three {
+            width: 300px;
+            height: 300px;
+            right: 15%;
+            bottom: -80px;
+            background: #1dd3b0;
+            animation-delay: -9s;
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50% { transform: translate3d(12px, -18px, 0) scale(1.08); }
+        }
+
+        .wrap {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 28px 16px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 470px;
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            box-shadow:
+                0 24px 60px rgba(0, 0, 0, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .brand-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #121212;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(30px, 5vw, 42px);
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            margin: 10px 0 0;
+            color: var(--text-soft);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .tabs {
+            margin-top: 22px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 6px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .tab {
+            padding: 11px 10px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: #c8d1e5;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s ease;
+        }
+
+        .tab:hover:not(:disabled) {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+            color: #101010;
+            border-color: transparent;
+            box-shadow: 0 6px 20px rgba(255, 183, 3, 0.35);
+        }
+
+        form { margin-top: 16px; }
+
+        .field {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(4, 8, 17, 0.66);
+            color: var(--text-main);
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(112, 227, 255, 0.16);
+        }
+
+        .primary {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 13px;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            color: #151515;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+            transition: transform .12s ease, box-shadow .2s ease, filter .2s ease;
+            box-shadow: 0 12px 28px rgba(255, 183, 3, 0.28);
+        }
+
+        .primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            filter: brightness(1.03);
+        }
+
+        .primary:disabled,
+        .tab:disabled,
+        .field:disabled {
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+
+        .account-box {
+            margin-top: 16px;
+            border-radius: 14px;
+            padding: 12px;
+            border: 1px solid rgba(144, 242, 185, 0.24);
+            background: rgba(58, 172, 112, 0.11);
+            color: #d9ffe9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .account-box code {
+            background: rgba(0, 0, 0, 0.28);
+            padding: 2px 6px;
+            border-radius: 7px;
+            color: #cbffe1;
+        }
+
+        .small {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        a {
+            color: #ffd665;
+            font-weight: 600;
+        }
+
+        .status {
+            margin-top: 14px;
+            min-height: 20px;
+            font-size: 14px;
+            color: #b8ddff;
+        }
+
+        .status.error { color: var(--danger); }
+        .status.success { color: var(--success); }
+
+        @media (max-width: 560px) {
+            .card { padding: 22px; border-radius: 18px; }
+        }
     </style>
 </head>
 <body>
+    <div class="fx-layer">
+        <div class="orb one"></div>
+        <div class="orb two"></div>
+        <div class="orb three"></div>
+    </div>
+
     <div id="root"></div>
+
     <script type="text/babel">
         const { useState, useEffect } = React;
 
@@ -37,7 +281,9 @@
             const [email, setEmail] = useState('');
             const [password, setPassword] = useState('');
             const [status, setStatus] = useState('');
+            const [statusType, setStatusType] = useState('');
             const [currentUser, setCurrentUser] = useState(null);
+            const [isSubmitting, setIsSubmitting] = useState(false);
 
             useEffect(() => {
                 if (!supabaseClient) return;
@@ -46,13 +292,23 @@
                 });
             }, []);
 
+            const setStatusMessage = (message, type = '') => {
+                setStatus(message);
+                setStatusType(type);
+            };
+
             const handleSubmit = async (e) => {
                 e.preventDefault();
+                if (isSubmitting) return;
+
                 if (!supabaseClient) {
-                    setStatus('Please set your Supabase URL and anon key in auth.html first.');
+                    setStatusMessage('The account service is currently unavailable. Please try again shortly.', 'error');
                     return;
                 }
-                setStatus('Working...');
+
+                setIsSubmitting(true);
+                setStatusMessage('Just a sec — checking your details...');
+
                 let data;
                 let error;
 
@@ -63,15 +319,29 @@
                 }
 
                 if (error) {
-                    setStatus(error.message);
+                    const message = (error.message || '').toLowerCase();
+                    const rateLimited = error.status === 429 || message.includes('rate limit');
+
+                    if (rateLimited && mode === 'signup') {
+                        setStatusMessage('Too many signup attempts right now. Please wait a little before trying again.', 'error');
+                    } else {
+                        setStatusMessage(error.message || 'Something went wrong. Please try again.', 'error');
+                    }
+                    setIsSubmitting(false);
                     return;
                 }
+
                 setCurrentUser(data.user || null);
-                setStatus(mode === 'login' ? 'Logged in! Redirecting...' : 'Sign-up success. Check email if confirmation is enabled.');
+
                 if (mode === 'login') {
+                    setStatusMessage('Welcome back! Taking you to your dashboard...', 'success');
                     setTimeout(() => {
                         window.location.href = 'index.html';
-                    }, 600);
+                    }, 650);
+                } else {
+                    setStatusMessage('Account created successfully! You can now sign in.', 'success');
+                    setMode('login');
+                    setIsSubmitting(false);
                 }
             };
 
@@ -79,36 +349,71 @@
                 if (!supabaseClient) return;
                 await supabaseClient.auth.signOut();
                 setCurrentUser(null);
-                setStatus('Logged out.');
+                setStatusMessage('You’re signed out for now.', 'success');
             };
 
             return (
                 <div className="wrap">
                     <div className="card">
-                        <h1>Budget Tracker Auth</h1>
-                        <p>Login or create an account to sync data per user.</p>
+                        <span className="brand-chip">Budget Tracker</span>
+                        <h1>Welcome Back</h1>
+                        <p>Sign in to continue, or create your account to save your budgets securely across devices.</p>
 
                         <div className="tabs">
-                            <button className={`tab ${mode === 'login' ? 'active' : ''}`} onClick={() => setMode('login')}>Login</button>
-                            <button className={`tab ${mode === 'signup' ? 'active' : ''}`} onClick={() => setMode('signup')}>Sign Up</button>
+                            <button
+                                className={`tab ${mode === 'login' ? 'active' : ''}`}
+                                onClick={() => setMode('login')}
+                                disabled={isSubmitting}
+                                type="button"
+                            >
+                                Sign In
+                            </button>
+                            <button
+                                className={`tab ${mode === 'signup' ? 'active' : ''}`}
+                                onClick={() => setMode('signup')}
+                                disabled={isSubmitting}
+                                type="button"
+                            >
+                                Create Account
+                            </button>
                         </div>
 
                         <form onSubmit={handleSubmit}>
-                            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                            <button className="primary" type="submit">{mode === 'login' ? 'Login' : 'Create Account'}</button>
+                            <input
+                                className="field"
+                                type="email"
+                                placeholder="Email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                disabled={isSubmitting}
+                            />
+                            <input
+                                className="field"
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                disabled={isSubmitting}
+                            />
+                            <button className="primary" type="submit" disabled={isSubmitting}>
+                                {isSubmitting
+                                    ? 'Please wait...'
+                                    : (mode === 'login' ? 'Sign In' : 'Create Account')}
+                            </button>
                         </form>
 
                         {currentUser && (
-                            <div className="small">
-                                <div>Logged in as: <strong>{currentUser.email}</strong></div>
-                                <div>User ID sent to Supabase row: <code>{currentUser.id}</code></div>
-                                <button className="primary" style={{ marginTop: 10 }} onClick={handleLogout}>Logout</button>
+                            <div className="account-box">
+                                <div>Signed in as <strong>{currentUser.email}</strong></div>
+                                <div>Member ID: <code>{currentUser.id}</code></div>
+                                <button className="primary" style={{ marginTop: 10 }} onClick={handleLogout} type="button">Sign Out</button>
                             </div>
                         )}
 
                         <div className="small"><a href="index.html">Go to Dashboard</a></div>
-                        <div className="status">{status}</div>
+                        <div className={`status ${statusType}`}>{status}</div>
                     </div>
                 </div>
             );
