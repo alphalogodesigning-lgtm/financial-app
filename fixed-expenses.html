@@ -631,16 +631,29 @@
             return generated;
         };
 
+        const getAuthenticatedUser = async () => {
+            if (!supabaseClient) return null;
+            const { data, error } = await supabaseClient.auth.getUser();
+            if (error) throw error;
+            return data.user || null;
+        };
+
         const loadBudgetData = async () => {
             const fallback = localStorage.getItem('budgetTrackerData');
             if (!supabaseClient) {
                 return fallback ? JSON.parse(fallback) : null;
             }
             try {
+                const user = await getAuthenticatedUser();
+                if (!user) {
+                    window.location.href = 'auth.html';
+                    return fallback ? JSON.parse(fallback) : null;
+                }
                 const deviceId = getDeviceId();
                 const { data, error } = await supabaseClient
                     .from(STORAGE_TABLE)
                     .select('data')
+                    .eq('user_id', user.id)
                     .eq('device_id', deviceId)
                     .maybeSingle();
                 if (error) throw error;
@@ -658,14 +671,20 @@
             localStorage.setItem('budgetTrackerData', JSON.stringify(nextData));
             if (!supabaseClient) return;
             try {
+                const user = await getAuthenticatedUser();
+                if (!user) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
                 const deviceId = getDeviceId();
                 const { error } = await supabaseClient
                     .from(STORAGE_TABLE)
                     .upsert({
+                        user_id: user.id,
                         device_id: deviceId,
                         data: nextData,
                         updated_at: new Date().toISOString()
-                    });
+                    }, { onConflict: 'user_id,device_id' });
                 if (error) throw error;
             } catch (err) {
                 console.warn('Supabase save failed, kept local data.', err);
