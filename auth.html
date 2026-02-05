@@ -38,6 +38,7 @@
             const [password, setPassword] = useState('');
             const [status, setStatus] = useState('');
             const [currentUser, setCurrentUser] = useState(null);
+            const [isSubmitting, setIsSubmitting] = useState(false);
 
             useEffect(() => {
                 if (!supabaseClient) return;
@@ -48,10 +49,12 @@
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
+                if (isSubmitting) return;
                 if (!supabaseClient) {
                     setStatus('Please set your Supabase URL and anon key in auth.html first.');
                     return;
                 }
+                setIsSubmitting(true);
                 setStatus('Working...');
                 let data;
                 let error;
@@ -63,7 +66,14 @@
                 }
 
                 if (error) {
-                    setStatus(error.message);
+                    const message = (error.message || '').toLowerCase();
+                    const rateLimited = error.status === 429 || message.includes('rate limit');
+                    if (rateLimited && mode === 'signup') {
+                        setStatus('Signup email limit hit. For now, wait a bit or disable email confirmations in Supabase Auth settings while testing.');
+                    } else {
+                        setStatus(error.message);
+                    }
+                    setIsSubmitting(false);
                     return;
                 }
                 setCurrentUser(data.user || null);
@@ -72,6 +82,8 @@
                     setTimeout(() => {
                         window.location.href = 'index.html';
                     }, 600);
+                } else {
+                    setIsSubmitting(false);
                 }
             };
 
@@ -87,16 +99,17 @@
                     <div className="card">
                         <h1>Budget Tracker Auth</h1>
                         <p>Login or create an account to sync data per user.</p>
+                        <p style={{ fontSize: 13, marginTop: -8 }}>Tip for testing: create one account, then use Login. Repeated Sign Up attempts can trigger Supabase email limits.</p>
 
                         <div className="tabs">
-                            <button className={`tab ${mode === 'login' ? 'active' : ''}`} onClick={() => setMode('login')}>Login</button>
-                            <button className={`tab ${mode === 'signup' ? 'active' : ''}`} onClick={() => setMode('signup')}>Sign Up</button>
+                            <button className={`tab ${mode === 'login' ? 'active' : ''}`} onClick={() => setMode('login')} disabled={isSubmitting}>Login</button>
+                            <button className={`tab ${mode === 'signup' ? 'active' : ''}`} onClick={() => setMode('signup')} disabled={isSubmitting}>Sign Up</button>
                         </div>
 
                         <form onSubmit={handleSubmit}>
-                            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                            <button className="primary" type="submit">{mode === 'login' ? 'Login' : 'Create Account'}</button>
+                            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isSubmitting} />
+                            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isSubmitting} />
+                            <button className="primary" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Please wait...' : (mode === 'login' ? 'Login' : 'Create Account')}</button>
                         </form>
 
                         {currentUser && (
