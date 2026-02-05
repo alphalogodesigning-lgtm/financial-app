@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Tracker - Login</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js"></script>
+    <style>
+        body { margin: 0; font-family: Inter, system-ui, sans-serif; background:#0a0a0a; color:#E0E0E0; }
+        .wrap { min-height: 100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+        .card { width:100%; max-width:420px; background:#1a1a1a; border:1px solid #2a2a2a; border-radius:16px; padding:24px; }
+        h1 { margin:0 0 10px; color:#fff; }
+        p { color:#aaa; margin:0 0 18px; }
+        .tabs { display:flex; gap:10px; margin-bottom:16px; }
+        .tab { flex:1; padding:10px; border-radius:8px; border:1px solid #2a2a2a; background:transparent; color:#bbb; cursor:pointer; }
+        .tab.active { background:linear-gradient(135deg,#D4AF37,#FFD700); color:#111; border-color:#D4AF37; font-weight:700; }
+        input { width:100%; padding:12px; border-radius:8px; border:1px solid #2a2a2a; background:#111; color:#fff; margin-bottom:12px; }
+        button.primary { width:100%; padding:12px; border:none; border-radius:8px; background:linear-gradient(135deg,#D4AF37,#FFD700); color:#111; font-weight:700; cursor:pointer; }
+        .status { margin-top:12px; font-size:14px; color:#89ABE3; min-height:20px; }
+        .small { margin-top:16px; text-align:center; }
+        a { color:#D4AF37; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const { supabaseClient } = window.SUPABASE_CONFIG;
+
+        function AuthPage() {
+            const [mode, setMode] = useState('login');
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [status, setStatus] = useState('');
+            const [currentUser, setCurrentUser] = useState(null);
+
+            useEffect(() => {
+                if (!supabaseClient) return;
+                supabaseClient.auth.getUser().then(({ data }) => {
+                    setCurrentUser(data.user || null);
+                });
+            }, []);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (!supabaseClient) {
+                    setStatus('Please set your Supabase URL and anon key in auth.html first.');
+                    return;
+                }
+                setStatus('Working...');
+                let data;
+                let error;
+
+                if (mode === 'login') {
+                    ({ data, error } = await supabaseClient.auth.signInWithPassword({ email, password }));
+                } else {
+                    ({ data, error } = await supabaseClient.auth.signUp({ email, password }));
+                }
+
+                if (error) {
+                    setStatus(error.message);
+                    return;
+                }
+                setCurrentUser(data.user || null);
+                setStatus(mode === 'login' ? 'Logged in! Redirecting...' : 'Sign-up success. Check email if confirmation is enabled.');
+                if (mode === 'login') {
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 600);
+                }
+            };
+
+            const handleLogout = async () => {
+                if (!supabaseClient) return;
+                await supabaseClient.auth.signOut();
+                setCurrentUser(null);
+                setStatus('Logged out.');
+            };
+
+            return (
+                <div className="wrap">
+                    <div className="card">
+                        <h1>Budget Tracker Auth</h1>
+                        <p>Login or create an account to sync data per user.</p>
+
+                        <div className="tabs">
+                            <button className={`tab ${mode === 'login' ? 'active' : ''}`} onClick={() => setMode('login')}>Login</button>
+                            <button className={`tab ${mode === 'signup' ? 'active' : ''}`} onClick={() => setMode('signup')}>Sign Up</button>
+                        </div>
+
+                        <form onSubmit={handleSubmit}>
+                            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                            <button className="primary" type="submit">{mode === 'login' ? 'Login' : 'Create Account'}</button>
+                        </form>
+
+                        {currentUser && (
+                            <div className="small">
+                                <div>Logged in as: <strong>{currentUser.email}</strong></div>
+                                <div>User ID sent to Supabase row: <code>{currentUser.id}</code></div>
+                                <button className="primary" style={{ marginTop: 10 }} onClick={handleLogout}>Logout</button>
+                            </div>
+                        )}
+
+                        <div className="small"><a href="index.html">Go to Dashboard</a></div>
+                        <div className="status">{status}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<AuthPage />);
+    </script>
+</body>
+</html>
