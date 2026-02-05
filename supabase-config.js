@@ -1,6 +1,6 @@
 (function () {
   const SUPABASE_URL = 'https://sssutwexhgcirbsrygxg.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzc3V0d2V4aGdjaXJic3J5Z3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNTY1NTgsImV4cCI6MjA4NTgzMjU1OH0.pp5tjtDNWSCPAQK753axZcaIuE28VUYXOGR1eQCXkhk';
   const STORAGE_TABLE = 'budget_tracker_state';
   const DEVICE_ID_KEY = 'budgetTrackerDeviceId';
 
