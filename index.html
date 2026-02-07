@@ -603,15 +603,15 @@
         };
 
         const loadBudgetData = async () => {
+            const fallback = localStorage.getItem('budgetTrackerData');
             if (!supabaseClient) {
-                redirectToAuth();
-                return null;
+                return fallback ? JSON.parse(fallback) : null;
             }
             try {
                 const user = await getAuthenticatedUser();
                 if (!user) {
                     redirectToAuth();
-                    return null;
+                    return fallback ? JSON.parse(fallback) : null;
                 }
                 const deviceId = getDeviceId();
                 const { data, error } = await supabaseClient
@@ -626,11 +626,9 @@
                     return data.data;
                 }
             } catch (err) {
-                console.warn('Supabase load failed, redirecting to auth.', err);
-                redirectToAuth();
-                return null;
+                console.warn('Supabase load failed, using local data.', err);
             }
-            return null;
+            return fallback ? JSON.parse(fallback) : null;
         };
 
         const saveBudgetData = async (nextData) => {
