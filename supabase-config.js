@@ -7,10 +7,31 @@
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
+  const waitForAuthSession = (timeoutMs = 3000) => new Promise((resolve) => {
+    if (!supabaseClient) {
+      resolve(null);
+      return;
+    }
+    let settled = false;
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      if (settled) return;
+      settled = true;
+      subscription.unsubscribe();
+      resolve(session || null);
+    });
+    setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      subscription.unsubscribe();
+      resolve(null);
+    }, timeoutMs);
+  });
+
   window.SUPABASE_CONFIG = {
     SUPABASE_URL,
     SUPABASE_ANON_KEY,
     STORAGE_TABLE,
-    supabaseClient
+    supabaseClient,
+    waitForAuthSession
   };
 })();
