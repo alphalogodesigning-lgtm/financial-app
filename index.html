@@ -751,14 +751,24 @@
             const income = Number.isFinite(data.income) ? data.income : 0;
             const incomeSet = income > 0;
 
-            const totalFixed = (data.fixedExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
-            const totalVariable = (data.variableExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+            const toAmount = (value) => {
+                const parsed = Number(value);
+                return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+            };
+
+            const totalFixed = (data.fixedExpenses || []).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
+            const totalVariable = (data.variableExpenses || []).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
             const totalSpent = totalFixed + totalVariable;
             const remaining = income - totalSpent;
             const daysInMonth = 30;
             const today = new Date().getDate();
-            const dailyBurnRate = today > 0 ? totalVariable / today : 0;
-            const projectedSpend = totalFixed + (dailyBurnRate * daysInMonth);
+
+            // Fixed expenses are recurring commitments and must always form baseline burn.
+            const baselineDailyBurn = totalFixed / daysInMonth;
+            const activeDailyBurn = today > 0 ? totalVariable / today : 0;
+            const dailyBurnRate = baselineDailyBurn + activeDailyBurn;
+
+            const projectedSpend = totalFixed + (activeDailyBurn * daysInMonth);
             const runway = dailyBurnRate > 0 ? remaining / dailyBurnRate : null;
 
             const availablePct = incomeSet ? (remaining / income) * 100 : null;
