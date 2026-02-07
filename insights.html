@@ -576,24 +576,31 @@
             }
             
             // Core calculations
-            const totalFixed = fixedExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-            const totalVariable = variableExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const toAmount = (value) => {
+                const parsed = Number(value);
+                return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+            };
+
+            const totalFixed = fixedExpenses.reduce((sum, exp) => sum + toAmount(exp.amount), 0);
+            const totalVariable = variableExpenses.reduce((sum, exp) => sum + toAmount(exp.amount), 0);
             const totalSpent = totalFixed + totalVariable;
             const savingsRate = ((income - totalSpent) / income) * 100;
-            const regretMoney = variableExpenses.filter(e => e.regret).reduce((sum, e) => sum + e.amount, 0);
+            const regretMoney = variableExpenses
+                .filter(e => e.regret)
+                .reduce((sum, e) => sum + toAmount(e.amount), 0);
 
             // Time-based patterns
             const weekendSpending = variableExpenses.filter(exp => {
                 const date = new Date(exp.date);
                 const day = date.getDay();
                 return day === 0 || day === 6;
-            }).reduce((sum, exp) => sum + exp.amount, 0);
+            }).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
 
             const weekdaySpending = variableExpenses.filter(exp => {
                 const date = new Date(exp.date);
                 const day = date.getDay();
                 return day > 0 && day < 6;
-            }).reduce((sum, exp) => sum + exp.amount, 0);
+            }).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
 
             const weekendCount = variableExpenses.filter(exp => {
                 const date = new Date(exp.date);
@@ -609,26 +616,33 @@
 
             const avgWeekendSpend = weekendCount > 0 ? weekendSpending / weekendCount : 0;
             const avgWeekdaySpend = weekdayCount > 0 ? weekdaySpending / weekdayCount : 0;
+            const weekendWeekdayRatio = avgWeekdaySpend > 0
+                ? avgWeekendSpend / avgWeekdaySpend
+                : (avgWeekendSpend > 0 ? Infinity : 1);
 
             // Night owl analysis
             const lateNightSpending = variableExpenses.filter(exp => {
-                const hour = parseInt(exp.time.split(':')[0]);
+                const hour = parseInt((exp.time || '00:00').split(':')[0], 10);
                 return hour >= 22 || hour <= 4;
-            }).reduce((sum, exp) => sum + exp.amount, 0);
+            }).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
 
             // Category addiction
             const categoryTotals = {};
             variableExpenses.forEach(exp => {
-                categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + exp.amount;
+                categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + toAmount(exp.amount);
             });
-            
+
             const topCategory = Object.entries(categoryTotals).reduce((top, [cat, amount]) => {
                 return amount > top.amount ? { name: cat, amount } : top;
             }, { name: 'None', amount: 0 });
 
-            const categoryAddictionScore = topCategory.amount > 0 
-                ? (topCategory.amount / totalVariable) * 100 
+            const categoryAddictionScore = totalVariable > 0
+                ? (topCategory.amount / totalVariable) * 100
                 : 0;
+
+            const regretRatio = totalVariable > 0 ? regretMoney / totalVariable : 0;
+            const lateNightSpendRatio = totalVariable > 0 ? lateNightSpending / totalVariable : 0;
+            const overspendRatio = income > 0 ? Math.max(0, (totalSpent - income) / income) : 0;
 
             // Merchant loyalty
             const merchantTotals = {};
@@ -644,20 +658,46 @@
 
             // Financial Health Score (0-100)
             let healthScore = 100;
-            if (savingsRate < 10) healthScore -= 30;
-            else if (savingsRate < 20) healthScore -= 15;
-            if (regretMoney > totalVariable * 0.2) healthScore -= 20;
-            if (avgWeekendSpend > avgWeekdaySpend * 2) healthScore -= 15;
-            if (categoryAddictionScore > 50) healthScore -= 10;
-            if (totalSpent > income) healthScore -= 25;
-            healthScore = Math.max(0, healthScore);
+
+            if (savingsRate < 0) healthScore -= 40;
+            else if (savingsRate < 10) healthScore -= 25;
+            else if (savingsRate < 20) healthScore -= 12;
+
+            if (regretRatio >= 0.75) healthScore -= 45;
+            else if (regretRatio >= 0.5) healthScore -= 35;
+            else if (regretRatio >= 0.3) healthScore -= 25;
+            else if (regretRatio >= 0.15) healthScore -= 12;
+            else if (regretRatio > 0) healthScore -= 4;
+
+            if (weekendWeekdayRatio >= 3) healthScore -= 15;
+            else if (weekendWeekdayRatio >= 2) healthScore -= 8;
+
+            if (lateNightSpendRatio >= 0.4) healthScore -= 12;
+            else if (lateNightSpendRatio >= 0.25) healthScore -= 6;
+
+            if (categoryAddictionScore >= 65) healthScore -= 12;
+            else if (categoryAddictionScore >= 50) healthScore -= 6;
+
+            if (overspendRatio > 0) {
+                healthScore -= Math.min(35, 15 + (overspendRatio * 50));
+            }
+
+            if (savingsRate >= 30 && regretRatio < 0.1 && overspendRatio === 0) {
+                healthScore += 5;
+            }
+
+            healthScore = Math.max(0, Math.min(100, Math.round(healthScore)));
 
             const getGrade = (score) => {
-                if (score >= 90) return { grade: 'A+', color: '#66BB6A', text: 'Financial Zen Master' };
-                if (score >= 80) return { grade: 'A', color: '#66BB6A', text: 'Crushing It' };
-                if (score >= 70) return { grade: 'B', color: '#89ABE3', text: 'Doing Well' };
-                if (score >= 60) return { grade: 'C', color: '#D4AF37', text: 'Room for Improvement' };
-                if (score >= 50) return { grade: 'D', color: '#FF9800', text: 'Needs Work' };
+                if (score >= 93) return { grade: 'A', color: '#66BB6A', text: 'Elite Control' };
+                if (score >= 85) return { grade: 'A-', color: '#66BB6A', text: 'Very Strong' };
+                if (score >= 78) return { grade: 'B+', color: '#89ABE3', text: 'Good Momentum' };
+                if (score >= 72) return { grade: 'B', color: '#89ABE3', text: 'Doing Well' };
+                if (score >= 67) return { grade: 'B-', color: '#89ABE3', text: 'Some Leaks' };
+                if (score >= 62) return { grade: 'C+', color: '#D4AF37', text: 'Needs Tightening' };
+                if (score >= 57) return { grade: 'C', color: '#D4AF37', text: 'Room for Improvement' };
+                if (score >= 52) return { grade: 'C-', color: '#D4AF37', text: 'Warning Zone' };
+                if (score >= 45) return { grade: 'D', color: '#FF9800', text: 'Needs Work' };
                 return { grade: 'F', color: '#FF6B6B', text: 'Financial Crisis Mode' };
             };
 
@@ -665,34 +705,34 @@
 
             // Spending personality
             const getPersonality = () => {
-                if (savingsRate > 30) return {
-                    type: 'The Squirrel',
-                    description: 'You\'re a natural saver, always planning for winter. Your future self loves you.',
-                    traits: ['🐿️ Highly Disciplined', '💰 Future-Focused', '📊 Data-Driven']
-                };
-                if (regretMoney > totalVariable * 0.3) return {
+                if (regretRatio >= 0.35) return {
                     type: 'The Impulse Buyer',
-                    description: 'You click "Buy Now" faster than you can say "do I need this?" But hey, at least you\'re honest about it.',
+                    description: 'A big share of your spending becomes regret. Slow down purchases and add a 24-hour pause before non-essentials.',
                     traits: ['🛍️ Spontaneous', '😬 Regret-Prone', '💳 YOLO Spender']
                 };
-                if (avgWeekendSpend > avgWeekdaySpend * 2.5) return {
-                    type: 'The Weekend Warrior',
-                    description: 'Monday to Friday you\'re a financial saint. Saturday hits and your wallet screams for mercy.',
-                    traits: ['🎉 Weekend Splurger', '💸 Work Hard Play Hard', '📅 Cyclical Spender']
-                };
-                if (lateNightSpending > totalVariable * 0.25) return {
+                if (lateNightSpendRatio >= 0.3) return {
                     type: 'The Night Owl Spender',
-                    description: 'Your bank account fears the night. Nothing good happens to your wallet after 10pm.',
+                    description: 'Your wallet takes the biggest hits after 10pm. Add friction at night before tapping checkout.',
                     traits: ['🌙 Late Night Shopper', '😴 Sleep-Deprived Buyer', '🦉 Nocturnal Spender']
                 };
-                if (categoryAddictionScore > 60) return {
+                if (weekendWeekdayRatio >= 2.5) return {
+                    type: 'The Weekend Warrior',
+                    description: 'Weekend spending spikes hard versus weekdays. Plan a weekend cap before Friday starts.',
+                    traits: ['🎉 Weekend Splurger', '💸 Work Hard Play Hard', '📅 Cyclical Spender']
+                };
+                if (categoryAddictionScore >= 60) return {
                     type: 'The Category Addict',
-                    description: `You have a serious ${topCategory.name} addiction. It's not a problem... it's a lifestyle choice.`,
+                    description: `A heavy chunk of spend is in ${topCategory.name}. Set a category cap to rebalance your month.`,
                     traits: [`${topCategory.name} Obsessed`, '🎯 Hyper-Focused', '💎 Quality > Quantity']
+                };
+                if (savingsRate > 30 && regretRatio < 0.1 && lateNightSpendRatio < 0.2 && weekendWeekdayRatio < 1.8 && overspendRatio === 0) return {
+                    type: 'The Squirrel',
+                    description: 'You save consistently and avoid major spending traps. Keep compounding this discipline.',
+                    traits: ['🐿️ Highly Disciplined', '💰 Future-Focused', '📊 Data-Driven']
                 };
                 return {
                     type: 'The Balanced Spender',
-                    description: 'You\'re remarkably... normal. Boring? Maybe. Financially stable? Absolutely.',
+                    description: 'You are mostly steady, but there are still a few leaks worth tightening.',
                     traits: ['⚖️ Well-Balanced', '🎯 Moderate', '📈 Steady Eddie']
                 };
             };
@@ -704,7 +744,7 @@
                 { id: 'streak_7', icon: '🔥', name: '7-Day Streak', description: 'Tracked for 7 days', unlocked: data.streak >= 7 },
                 { id: 'streak_30', icon: '💪', name: 'Month Master', description: 'Tracked for 30 days', unlocked: data.streak >= 30 },
                 { id: 'saver', icon: '💎', name: 'Super Saver', description: 'Save 30% of income', unlocked: savingsRate >= 30 },
-                { id: 'conscious', icon: '🧘', name: 'Conscious Spender', description: 'Less than 10% regret', unlocked: (regretMoney / totalVariable) * 100 < 10 },
+                { id: 'conscious', icon: '🧘', name: 'Conscious Spender', description: 'Less than 10% regret', unlocked: totalVariable > 0 && regretRatio < 0.1 },
                 { id: 'budget_king', icon: '👑', name: 'Budget King', description: 'Stay under budget', unlocked: totalSpent < income },
                 { id: 'organized', icon: '📊', name: 'Organized AF', description: '10+ expenses logged', unlocked: variableExpenses.length >= 10 },
             ];
@@ -714,16 +754,16 @@
                 if (totalSpent > income) {
                     return "You're spending more than you earn. That's literally the definition of financial chaos. Time for a reality check.";
                 }
-                if (regretMoney > totalVariable * 0.4) {
-                    return `You regret RM${regretMoney.toFixed(0)} worth of purchases. That's ${((regretMoney/totalVariable)*100).toFixed(0)}% of your spending. Maybe pause before clicking 'Buy'?`;
+                if (regretRatio > 0.4) {
+                    return `You regret RM${regretMoney.toFixed(0)} worth of purchases. That's ${(regretRatio * 100).toFixed(0)}% of your spending. Maybe pause before clicking 'Buy'?`;
                 }
                 if (savingsRate < 5) {
                     return "You're saving less than 5% of your income. At this rate, any emergency will destroy you. Not trying to be mean, just honest.";
                 }
-                if (avgWeekendSpend > avgWeekdaySpend * 3) {
-                    return `Your weekend spending is ${(avgWeekendSpend/avgWeekdaySpend).toFixed(1)}x your weekday spending. Your wallet needs a vacation FROM the weekend.`;
+                if (weekendWeekdayRatio > 3) {
+                    return `Your weekend spending is ${weekendWeekdayRatio.toFixed(1)}x your weekday spending. Your wallet needs a vacation FROM the weekend.`;
                 }
-                if (lateNightSpending > totalVariable * 0.3) {
+                if (lateNightSpendRatio > 0.3) {
                     return "You spend 30% of your money after 10pm. Put your phone down and go to sleep. Your wallet will thank you.";
                 }
                 return "Actually... you're doing pretty well. Keep it up and you might actually achieve financial freedom. Crazy, right?";
@@ -787,9 +827,9 @@
                                 vs <strong style={{ color: '#89ABE3' }}>RM{avgWeekdaySpend.toFixed(2)}</strong> on weekdays.
                             </div>
                             <div className="insight-stat">
-                                {avgWeekdaySpend > 0 ? `${(avgWeekendSpend/avgWeekdaySpend).toFixed(1)}x` : 'N/A'}
+                                {Number.isFinite(weekendWeekdayRatio) ? `${weekendWeekdayRatio.toFixed(1)}x` : 'N/A'}
                             </div>
-                            {avgWeekendSpend > avgWeekdaySpend * 2 && (
+                            {weekendWeekdayRatio > 2 && (
                                 <div className="insight-recommendation">
                                     💡 Your weekends are expensive. Maybe try a free hobby?
                                 </div>
@@ -801,9 +841,9 @@
                             <div className="insight-title">Night Owl Analysis</div>
                             <div className="insight-description">
                                 You've spent <strong style={{ color: '#D4AF37' }}>RM{lateNightSpending.toFixed(2)}</strong> between 
-                                10pm and 4am. That's {totalVariable > 0 ? ((lateNightSpending/totalVariable)*100).toFixed(0) : 0}% of your variable spending.
+                                10pm and 4am. That's {(lateNightSpendRatio * 100).toFixed(0)}% of your variable spending.
                             </div>
-                            {lateNightSpending > totalVariable * 0.2 && (
+                            {lateNightSpendRatio > 0.2 && (
                                 <div className="insight-recommendation">
                                     💡 Nothing good happens to your wallet after 10pm. Delete those shopping apps from your home screen.
                                 </div>
