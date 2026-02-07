@@ -560,6 +560,12 @@
             return generated;
         };
 
+        const redirectToAuth = () => {
+            if (!window.location.pathname.endsWith('/auth.html') && !window.location.pathname.endsWith('auth.html')) {
+                window.location.replace('auth.html');
+            }
+        };
+
         const getAuthenticatedUser = async () => {
             if (!supabaseClient) return null;
             const { data, error } = await supabaseClient.auth.getUser();
@@ -568,15 +574,15 @@
         };
 
         const loadBudgetData = async () => {
-            const fallback = localStorage.getItem('budgetTrackerData');
             if (!supabaseClient) {
-                return fallback ? JSON.parse(fallback) : null;
+                redirectToAuth();
+                return null;
             }
             try {
                 const user = await getAuthenticatedUser();
                 if (!user) {
-                    window.location.href = 'auth.html';
-                    return fallback ? JSON.parse(fallback) : null;
+                    redirectToAuth();
+                    return null;
                 }
                 const deviceId = getDeviceId();
                 const { data, error } = await supabaseClient
@@ -591,9 +597,11 @@
                     return data.data;
                 }
             } catch (err) {
-                console.warn('Supabase load failed, using local data.', err);
+                console.warn('Supabase load failed, redirecting to auth.', err);
+                redirectToAuth();
+                return null;
             }
-            return fallback ? JSON.parse(fallback) : null;
+            return null;
         };
 
         const saveBudgetData = async (nextData) => {
@@ -602,7 +610,7 @@
             try {
                 const user = await getAuthenticatedUser();
                 if (!user) {
-                    window.location.href = 'auth.html';
+                    redirectToAuth();
                     return;
                 }
                 const deviceId = getDeviceId();
