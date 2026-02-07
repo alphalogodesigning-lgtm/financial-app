@@ -581,6 +581,8 @@
             const totalSpent = totalFixed + totalVariable;
             const savingsRate = ((income - totalSpent) / income) * 100;
             const regretMoney = variableExpenses.filter(e => e.regret).reduce((sum, e) => sum + e.amount, 0);
+            const regretRatio = totalVariable > 0 ? regretMoney / totalVariable : 0;
+            const overspendRatio = income > 0 ? Math.max(0, (totalSpent - income) / income) : 0;
 
             // Time-based patterns
             const weekendSpending = variableExpenses.filter(exp => {
@@ -644,13 +646,21 @@
 
             // Financial Health Score (0-100)
             let healthScore = 100;
-            if (savingsRate < 10) healthScore -= 30;
-            else if (savingsRate < 20) healthScore -= 15;
-            if (regretMoney > totalVariable * 0.2) healthScore -= 20;
+            if (savingsRate < 5) healthScore -= 26;
+            else if (savingsRate < 10) healthScore -= 20;
+            else if (savingsRate < 20) healthScore -= 12;
+            else if (savingsRate >= 30) healthScore += 4;
+
+            if (regretRatio >= 0.4) healthScore -= 30;
+            else if (regretRatio >= 0.25) healthScore -= 22;
+            else if (regretRatio >= 0.1) healthScore -= 12;
+
             if (avgWeekendSpend > avgWeekdaySpend * 2) healthScore -= 15;
             if (categoryAddictionScore > 50) healthScore -= 10;
-            if (totalSpent > income) healthScore -= 25;
-            healthScore = Math.max(0, healthScore);
+            if (overspendRatio >= 0.2) healthScore -= 32;
+            else if (overspendRatio >= 0.1) healthScore -= 24;
+            else if (overspendRatio > 0) healthScore -= 16;
+            healthScore = Math.min(100, Math.max(0, Math.round(healthScore)));
 
             const getGrade = (score) => {
                 if (score >= 90) return { grade: 'A+', color: '#66BB6A', text: 'Financial Zen Master' };
