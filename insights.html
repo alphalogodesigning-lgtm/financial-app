@@ -616,6 +616,12 @@
                 return hour >= 22 || hour <= 4;
             }).reduce((sum, exp) => sum + exp.amount, 0);
 
+            const regretRatio = totalVariable > 0 ? regretMoney / totalVariable : 0;
+            const lateNightRatio = totalVariable > 0 ? lateNightSpending / totalVariable : 0;
+            const weekendVsWeekdayRatio = avgWeekdaySpend > 0
+                ? avgWeekendSpend / avgWeekdaySpend
+                : (avgWeekendSpend > 0 ? Infinity : 1);
+
             // Category addiction
             const categoryTotals = {};
             variableExpenses.forEach(exp => {
@@ -665,30 +671,37 @@
 
             // Spending personality
             const getPersonality = () => {
-                if (savingsRate > 30) return {
-                    type: 'The Squirrel',
-                    description: 'You\'re a natural saver, always planning for winter. Your future self loves you.',
-                    traits: ['🐿️ Highly Disciplined', '💰 Future-Focused', '📊 Data-Driven']
-                };
-                if (regretMoney > totalVariable * 0.3) return {
+                const hasHighRegret = regretRatio > 0.3;
+                const hasStrongLateNightSpending = lateNightRatio > 0.25;
+                const hasExtremeWeekendSpikes = weekendVsWeekdayRatio > 2.5;
+                const hasCategoryConcentrationRisk = categoryAddictionScore > 60;
+                const hasOverspending = totalSpent > income;
+                const hasExtremeBehavioralFlags = hasStrongLateNightSpending || hasExtremeWeekendSpikes || hasCategoryConcentrationRisk;
+
+                if (hasHighRegret) return {
                     type: 'The Impulse Buyer',
-                    description: 'You click "Buy Now" faster than you can say "do I need this?" But hey, at least you\'re honest about it.',
+                    description: 'A big share of your spending becomes regret. Slow down purchases and add a 24-hour pause before non-essentials.',
                     traits: ['🛍️ Spontaneous', '😬 Regret-Prone', '💳 YOLO Spender']
                 };
-                if (avgWeekendSpend > avgWeekdaySpend * 2.5) return {
-                    type: 'The Weekend Warrior',
-                    description: 'Monday to Friday you\'re a financial saint. Saturday hits and your wallet screams for mercy.',
-                    traits: ['🎉 Weekend Splurger', '💸 Work Hard Play Hard', '📅 Cyclical Spender']
-                };
-                if (lateNightSpending > totalVariable * 0.25) return {
+                if (hasStrongLateNightSpending) return {
                     type: 'The Night Owl Spender',
-                    description: 'Your bank account fears the night. Nothing good happens to your wallet after 10pm.',
+                    description: 'A large chunk of spending happens late at night, when impulse control is usually lower. Set app limits after 10pm.',
                     traits: ['🌙 Late Night Shopper', '😴 Sleep-Deprived Buyer', '🦉 Nocturnal Spender']
                 };
-                if (categoryAddictionScore > 60) return {
+                if (hasExtremeWeekendSpikes) return {
+                    type: 'The Weekend Warrior',
+                    description: 'Your weekend spending spikes hard versus weekdays. Add a weekend cap before habits snowball.',
+                    traits: ['🎉 Weekend Splurger', '💸 Work Hard Play Hard', '📅 Cyclical Spender']
+                };
+                if (hasCategoryConcentrationRisk) return {
                     type: 'The Category Addict',
-                    description: `You have a serious ${topCategory.name} addiction. It's not a problem... it's a lifestyle choice.`,
+                    description: `${topCategory.name} dominates your variable spending. Diversify or set category limits to reduce concentration risk.`,
                     traits: [`${topCategory.name} Obsessed`, '🎯 Hyper-Focused', '💎 Quality > Quantity']
+                };
+                if (savingsRate > 30 && regretRatio < 0.1 && !hasOverspending && !hasExtremeBehavioralFlags) return {
+                    type: 'The Squirrel',
+                    description: 'You consistently save and avoid risky spending patterns. Keep protecting this discipline with clear goals.',
+                    traits: ['🐿️ Highly Disciplined', '💰 Future-Focused', '📊 Data-Driven']
                 };
                 return {
                     type: 'The Balanced Spender',
@@ -704,7 +717,7 @@
                 { id: 'streak_7', icon: '🔥', name: '7-Day Streak', description: 'Tracked for 7 days', unlocked: data.streak >= 7 },
                 { id: 'streak_30', icon: '💪', name: 'Month Master', description: 'Tracked for 30 days', unlocked: data.streak >= 30 },
                 { id: 'saver', icon: '💎', name: 'Super Saver', description: 'Save 30% of income', unlocked: savingsRate >= 30 },
-                { id: 'conscious', icon: '🧘', name: 'Conscious Spender', description: 'Less than 10% regret', unlocked: (regretMoney / totalVariable) * 100 < 10 },
+                { id: 'conscious', icon: '🧘', name: 'Conscious Spender', description: 'Less than 10% regret', unlocked: regretRatio < 0.1 },
                 { id: 'budget_king', icon: '👑', name: 'Budget King', description: 'Stay under budget', unlocked: totalSpent < income },
                 { id: 'organized', icon: '📊', name: 'Organized AF', description: '10+ expenses logged', unlocked: variableExpenses.length >= 10 },
             ];
