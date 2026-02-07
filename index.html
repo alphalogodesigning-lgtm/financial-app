@@ -566,11 +566,33 @@
             }
         };
 
+        const waitForAuthSession = (timeoutMs = 1500) => new Promise((resolve) => {
+            if (!supabaseClient) {
+                resolve(null);
+                return;
+            }
+            let settled = false;
+            const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+                if (settled) return;
+                settled = true;
+                subscription.unsubscribe();
+                resolve(session || null);
+            });
+            setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                subscription.unsubscribe();
+                resolve(null);
+            }, timeoutMs);
+        });
+
         const getAuthenticatedUser = async () => {
             if (!supabaseClient) return null;
-            const { data, error } = await supabaseClient.auth.getUser();
+            const { data, error } = await supabaseClient.auth.getSession();
             if (error) throw error;
-            return data.user || null;
+            if (data?.session?.user) return data.session.user;
+            const session = await waitForAuthSession();
+            return session?.user || null;
         };
 
         const loadBudgetData = async () => {
