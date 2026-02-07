@@ -472,23 +472,45 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        (() => {
         const { useState, useEffect } = React;
 
-        const { supabaseClient, STORAGE_TABLE, DEVICE_ID_KEY } = window.SUPABASE_CONFIG;
+        const { supabaseClient, STORAGE_TABLE } = window.SUPABASE_CONFIG;
 
-        const getDeviceId = () => {
-            const existing = localStorage.getItem(DEVICE_ID_KEY);
-            if (existing) return existing;
-            const generated = (crypto?.randomUUID?.() || `device-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-            localStorage.setItem(DEVICE_ID_KEY, generated);
-            return generated;
+        const waitForAuthSession = (timeoutMs = 3000) => new Promise((resolve) => {
+            if (!supabaseClient) {
+                resolve(null);
+                return;
+            }
+            let settled = false;
+            const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+                if (settled) return;
+                settled = true;
+                subscription.unsubscribe();
+                resolve(session || null);
+            });
+            setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                subscription.unsubscribe();
+                resolve(null);
+            }, timeoutMs);
+        });
+
+        const resolveAuthSession = async () => {
+            if (!supabaseClient) return null;
+            const { data, error } = await supabaseClient.auth.getSession();
+            if (error) throw error;
+            if (data?.session) return data.session;
+            const refreshed = await supabaseClient.auth.refreshSession();
+            if (refreshed?.data?.session) return refreshed.data.session;
+            return waitForAuthSession();
         };
 
         const getAuthenticatedUser = async () => {
             if (!supabaseClient) return null;
-            const { data, error } = await supabaseClient.auth.getUser();
-            if (error) throw error;
-            return data.user || null;
+            const session = await resolveAuthSession();
+            return session?.user || null;
         };
 
         const loadBudgetData = async () => {
@@ -502,12 +524,10 @@
                     window.location.href = 'auth.html';
                     return fallback ? JSON.parse(fallback) : null;
                 }
-                const deviceId = getDeviceId();
                 const { data, error } = await supabaseClient
                     .from(STORAGE_TABLE)
                     .select('data')
                     .eq('user_id', user.id)
-                    .eq('device_id', deviceId)
                     .maybeSingle();
                 if (error) throw error;
                 if (data?.data) {
@@ -1054,6 +1074,7 @@
         }
 
         ReactDOM.render(<Insights />, document.getElementById('root'));
+        })();
     </script>
 </body>
 </html>
