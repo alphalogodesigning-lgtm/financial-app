@@ -616,7 +616,7 @@
 
             const avgWeekendSpend = weekendCount > 0 ? weekendSpending / weekendCount : 0;
             const avgWeekdaySpend = weekdayCount > 0 ? weekdaySpending / weekdayCount : 0;
-            const weekendVsWeekdayRatio = avgWeekdaySpend > 0
+            const weekendWeekdayRatio = avgWeekdaySpend > 0
                 ? avgWeekendSpend / avgWeekdaySpend
                 : (avgWeekendSpend > 0 ? Infinity : 1);
 
@@ -625,12 +625,6 @@
                 const hour = parseInt((exp.time || '00:00').split(':')[0], 10);
                 return hour >= 22 || hour <= 4;
             }).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
-
-            const lateNightRatio = totalVariable > 0 ? lateNightSpending / safeTotalVariable : 0;
-            const lateNightPercent = lateNightRatio * 100;
-            const weekendVsWeekdayRatio = avgWeekdaySpend > 0
-                ? avgWeekendSpend / avgWeekdaySpend
-                : (avgWeekendSpend > 0 ? Infinity : 1);
 
             // Category addiction
             const categoryTotals = {};
@@ -647,7 +641,7 @@
                 : 0;
 
             const regretRatio = totalVariable > 0 ? regretMoney / totalVariable : 0;
-            const lateNightRatio = totalVariable > 0 ? lateNightSpending / totalVariable : 0;
+            const lateNightSpendRatio = totalVariable > 0 ? lateNightSpending / totalVariable : 0;
             const overspendRatio = income > 0 ? Math.max(0, (totalSpent - income) / income) : 0;
 
             // Merchant loyalty
@@ -675,11 +669,11 @@
             else if (regretRatio >= 0.15) healthScore -= 12;
             else if (regretRatio > 0) healthScore -= 4;
 
-            if (weekendVsWeekdayRatio >= 3) healthScore -= 15;
-            else if (weekendVsWeekdayRatio >= 2) healthScore -= 8;
+            if (weekendWeekdayRatio >= 3) healthScore -= 15;
+            else if (weekendWeekdayRatio >= 2) healthScore -= 8;
 
-            if (lateNightRatio >= 0.4) healthScore -= 12;
-            else if (lateNightRatio >= 0.25) healthScore -= 6;
+            if (lateNightSpendRatio >= 0.4) healthScore -= 12;
+            else if (lateNightSpendRatio >= 0.25) healthScore -= 6;
 
             if (categoryAddictionScore >= 65) healthScore -= 12;
             else if (categoryAddictionScore >= 50) healthScore -= 6;
@@ -716,12 +710,12 @@
                     description: 'A big share of your spending becomes regret. Slow down purchases and add a 24-hour pause before non-essentials.',
                     traits: ['🛍️ Spontaneous', '😬 Regret-Prone', '💳 YOLO Spender']
                 };
-                if (lateNightRatio >= 0.3) return {
+                if (lateNightSpendRatio >= 0.3) return {
                     type: 'The Night Owl Spender',
                     description: 'Your wallet takes the biggest hits after 10pm. Add friction at night before tapping checkout.',
                     traits: ['🌙 Late Night Shopper', '😴 Sleep-Deprived Buyer', '🦉 Nocturnal Spender']
                 };
-                if (weekendVsWeekdayRatio >= 2.5) return {
+                if (weekendWeekdayRatio >= 2.5) return {
                     type: 'The Weekend Warrior',
                     description: 'Weekend spending spikes hard versus weekdays. Plan a weekend cap before Friday starts.',
                     traits: ['🎉 Weekend Splurger', '💸 Work Hard Play Hard', '📅 Cyclical Spender']
@@ -731,7 +725,7 @@
                     description: `A heavy chunk of spend is in ${topCategory.name}. Set a category cap to rebalance your month.`,
                     traits: [`${topCategory.name} Obsessed`, '🎯 Hyper-Focused', '💎 Quality > Quantity']
                 };
-                if (savingsRate > 30 && regretRatio < 0.1 && lateNightRatio < 0.2 && weekendVsWeekdayRatio < 1.8 && overspendRatio === 0) return {
+                if (savingsRate > 30 && regretRatio < 0.1 && lateNightSpendRatio < 0.2 && weekendWeekdayRatio < 1.8 && overspendRatio === 0) return {
                     type: 'The Squirrel',
                     description: 'You save consistently and avoid major spending traps. Keep compounding this discipline.',
                     traits: ['🐿️ Highly Disciplined', '💰 Future-Focused', '📊 Data-Driven']
@@ -766,10 +760,10 @@
                 if (savingsRate < 5) {
                     return "You're saving less than 5% of your income. At this rate, any emergency will destroy you. Not trying to be mean, just honest.";
                 }
-                if (weekendVsWeekdayRatio > 3) {
-                    return `Your weekend spending is ${weekendVsWeekdayRatio.toFixed(1)}x your weekday spending. Your wallet needs a vacation FROM the weekend.`;
+                if (weekendWeekdayRatio > 3) {
+                    return `Your weekend spending is ${weekendWeekdayRatio.toFixed(1)}x your weekday spending. Your wallet needs a vacation FROM the weekend.`;
                 }
-                if (lateNightRatio > 0.3) {
+                if (lateNightSpendRatio > 0.3) {
                     return "You spend 30% of your money after 10pm. Put your phone down and go to sleep. Your wallet will thank you.";
                 }
                 return "Actually... you're doing pretty well. Keep it up and you might actually achieve financial freedom. Crazy, right?";
@@ -833,9 +827,9 @@
                                 vs <strong style={{ color: '#89ABE3' }}>RM{avgWeekdaySpend.toFixed(2)}</strong> on weekdays.
                             </div>
                             <div className="insight-stat">
-                                {Number.isFinite(weekendVsWeekdayRatio) ? `${weekendVsWeekdayRatio.toFixed(1)}x` : 'N/A'}
+                                {Number.isFinite(weekendWeekdayRatio) ? `${weekendWeekdayRatio.toFixed(1)}x` : 'N/A'}
                             </div>
-                            {weekendVsWeekdayRatio > 2 && (
+                            {weekendWeekdayRatio > 2 && (
                                 <div className="insight-recommendation">
                                     💡 Your weekends are expensive. Maybe try a free hobby?
                                 </div>
@@ -847,9 +841,9 @@
                             <div className="insight-title">Night Owl Analysis</div>
                             <div className="insight-description">
                                 You've spent <strong style={{ color: '#D4AF37' }}>RM{lateNightSpending.toFixed(2)}</strong> between 
-                                10pm and 4am. That's {(lateNightRatio * 100).toFixed(0)}% of your variable spending.
+                                10pm and 4am. That's {(lateNightSpendRatio * 100).toFixed(0)}% of your variable spending.
                             </div>
-                            {lateNightRatio > 0.2 && (
+                            {lateNightSpendRatio > 0.2 && (
                                 <div className="insight-recommendation">
                                     💡 Nothing good happens to your wallet after 10pm. Delete those shopping apps from your home screen.
                                 </div>
