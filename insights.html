@@ -729,6 +729,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        (() => {
+        if (window.__insightsInit) return;
+        window.__insightsInit = true;
         const { useState, useEffect } = React;
 
         // Supabase setup
@@ -748,6 +751,51 @@
             if (!supabaseClient) return null;
             const session = await resolveAuthSession();
             return session?.user || null;
+        };
+
+        const loadBudgetData = async () => {
+            const fallback = localStorage.getItem('budgetTrackerData');
+            if (!supabaseClient) {
+                return fallback ? JSON.parse(fallback) : null;
+            }
+            try {
+                const user = await getAuthenticatedUser();
+                if (!user) {
+                    window.location.href = 'auth.html';
+                    return fallback ? JSON.parse(fallback) : null;
+                }
+                const { data, error } = await supabaseClient
+                    .from(STORAGE_TABLE)
+                    .select('data')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+                if (error) throw error;
+                if (data?.data) {
+                    localStorage.setItem('budgetTrackerData', JSON.stringify(data.data));
+                    return data.data;
+                }
+            } catch (err) {
+                console.warn('Supabase load failed, using local data.', err);
+            }
+            return fallback ? JSON.parse(fallback) : null;
+        };
+
+        const saveBudgetData = async (budgetData) => {
+            localStorage.setItem('budgetTrackerData', JSON.stringify(budgetData));
+            if (!supabaseClient) return;
+            try {
+                const user = await getAuthenticatedUser();
+                if (!user) return;
+                await supabaseClient
+                    .from(STORAGE_TABLE)
+                    .upsert({
+                        user_id: user.id,
+                        data: budgetData,
+                        updated_at: new Date().toISOString()
+                    });
+            } catch (err) {
+                console.warn('Supabase save failed.', err);
+            }
         };
 
         // Roast level configurations
@@ -786,101 +834,47 @@
             }
         };
 
+        const INITIAL_DATA = {
+            income: 0,
+            fixedExpenses: [],
+            variableExpenses: [],
+            streak: 0,
+            roast_level: 'honest'
+        };
+
         function App() {
-            const [data, setData] = useState({
-                income: 0,
-                fixedExpenses: [],
-                variableExpenses: [],
-                streak: 0
-            });
+            const [data, setData] = useState(INITIAL_DATA);
+            const [isHydrated, setIsHydrated] = useState(false);
             const [showSettings, setShowSettings] = useState(false);
-            const [roastLevel, setRoastLevel] = useState('honest'); // default
+            const [roastLevel, setRoastLevel] = useState('honest');
             const [tempRoastLevel, setTempRoastLevel] = useState('honest');
-            const [userId, setUserId] = useState(null);
 
             useEffect(() => {
-                fetchData();
+                let isMounted = true;
+                loadBudgetData().then((saved) => {
+                    if (!isMounted) return;
+                    if (saved) {
+                        setData(saved);
+                        const savedRoastLevel = saved.roast_level || 'honest';
+                        setRoastLevel(savedRoastLevel);
+                        setTempRoastLevel(savedRoastLevel);
+                    }
+                    setIsHydrated(true);
+                });
+                return () => {
+                    isMounted = false;
+                };
             }, []);
 
-            const fetchData = async () => {
-                try {
-                    const user = await getAuthenticatedUser();
-                    if (!user) {
-                        window.location.href = 'auth.html';
-                        return;
-                    }
-
-                    setUserId(user.id);
-
-                    // Fetch data from budget_tracker_state table
-                    const { data: stateData, error: stateError } = await supabaseClient
-                        .from(STORAGE_TABLE)
-                        .select('data')
-                        .eq('user_id', user.id)
-                        .maybeSingle();
-
-                    if (stateError) throw stateError;
-
-                    // Load roast level from the state data
-                    const savedRoastLevel = stateData?.data?.roast_level || 'honest';
-                    setRoastLevel(savedRoastLevel);
-                    setTempRoastLevel(savedRoastLevel);
-
-                    // Fetch fixed expenses
-                    const { data: fixed } = await supabaseClient
-                        .from('fixed_expenses')
-                        .select('*')
-                        .eq('user_id', user.id);
-
-                    // Fetch variable expenses
-                    const { data: variable } = await supabaseClient
-                        .from('variable_expenses')
-                        .select('*')
-                        .eq('user_id', user.id);
-
-                    setData({
-                        income: stateData?.data?.income || 0,
-                        fixedExpenses: fixed || [],
-                        variableExpenses: variable || [],
-                        streak: stateData?.data?.streak || 0
-                    });
-                } catch (error) {
-                    console.error('Error fetching data:', error);
-                }
-            };
-
             const handleSaveRoastLevel = async () => {
-                try {
-                    // Save to Supabase
-                    const { data: currentData, error: fetchError } = await supabaseClient
-                        .from(STORAGE_TABLE)
-                        .select('data')
-                        .eq('user_id', userId)
-                        .maybeSingle();
-
-                    if (fetchError) throw fetchError;
-
-                    const updatedData = {
-                        ...(currentData?.data || {}),
-                        roast_level: tempRoastLevel
-                    };
-
-                    const { error: updateError } = await supabaseClient
-                        .from(STORAGE_TABLE)
-                        .upsert({
-                            user_id: userId,
-                            data: updatedData,
-                            updated_at: new Date().toISOString()
-                        });
-
-                    if (updateError) throw updateError;
-
-                    setRoastLevel(tempRoastLevel);
-                    setShowSettings(false);
-                } catch (error) {
-                    console.error('Error saving roast level:', error);
-                    alert('Failed to save preference. Please try again.');
-                }
+                const updatedData = {
+                    ...data,
+                    roast_level: tempRoastLevel
+                };
+                setData(updatedData);
+                setRoastLevel(tempRoastLevel);
+                setShowSettings(false);
+                await saveBudgetData(updatedData);
             };
 
             // Calculate metrics
@@ -1343,6 +1337,7 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+        })();
     </script>
 </body>
 </html>
