@@ -703,36 +703,112 @@
 
             const gradeInfo = getGrade(healthScore);
 
-            // Spending personality
+            // Spending personality (scenario-based variants)
+            const personaSeed = Math.floor(totalVariable + regretMoney + lateNightSpending + topCategory.amount + (data.streak || 0));
+            const pickVariant = (variants, extraSeed = 0) => variants[(personaSeed + extraSeed) % variants.length];
+
+            const impulseLevel = regretRatio >= 0.6 ? 'critical' : (regretRatio >= 0.45 ? 'serious' : 'mild');
+            const impulseCause = lateNightSpendRatio >= 0.3
+                ? 'lateNight'
+                : (weekendWeekdayRatio >= 2.2 ? 'weekend' : 'general');
+
+            const impulseVariants = {
+                mild: {
+                    general: [
+                        'You are making quick buys you later regret. Use a 24-hour pause for non-essentials.',
+                        'Small impulse buys are adding up. Add to cart now, checkout tomorrow.'
+                    ],
+                    lateNight: [
+                        'Late-night clicks are driving regret. Set a no-checkout rule after 10pm.',
+                        'Night shopping is becoming expensive. Save items at night, decide in daylight.'
+                    ],
+                    weekend: [
+                        'Weekends are where your impulse spending jumps. Set a weekend cash cap.',
+                        'Weekend mood is costing you extra. Plan one fun budget before Saturday starts.'
+                    ]
+                },
+                serious: {
+                    general: [
+                        'Impulse spending is now a real leak. Pause 24 hours and cap daily non-essential spend.',
+                        'Regret is eating too much of your budget. Freeze non-urgent purchases for 7 days.'
+                    ],
+                    lateNight: [
+                        'Most regret is happening late at night. Block shopping apps after 10pm this week.',
+                        'Your midnight purchases are expensive. Add app timers and buy only next morning.'
+                    ],
+                    weekend: [
+                        'Your weekend impulses are draining progress. Pre-set a strict weekend spending ceiling.',
+                        'Weekend splurges are dominating your regret list. Keep one paid activity, skip the rest.'
+                    ]
+                },
+                critical: {
+                    general: [
+                        'This is critical impulse territory. Switch to essentials-only mode for 7 days.',
+                        'Regret is overwhelming your spending. Hard-stop all non-essential buys this week.'
+                    ],
+                    lateNight: [
+                        'Critical warning: night spending is wrecking your budget. No purchases after 10pm, full stop.',
+                        'Your wallet is getting hit hardest at night. Remove saved cards and lock shopping apps after dark.'
+                    ],
+                    weekend: [
+                        'Critical weekend overspend pattern. Plan free weekends until your regret ratio drops.',
+                        'Weekends are currently a danger zone. Use a fixed envelope budget and stop at the limit.'
+                    ]
+                }
+            };
+
             const getPersonality = () => {
-                if (regretRatio >= 0.35) return {
-                    type: 'The Impulse Buyer',
-                    description: 'A big share of your spending becomes regret. Slow down purchases and add a 24-hour pause before non-essentials.',
-                    traits: ['🛍️ Spontaneous', '😬 Regret-Prone', '💳 YOLO Spender']
-                };
+                if (regretRatio >= 0.35) {
+                    const impulseDescription = pickVariant(impulseVariants[impulseLevel][impulseCause], 3);
+                    return {
+                        type: 'The Impulse Buyer',
+                        description: impulseDescription,
+                        traits: ['🛍️ Spontaneous', '😬 Regret-Prone', '💳 YOLO Spender']
+                    };
+                }
                 if (lateNightSpendRatio >= 0.3) return {
                     type: 'The Night Owl Spender',
-                    description: 'Your wallet takes the biggest hits after 10pm. Add friction at night before tapping checkout.',
+                    description: pickVariant([
+                        'Your wallet takes the biggest hits after 10pm. Add friction at night before tapping checkout.',
+                        'You spend best intentions at night. Use a bedtime lockout for shopping apps.',
+                        'Late-night spending is your main leak. Queue purchases overnight and review in the morning.'
+                    ], 7),
                     traits: ['🌙 Late Night Shopper', '😴 Sleep-Deprived Buyer', '🦉 Nocturnal Spender']
                 };
                 if (weekendWeekdayRatio >= 2.5) return {
                     type: 'The Weekend Warrior',
-                    description: 'Weekend spending spikes hard versus weekdays. Plan a weekend cap before Friday starts.',
+                    description: pickVariant([
+                        'Weekend spending spikes hard versus weekdays. Plan a weekend cap before Friday starts.',
+                        'Your weekends are doing the damage. Give yourself one paid outing limit each weekend.',
+                        'You are disciplined on weekdays but loose on weekends. Use a separate weekend budget.'
+                    ], 11),
                     traits: ['🎉 Weekend Splurger', '💸 Work Hard Play Hard', '📅 Cyclical Spender']
                 };
                 if (categoryAddictionScore >= 60) return {
                     type: 'The Category Addict',
-                    description: `A heavy chunk of spend is in ${topCategory.name}. Set a category cap to rebalance your month.`,
+                    description: pickVariant([
+                        `A heavy chunk of spend is in ${topCategory.name}. Set a category cap to rebalance your month.`,
+                        `${topCategory.name} is dominating your wallet. Add a weekly limit to break the pattern.`,
+                        `You're over-concentrated in ${topCategory.name}. Try a no-spend challenge for that category this week.`
+                    ], 17),
                     traits: [`${topCategory.name} Obsessed`, '🎯 Hyper-Focused', '💎 Quality > Quantity']
                 };
                 if (savingsRate > 30 && regretRatio < 0.1 && lateNightSpendRatio < 0.2 && weekendWeekdayRatio < 1.8 && overspendRatio === 0) return {
                     type: 'The Squirrel',
-                    description: 'You save consistently and avoid major spending traps. Keep compounding this discipline.',
+                    description: pickVariant([
+                        'You save consistently and avoid major spending traps. Keep compounding this discipline.',
+                        'Your habits are sharp and steady. Stay consistent and your future self wins big.',
+                        'Strong control with low regret. Keep this pace and increase your automatic savings next.'
+                    ], 23),
                     traits: ['🐿️ Highly Disciplined', '💰 Future-Focused', '📊 Data-Driven']
                 };
                 return {
                     type: 'The Balanced Spender',
-                    description: 'You are mostly steady, but there are still a few leaks worth tightening.',
+                    description: pickVariant([
+                        'You are mostly steady, but there are still a few leaks worth tightening.',
+                        'Your spending is fairly balanced. Small tweaks now can make a big difference monthly.',
+                        'Solid base overall. Focus on one weak spot this week and your score will rise.'
+                    ], 29),
                     traits: ['⚖️ Well-Balanced', '🎯 Moderate', '📈 Steady Eddie']
                 };
             };
