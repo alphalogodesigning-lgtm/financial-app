@@ -727,6 +727,8 @@
 
     <script type="text/babel">
         (() => {
+        if (window.__variableSpendingInit) return;
+        window.__variableSpendingInit = true;
         const { useState, useEffect } = React;
 
         const { supabaseClient, STORAGE_TABLE } = window.SUPABASE_CONFIG;

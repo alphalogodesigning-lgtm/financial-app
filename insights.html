@@ -473,6 +473,8 @@
 
     <script type="text/babel">
         (() => {
+        if (window.__insightsInit) return;
+        window.__insightsInit = true;
         const { useState, useEffect } = React;
 
         const { supabaseClient, STORAGE_TABLE } = window.SUPABASE_CONFIG;

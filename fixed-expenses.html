@@ -614,6 +614,8 @@
 
     <script type="text/babel">
         (() => {
+        if (window.__fixedExpensesInit) return;
+        window.__fixedExpensesInit = true;
         const { useState, useEffect } = React;
 
         const { supabaseClient, STORAGE_TABLE } = window.SUPABASE_CONFIG;

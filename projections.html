@@ -486,6 +486,8 @@
 
     <script type="text/babel">
         (() => {
+        if (window.__projectionsInit) return;
+        window.__projectionsInit = true;
         const { useState, useEffect } = React;
 
         const { supabaseClient, STORAGE_TABLE } = window.SUPABASE_CONFIG;
