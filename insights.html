@@ -626,6 +626,12 @@
                 return hour >= 22 || hour <= 4;
             }).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
 
+            const lateNightRatio = totalVariable > 0 ? lateNightSpending / safeTotalVariable : 0;
+            const lateNightPercent = lateNightRatio * 100;
+            const weekendVsWeekdayRatio = avgWeekdaySpend > 0
+                ? avgWeekendSpend / avgWeekdaySpend
+                : (avgWeekendSpend > 0 ? Infinity : 1);
+
             // Category addiction
             const categoryTotals = {};
             variableExpenses.forEach(exp => {
