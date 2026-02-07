@@ -485,6 +485,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        (() => {
         const { useState, useEffect } = React;
 
         const { supabaseClient, STORAGE_TABLE } = window.SUPABASE_CONFIG;
@@ -540,16 +541,6 @@
         });
 
         const resolveAuthSession = async () => {
-            if (!supabaseClient) return null;
-            const { data, error } = await supabaseClient.auth.getSession();
-            if (error) throw error;
-            if (data?.session) return data.session;
-            const refreshed = await supabaseClient.auth.refreshSession();
-            if (refreshed?.data?.session) return refreshed.data.session;
-            return waitForAuthSession();
-        };
-
-        const getAuthenticatedUser = async () => {
             if (!supabaseClient) return null;
             const session = await resolveAuthSession();
             return session?.user || null;
@@ -1012,6 +1003,7 @@
         }
 
         ReactDOM.render(<Projections />, document.getElementById('root'));
+        })();
     </script>
 </body>
 </html>
