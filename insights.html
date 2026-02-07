@@ -886,7 +886,7 @@
             const savingsRate = income > 0 ? (savingsAmount / income) * 100 : 0;
 
             // Regret money
-            const regretExpenses = data.variableExpenses.filter(exp => exp.is_regret);
+            const regretExpenses = data.variableExpenses.filter(exp => exp.is_regret || exp.regret);
             const regretMoney = regretExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
             const regretRatio = totalVariableSpent > 0 ? regretMoney / totalVariableSpent : 0;
 
@@ -948,17 +948,14 @@
                 else if (savingsRate >= 0) score -= 5;
                 else if (savingsRate < 0) score -= 30; // Spending more than earning
 
-                // Regret ratio - MUCH HARSHER NOW
-                if (regretRatio === 0) score += 20;
-                else if (regretRatio < 0.1) score += 15;
-                else if (regretRatio < 0.2) score += 5;
-                else if (regretRatio < 0.3) score -= 10;
-                else if (regretRatio < 0.4) score -= 20;
+                // Regret ratio penalties
+                if (regretRatio <= 0.1) score += 15;
+                else if (regretRatio < 0.4) score += 0;
                 else if (regretRatio < 0.5) score -= 30;
                 else if (regretRatio < 0.6) score -= 40;
                 else if (regretRatio < 0.7) score -= 50;
-                else if (regretRatio < 0.8) score -= 60; // 70-80% regret
-                else score -= 70; // 80%+ regret - absolutely terrible
+                else if (regretRatio < 0.8) score -= 60;
+                else score -= 70;
 
                 // Late night spending (max +15, min -20)
                 if (lateNightSpendRatio === 0) score += 15;
@@ -1056,11 +1053,25 @@
 
             // Spending personality
             const getPersonality = () => {
+                if (regretRatio >= 0.7) {
+                    return {
+                        type: 'THE REGRET SPIRAL',
+                        description: 'Most of your purchases feel like mistakes. Pause, reflect, and set a 24-hour rule.',
+                        traits: ['🌀 Impulsive', '😬 Regret-Heavy', '🛑 Needs a Reset']
+                    };
+                }
                 if (regretRatio > 0.4 && lateNightSpendRatio > 0.3) {
                     return {
                         type: 'THE IMPULSE BUYER',
                         description: 'Night shopping is becoming expensive. Save items at night, decide in daylight.',
                         traits: ['🎭 Spontaneous', '⚡ Regret-Prone', '🎯 YOLO Spender']
+                    };
+                }
+                if (regretRatio >= 0.4) {
+                    return {
+                        type: 'THE BUYER\'S REMORSE',
+                        description: 'Regret is eating a big chunk of your spending. Slow down and plan purchases.',
+                        traits: ['😓 Second-Guesser', '🧠 Overthinker', '🛍️ Impulse-Prone']
                     };
                 }
                 if (savingsRate >= 20) {
