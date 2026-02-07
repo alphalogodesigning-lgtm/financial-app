@@ -1053,11 +1053,25 @@
 
             // Spending personality
             const getPersonality = () => {
+                if (regretRatio >= 0.7) {
+                    return {
+                        type: 'THE REGRET SPIRAL',
+                        description: 'Most of your purchases feel like mistakes. Pause, reflect, and set a 24-hour rule.',
+                        traits: ['🌀 Impulsive', '😬 Regret-Heavy', '🛑 Needs a Reset']
+                    };
+                }
                 if (regretRatio > 0.4 && lateNightSpendRatio > 0.3) {
                     return {
                         type: 'THE IMPULSE BUYER',
                         description: 'Night shopping is becoming expensive. Save items at night, decide in daylight.',
                         traits: ['🎭 Spontaneous', '⚡ Regret-Prone', '🎯 YOLO Spender']
+                    };
+                }
+                if (regretRatio >= 0.4) {
+                    return {
+                        type: 'THE BUYER\'S REMORSE',
+                        description: 'Regret is eating a big chunk of your spending. Slow down and plan purchases.',
+                        traits: ['😓 Second-Guesser', '🧠 Overthinker', '🛍️ Impulse-Prone']
                     };
                 }
                 if (savingsRate >= 20) {
