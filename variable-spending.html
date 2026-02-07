@@ -763,7 +763,27 @@
             return waitForAuthSession();
         };
 
-        const getAuthenticatedUser = async () => {
+        const waitForAuthSession = (timeoutMs = 3000) => new Promise((resolve) => {
+            if (!supabaseClient) {
+                resolve(null);
+                return;
+            }
+            let settled = false;
+            const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+                if (settled) return;
+                settled = true;
+                subscription.unsubscribe();
+                resolve(session || null);
+            });
+            setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                subscription.unsubscribe();
+                resolve(null);
+            }, timeoutMs);
+        });
+
+        const resolveAuthSession = async () => {
             if (!supabaseClient) return null;
             const session = await resolveAuthSession();
             return session?.user || null;
