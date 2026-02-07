@@ -757,8 +757,12 @@
             const remaining = income - totalSpent;
             const daysInMonth = 30;
             const today = new Date().getDate();
-            const dailyBurnRate = today > 0 ? totalVariable / today : 0;
-            const projectedSpend = totalFixed + (dailyBurnRate * daysInMonth);
+            const baselineDailyBurn = totalFixed / daysInMonth;
+            const activeDailyBurn = today > 0 ? totalVariable / today : 0;
+            const dailyBurnRate = activeDailyBurn > 0
+                ? baselineDailyBurn + activeDailyBurn
+                : baselineDailyBurn;
+            const projectedSpend = totalFixed + (activeDailyBurn * daysInMonth);
             const runway = dailyBurnRate > 0 ? remaining / dailyBurnRate : null;
 
             const availablePct = incomeSet ? (remaining / income) * 100 : null;
