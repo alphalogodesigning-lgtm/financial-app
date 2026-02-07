@@ -550,15 +550,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        const { supabaseClient, STORAGE_TABLE, DEVICE_ID_KEY } = window.SUPABASE_CONFIG;
-
-        const getDeviceId = () => {
-            const existing = localStorage.getItem(DEVICE_ID_KEY);
-            if (existing) return existing;
-            const generated = (crypto?.randomUUID?.() || `device-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-            localStorage.setItem(DEVICE_ID_KEY, generated);
-            return generated;
-        };
+        const { supabaseClient, STORAGE_TABLE } = window.SUPABASE_CONFIG;
 
         const redirectToAuth = () => {
             if (!window.location.pathname.endsWith('/auth.html') && !window.location.pathname.endsWith('auth.html')) {
@@ -613,12 +605,10 @@
                     redirectToAuth();
                     return fallback ? JSON.parse(fallback) : null;
                 }
-                const deviceId = getDeviceId();
                 const { data, error } = await supabaseClient
                     .from(STORAGE_TABLE)
                     .select('data')
                     .eq('user_id', user.id)
-                    .eq('device_id', deviceId)
                     .maybeSingle();
                 if (error) throw error;
                 if (data?.data) {
@@ -640,15 +630,13 @@
                     redirectToAuth();
                     return;
                 }
-                const deviceId = getDeviceId();
                 const { error } = await supabaseClient
                     .from(STORAGE_TABLE)
                     .upsert({
                         user_id: user.id,
-                        device_id: deviceId,
                         data: nextData,
                         updated_at: new Date().toISOString()
-                    }, { onConflict: 'user_id,device_id' });
+                    }, { onConflict: 'user_id' });
                 if (error) throw error;
             } catch (err) {
                 console.warn('Supabase save failed, kept local data.', err);
