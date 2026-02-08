@@ -778,7 +778,8 @@
             .calendar-day {
                 padding: 6px;
                 font-size: 0.65rem;
-                min-height: 60px;
+                min-height: 56px;
+                aspect-ratio: auto;
                 display: flex;
                 flex-direction: column;
                 justify-content: flex-start;
@@ -794,6 +795,19 @@
                 font-size: 0.6rem;
                 line-height: 1.2;
                 word-break: break-word;
+                max-height: 34px;
+                overflow: hidden;
+            }
+
+            .day-expenses div {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 100%;
+            }
+
+            .calendar-day.has-expense {
+                box-shadow: none;
             }
 
             /* CHOP BLOCK FIX - better number alignment and spacing */
@@ -824,15 +838,16 @@
 
             /* MODAL IMPROVEMENTS FOR MOBILE */
             .modal-content {
-                padding: 28px 20px;
-                border-radius: 20px;
+                padding: 24px 18px;
+                border-radius: 18px;
                 max-width: 100%;
                 margin: 0 8px;
             }
 
             .modal-title {
-                font-size: 1.625rem;
-                margin-bottom: 24px;
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+                line-height: 1.2;
             }
 
             .form-group {
@@ -851,12 +866,13 @@
             }
 
             .btn-row {
-                margin-top: 24px;
-                gap: 10px;
+                margin-top: 20px;
+                gap: 12px;
+                flex-direction: column;
             }
 
             .btn-primary, .btn-secondary {
-                padding: 13px 20px;
+                padding: 14px 20px;
                 font-size: 15px;
                 border-radius: 10px;
             }
@@ -920,75 +936,5 @@
     <div id="root"></div>
 
     <script type="text/babel" src="./fixed-expenses-app.js"></script>
-    
-    <script>
-        // Number rounding utility - ensures all currency displays max 2 decimal places
-        function formatCurrency(amount) {
-            const num = parseFloat(amount);
-            if (isNaN(num)) return amount;
-            return num.toFixed(2);
-        }
-
-        // Apply rounding to all currency elements on page load and updates
-        function roundAllCurrency() {
-            const currencyElements = document.querySelectorAll('.metric-value, .expense-amount, .chop-savings, .budget-total, .comparison-value, .day-expenses');
-            currencyElements.forEach(el => {
-                const text = el.textContent;
-                const match = text.match(/RM([\d.]+)/);
-                if (match) {
-                    const rounded = formatCurrency(match[1]);
-                    el.textContent = text.replace(match[1], rounded);
-                }
-            });
-        }
-
-        // Tab switching logic for mobile - hide metrics when not in list view
-        function handleTabSwitch() {
-            const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabText = this.textContent.toLowerCase().trim();
-                    
-                    // Update body data attribute for CSS targeting
-                    if (tabText.includes('calendar')) {
-                        document.body.setAttribute('data-tab', 'calendar');
-                    } else if (tabText.includes('chop')) {
-                        document.body.setAttribute('data-tab', 'chop');
-                    } else {
-                        document.body.setAttribute('data-tab', 'list');
-                    }
-                });
-            });
-        }
-
-        // Initialize on page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(() => {
-                    roundAllCurrency();
-                    handleTabSwitch();
-                }, 100);
-            });
-        } else {
-            setTimeout(() => {
-                roundAllCurrency();
-                handleTabSwitch();
-            }, 100);
-        }
-
-        // Re-run rounding when content changes (for dynamic updates)
-        const observer = new MutationObserver(function(mutations) {
-            roundAllCurrency();
-        });
-
-        // Start observing when DOM is ready
-        if (document.body) {
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true,
-                characterData: true
-            });
-        }
-    </script>
 </body>
 </html>
