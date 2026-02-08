@@ -772,42 +772,52 @@
 
             /* CALENDAR FIX - proper mobile layout */
             .calendar {
-                gap: 4px;
+                gap: 6px;
+                width: 100%;
+                grid-template-columns: repeat(7, minmax(0, 1fr));
             }
 
             .calendar-day {
-                padding: 6px;
+                padding: 6px 4px;
                 font-size: 0.65rem;
-                min-height: 56px;
-                aspect-ratio: auto;
+                min-height: 0;
+                aspect-ratio: 1;
                 display: flex;
                 flex-direction: column;
-                justify-content: flex-start;
-                align-items: flex-start;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                min-width: 0;
+                overflow: hidden;
             }
 
             .day-number {
                 font-size: 0.75rem;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .day-expenses {
                 font-size: 0.6rem;
                 line-height: 1.2;
                 word-break: break-word;
-                max-height: 34px;
+                max-height: 28px;
                 overflow: hidden;
             }
 
             .day-expenses div {
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                max-width: 100%;
+                display: none;
             }
 
             .calendar-day.has-expense {
                 box-shadow: none;
+            }
+
+            .day-expenses .day-total {
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
             }
 
             /* CHOP BLOCK FIX - better number alignment and spacing */
@@ -875,6 +885,14 @@
                 padding: 14px 20px;
                 font-size: 15px;
                 border-radius: 10px;
+            }
+
+            .quick-add-btn {
+                width: 56px;
+                height: 56px;
+                right: 20px;
+                bottom: 24px;
+                z-index: 1200;
             }
 
             /* Number rounding utility - ensure all amounts show max 2 decimal places */

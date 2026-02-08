@@ -318,7 +318,7 @@ const formatCurrency = (value) => {
                                                         {exp.name}: RM{formatCurrency(exp.amount)}
                                                     </div>
                                                 ))}
-                                                <div style={{ fontWeight: '700', marginTop: '4px' }}>
+                                                <div className="day-total" style={{ fontWeight: '700', marginTop: '4px' }}>
                                                     Total: RM{formatCurrency(total)}
                                                 </div>
                                             </div>
