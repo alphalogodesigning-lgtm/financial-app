@@ -7,6 +7,14 @@ const {
     calculateFixedSummary
 } = window.AppShared;
 
+const formatCurrency = (value) => {
+    const amount = Number.parseFloat(value);
+    if (Number.isNaN(amount)) {
+        return '0.00';
+    }
+    return amount.toFixed(2);
+};
+
         function FixedExpenses() {
             const [data, setData] = useState(getInitialData('fixed-expenses'));
             const [isHydrated, setIsHydrated] = useState(false);
@@ -22,6 +30,7 @@ const {
             });
             const [draggedItem, setDraggedItem] = useState(null);
             const [viewMode, setViewMode] = useState('list');
+            const [selectedDay, setSelectedDay] = useState(null);
 
             useEffect(() => {
                 let isMounted = true;
@@ -41,6 +50,13 @@ const {
                 if (!isHydrated) return;
                 saveBudgetData(data);
             }, [data, isHydrated]);
+
+            useEffect(() => {
+                document.body.setAttribute('data-tab', viewMode);
+                return () => {
+                    document.body.removeAttribute('data-tab');
+                };
+            }, [viewMode]);
 
             const expenses = data.fixedExpenses || [];
             const { totalMonthly, totalAnnual, charged, pending } = calculateFixedSummary(expenses);
@@ -183,19 +199,19 @@ const {
 
                     <div className="stats-grid">
                         <div className="stat-card">
-                            <div className="metric-value gold-text">RM{totalMonthly.toFixed(0)}</div>
+                            <div className="metric-value gold-text">RM{formatCurrency(totalMonthly)}</div>
                             <div className="metric-label">Monthly Total</div>
                         </div>
                         <div className="stat-card">
-                            <div className="metric-value" style={{ color: '#FF6B6B' }}>RM{totalAnnual.toFixed(0)}</div>
+                            <div className="metric-value" style={{ color: '#FF6B6B' }}>RM{formatCurrency(totalAnnual)}</div>
                             <div className="metric-label">Annual Damage</div>
                         </div>
                         <div className="stat-card">
-                            <div className="metric-value" style={{ color: '#66BB6A' }}>RM{charged.toFixed(0)}</div>
+                            <div className="metric-value" style={{ color: '#66BB6A' }}>RM{formatCurrency(charged)}</div>
                             <div className="metric-label">Charged</div>
                         </div>
                         <div className="stat-card">
-                            <div className="metric-value" style={{ color: '#89ABE3' }}>RM{pending.toFixed(0)}</div>
+                            <div className="metric-value" style={{ color: '#89ABE3' }}>RM{formatCurrency(pending)}</div>
                             <div className="metric-label">Pending</div>
                         </div>
                     </div>
@@ -233,7 +249,7 @@ const {
                                         </button>
                                         <div className="expense-header">
                                             <div className="expense-name">{expense.name}</div>
-                                            <div className="expense-amount">RM{expense.amount}</div>
+                                            <div className="expense-amount">RM{formatCurrency(expense.amount)}</div>
                                         </div>
                                         <div className="expense-details">
                                             <div className="expense-detail">
@@ -243,7 +259,7 @@ const {
                                                 <span>📂 {expense.category}</span>
                                             </div>
                                             <div className="expense-detail">
-                                                <span>💰 Annual: RM{(expense.amount * 12).toFixed(0)}</span>
+                                                <span>💰 Annual: RM{formatCurrency(expense.amount * 12)}</span>
                                             </div>
                                         </div>
                                         <div className="mood-selector" onClick={(e) => e.stopPropagation()}>
@@ -290,26 +306,30 @@ const {
                         <div className="card">
                             <h2 className="card-title">Monthly Payment Calendar</h2>
                             <div className="calendar">
-                                {calendarDays.map(({ day, expenses: dayExpenses, total }) => (
+                                {calendarDays.map(({ day, expenses: dayExpenses, total }) => {
+                                    const isSelected = selectedDay === day;
+                                    return (
                                     <div 
                                         key={day}
-                                        className={`calendar-day ${dayExpenses.length > 0 ? 'has-expense' : ''}`}
+                                        className={`calendar-day ${dayExpenses.length > 0 ? 'has-expense' : ''} ${isSelected ? 'is-selected' : ''}`}
+                                        onClick={() => setSelectedDay(isSelected ? null : day)}
                                     >
                                         <div className="day-number">{day}</div>
-                                        {dayExpenses.length > 0 && (
+                                        {dayExpenses.length > 0 && isSelected && (
                                             <div className="day-expenses">
                                                 {dayExpenses.map(exp => (
                                                     <div key={exp.id} style={{ fontSize: '0.65rem', marginBottom: '2px' }}>
-                                                        {exp.name}: RM{exp.amount}
+                                                        {exp.name}: RM{formatCurrency(exp.amount)}
                                                     </div>
                                                 ))}
-                                                <div style={{ fontWeight: '700', marginTop: '4px' }}>
-                                                    Total: RM{total}
+                                                <div className="day-total" style={{ fontWeight: '700', marginTop: '4px' }}>
+                                                    Total: RM{formatCurrency(total)}
                                                 </div>
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                );
+                                })}
                             </div>
                         </div>
                     )}
@@ -330,11 +350,11 @@ const {
                                                 #{index + 1} - {expense.name}
                                             </div>
                                             <div style={{ fontSize: '0.875rem', color: '#888', marginTop: '4px' }}>
-                                                RM{monthlySavings}/mo • RM{annualSavings}/yr
+                                                RM{formatCurrency(monthlySavings)}/mo • RM{formatCurrency(annualSavings)}/yr
                                             </div>
                                         </div>
                                         <div className="chop-savings">
-                                            Save RM{monthlySavings}/mo
+                                            Save RM{formatCurrency(monthlySavings)}/mo
                                         </div>
                                     </div>
                                 );
