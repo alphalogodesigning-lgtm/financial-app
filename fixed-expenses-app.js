@@ -32,6 +32,7 @@ const formatCurrency = (value) => {
             const [viewMode, setViewMode] = useState('list');
             const [selectedDay, setSelectedDay] = useState(null);
             const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+            const [isMobile, setIsMobile] = useState(false);
 
             useEffect(() => {
                 let isMounted = true;
@@ -58,6 +59,15 @@ const formatCurrency = (value) => {
                     document.body.removeAttribute('data-tab');
                 };
             }, [viewMode]);
+
+            useEffect(() => {
+                const updateIsMobile = () => {
+                    setIsMobile(window.innerWidth <= 640);
+                };
+                updateIsMobile();
+                window.addEventListener('resize', updateIsMobile);
+                return () => window.removeEventListener('resize', updateIsMobile);
+            }, []);
 
             const expenses = data.fixedExpenses || [];
             const { totalMonthly, totalAnnual, charged, pending } = calculateFixedSummary(expenses);
@@ -306,6 +316,7 @@ const formatCurrency = (value) => {
                     {viewMode === 'calendar' && (
                         <div className="card">
                             <h2 className="card-title">Monthly Payment Calendar</h2>
+                            <p className="calendar-caption">Tap on the date to see the expense.</p>
                             <div className="calendar">
                                 {calendarDays.map(({ day, expenses: dayExpenses, total }) => {
                                     return (
@@ -313,6 +324,9 @@ const formatCurrency = (value) => {
                                         key={day}
                                         className={`calendar-day ${dayExpenses.length > 0 ? 'has-expense' : ''}`}
                                         onClick={() => {
+                                            if (!isMobile) {
+                                                return;
+                                            }
                                             if (dayExpenses.length === 0) {
                                                 return;
                                             }
@@ -321,6 +335,18 @@ const formatCurrency = (value) => {
                                         }}
                                     >
                                         <div className="day-number">{day}</div>
+                                        {!isMobile && dayExpenses.length > 0 && (
+                                            <div className="day-expenses">
+                                                {dayExpenses.map(exp => (
+                                                    <div key={exp.id} style={{ fontSize: '0.65rem', marginBottom: '2px' }}>
+                                                        {exp.name}: RM{formatCurrency(exp.amount)}
+                                                    </div>
+                                                ))}
+                                                <div className="day-total" style={{ fontWeight: '700', marginTop: '4px' }}>
+                                                    Total: RM{formatCurrency(total)}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                                 })}
