@@ -82,6 +82,7 @@
         }
 
         .greeting-text {
+<<<<<<< codex/add-personalized-greeting-feature
             font-size: 1.5rem;
             font-weight: 700;
             letter-spacing: -0.01em;
@@ -93,6 +94,13 @@
             font-weight: 800;
         }
 
+=======
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+>>>>>>> main
         .header-title {
             font-size: 2rem;
             font-weight: 800;
@@ -785,6 +793,7 @@
             const greetingText = (() => {
                 const hour = new Date().getHours();
                 if (hour >= 0 && hour < 5) {
+<<<<<<< codex/add-personalized-greeting-feature
                     return 'Get some sleep';
                 }
                 if (hour < 12) {
@@ -797,6 +806,20 @@
                     return 'Good Evening';
                 }
                 return 'Good Night';
+=======
+                    return `Get some sleep${userName ? `, ${userName}` : ''}`;
+                }
+                if (hour < 12) {
+                    return `Good Morning${userName ? ` ${userName}` : ''}`;
+                }
+                if (hour < 17) {
+                    return `Good Afternoon${userName ? ` ${userName}` : ''}`;
+                }
+                if (hour < 21) {
+                    return `Good Evening${userName ? ` ${userName}` : ''}`;
+                }
+                return `Good Night${userName ? ` ${userName}` : ''}`;
+>>>>>>> main
             })();
 
             // Fixed expenses are recurring commitments and must always form baseline burn.
@@ -898,6 +921,7 @@
                     </nav>
 
                     <div className="greeting">
+<<<<<<< codex/add-personalized-greeting-feature
                         <p className="greeting-text">
                             {greetingText}
                             {userName && (
@@ -907,6 +931,9 @@
                                 </>
                             )}
                         </p>
+=======
+                        <p className="greeting-text">{greetingText}</p>
+>>>>>>> main
                     </div>
 
                     {/* Header */}
