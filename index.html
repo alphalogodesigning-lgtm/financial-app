@@ -77,6 +77,22 @@
             gap: 16px;
         }
 
+        .greeting {
+            margin: -12px 0 24px;
+        }
+
+        .greeting-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: #fff;
+        }
+
+        .greeting-name {
+            color: #D4AF37;
+            font-weight: 800;
+        }
+
         .header-title {
             font-size: 2rem;
             font-weight: 800;
@@ -729,6 +745,7 @@
                 category: 'Food',
                 date: new Date().toISOString().split('T')[0]
             });
+            const userName = '';
 
             useEffect(() => {
                 let isMounted = true;
@@ -765,6 +782,22 @@
             const remaining = income - totalSpent;
             const daysInMonth = 30;
             const today = new Date().getDate();
+            const greetingText = (() => {
+                const hour = new Date().getHours();
+                if (hour >= 0 && hour < 5) {
+                    return 'Get some sleep';
+                }
+                if (hour < 12) {
+                    return 'Good Morning';
+                }
+                if (hour < 17) {
+                    return 'Good Afternoon';
+                }
+                if (hour < 21) {
+                    return 'Good Evening';
+                }
+                return 'Good Night';
+            })();
 
             // Fixed expenses are recurring commitments and must always form baseline burn.
             const baselineDailyBurn = totalFixed / daysInMonth;
@@ -863,6 +896,18 @@
                         <a href="projections.html" className="nav-link">🔮 Projections</a>
                         <a href="insights.html" className="nav-link">🧠 Insights</a>
                     </nav>
+
+                    <div className="greeting">
+                        <p className="greeting-text">
+                            {greetingText}
+                            {userName && (
+                                <>
+                                    {greetingText === 'Get some sleep' ? ', ' : ' '}
+                                    <span className="greeting-name">{userName}</span>
+                                </>
+                            )}
+                        </p>
+                    </div>
 
                     {/* Header */}
                     <div className="header">
