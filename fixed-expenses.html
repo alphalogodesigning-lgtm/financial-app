@@ -625,6 +625,38 @@
             flex: 1;
         }
 
+        .calendar-caption {
+            color: #888;
+            font-size: 0.875rem;
+            margin: -12px 0 20px;
+            display: none;
+        }
+
+        .calendar-day-details {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .calendar-expense-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(10, 10, 10, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #E0E0E0;
+            font-weight: 600;
+        }
+
+        .calendar-expense-total {
+            margin-top: 8px;
+            font-weight: 800;
+            color: #D4AF37;
+            text-align: right;
+        }
+
         /* Quick add button */
         .quick-add-btn {
             position: fixed;
@@ -772,28 +804,58 @@
 
             /* CALENDAR FIX - proper mobile layout */
             .calendar {
-                gap: 4px;
+                gap: 6px;
+                width: 100%;
+                grid-template-columns: repeat(7, minmax(0, 1fr));
             }
 
             .calendar-day {
-                padding: 6px;
+                padding: 6px 4px;
                 font-size: 0.65rem;
-                min-height: 60px;
+                min-height: 0;
+                aspect-ratio: 1;
                 display: flex;
                 flex-direction: column;
-                justify-content: flex-start;
-                align-items: flex-start;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                min-width: 0;
+                overflow: hidden;
             }
 
             .day-number {
                 font-size: 0.75rem;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .day-expenses {
                 font-size: 0.6rem;
                 line-height: 1.2;
                 word-break: break-word;
+                max-height: 28px;
+                overflow: hidden;
+            }
+
+            .day-expenses div {
+                display: none;
+            }
+
+            .calendar-day.has-expense {
+                box-shadow: none;
+            }
+
+            .day-expenses .day-total {
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+
+            .calendar-caption {
+                display: block;
+                margin: -8px 0 16px;
+                font-size: 0.8rem;
             }
 
             /* CHOP BLOCK FIX - better number alignment and spacing */
@@ -824,15 +886,16 @@
 
             /* MODAL IMPROVEMENTS FOR MOBILE */
             .modal-content {
-                padding: 28px 20px;
-                border-radius: 20px;
+                padding: 24px 18px;
+                border-radius: 18px;
                 max-width: 100%;
                 margin: 0 8px;
             }
 
             .modal-title {
-                font-size: 1.625rem;
-                margin-bottom: 24px;
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+                line-height: 1.2;
             }
 
             .form-group {
@@ -851,14 +914,23 @@
             }
 
             .btn-row {
-                margin-top: 24px;
-                gap: 10px;
+                margin-top: 20px;
+                gap: 12px;
+                flex-direction: column;
             }
 
             .btn-primary, .btn-secondary {
-                padding: 13px 20px;
+                padding: 14px 20px;
                 font-size: 15px;
                 border-radius: 10px;
+            }
+
+            .quick-add-btn {
+                width: 56px;
+                height: 56px;
+                right: 20px;
+                bottom: 24px;
+                z-index: 1200;
             }
 
             /* Number rounding utility - ensure all amounts show max 2 decimal places */
@@ -920,75 +992,5 @@
     <div id="root"></div>
 
     <script type="text/babel" src="./fixed-expenses-app.js"></script>
-    
-    <script>
-        // Number rounding utility - ensures all currency displays max 2 decimal places
-        function formatCurrency(amount) {
-            const num = parseFloat(amount);
-            if (isNaN(num)) return amount;
-            return num.toFixed(2);
-        }
-
-        // Apply rounding to all currency elements on page load and updates
-        function roundAllCurrency() {
-            const currencyElements = document.querySelectorAll('.metric-value, .expense-amount, .chop-savings, .budget-total, .comparison-value, .day-expenses');
-            currencyElements.forEach(el => {
-                const text = el.textContent;
-                const match = text.match(/RM([\d.]+)/);
-                if (match) {
-                    const rounded = formatCurrency(match[1]);
-                    el.textContent = text.replace(match[1], rounded);
-                }
-            });
-        }
-
-        // Tab switching logic for mobile - hide metrics when not in list view
-        function handleTabSwitch() {
-            const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabText = this.textContent.toLowerCase().trim();
-                    
-                    // Update body data attribute for CSS targeting
-                    if (tabText.includes('calendar')) {
-                        document.body.setAttribute('data-tab', 'calendar');
-                    } else if (tabText.includes('chop')) {
-                        document.body.setAttribute('data-tab', 'chop');
-                    } else {
-                        document.body.setAttribute('data-tab', 'list');
-                    }
-                });
-            });
-        }
-
-        // Initialize on page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(() => {
-                    roundAllCurrency();
-                    handleTabSwitch();
-                }, 100);
-            });
-        } else {
-            setTimeout(() => {
-                roundAllCurrency();
-                handleTabSwitch();
-            }, 100);
-        }
-
-        // Re-run rounding when content changes (for dynamic updates)
-        const observer = new MutationObserver(function(mutations) {
-            roundAllCurrency();
-        });
-
-        // Start observing when DOM is ready
-        if (document.body) {
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true,
-                characterData: true
-            });
-        }
-    </script>
 </body>
 </html>
