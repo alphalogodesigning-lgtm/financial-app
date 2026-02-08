@@ -50,6 +50,13 @@ const formatCurrency = (value) => {
                 saveBudgetData(data);
             }, [data, isHydrated]);
 
+            useEffect(() => {
+                document.body.setAttribute('data-tab', viewMode);
+                return () => {
+                    document.body.removeAttribute('data-tab');
+                };
+            }, [viewMode]);
+
             const expenses = data.fixedExpenses || [];
             const { totalMonthly, totalAnnual, charged, pending } = calculateFixedSummary(expenses);
 
