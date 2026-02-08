@@ -770,13 +770,107 @@
                 padding: 16px;
             }
 
+            /* CALENDAR FIX - proper mobile layout */
             .calendar {
-                gap: 6px;
+                gap: 4px;
             }
 
             .calendar-day {
                 padding: 6px;
-                font-size: 0.7rem;
+                font-size: 0.65rem;
+                min-height: 60px;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: flex-start;
+            }
+
+            .day-number {
+                font-size: 0.75rem;
+                margin-bottom: 4px;
+            }
+
+            .day-expenses {
+                font-size: 0.6rem;
+                line-height: 1.2;
+                word-break: break-word;
+            }
+
+            /* CHOP BLOCK FIX - better number alignment and spacing */
+            .chop-item {
+                padding: 16px 12px;
+                gap: 12px;
+            }
+
+            .chop-name {
+                font-size: 0.9375rem;
+                flex: 1;
+                min-width: 0;
+                word-break: break-word;
+            }
+
+            .chop-savings {
+                font-size: 1.125rem;
+                white-space: nowrap;
+                text-align: right;
+                min-width: 80px;
+            }
+
+            /* Hide metrics on mobile when not in list view */
+            body[data-tab="calendar"] .stats-grid,
+            body[data-tab="chop"] .stats-grid {
+                display: none !important;
+            }
+
+            /* MODAL IMPROVEMENTS FOR MOBILE */
+            .modal-content {
+                padding: 28px 20px;
+                border-radius: 20px;
+                max-width: 100%;
+                margin: 0 8px;
+            }
+
+            .modal-title {
+                font-size: 1.625rem;
+                margin-bottom: 24px;
+            }
+
+            .form-group {
+                margin-bottom: 18px;
+            }
+
+            .form-label {
+                font-size: 0.75rem;
+                margin-bottom: 8px;
+            }
+
+            input, select {
+                padding: 12px 14px;
+                font-size: 15px;
+                border-radius: 10px;
+            }
+
+            .btn-row {
+                margin-top: 24px;
+                gap: 10px;
+            }
+
+            .btn-primary, .btn-secondary {
+                padding: 13px 20px;
+                font-size: 15px;
+                border-radius: 10px;
+            }
+
+            /* Number rounding utility - ensure all amounts show max 2 decimal places */
+            .metric-value,
+            .expense-amount,
+            .chop-savings,
+            .budget-total,
+            .comparison-value {
+                /* This will be handled by JavaScript, but we ensure the container doesn't break */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         }
 
@@ -826,5 +920,75 @@
     <div id="root"></div>
 
     <script type="text/babel" src="./fixed-expenses-app.js"></script>
+    
+    <script>
+        // Number rounding utility - ensures all currency displays max 2 decimal places
+        function formatCurrency(amount) {
+            const num = parseFloat(amount);
+            if (isNaN(num)) return amount;
+            return num.toFixed(2);
+        }
+
+        // Apply rounding to all currency elements on page load and updates
+        function roundAllCurrency() {
+            const currencyElements = document.querySelectorAll('.metric-value, .expense-amount, .chop-savings, .budget-total, .comparison-value, .day-expenses');
+            currencyElements.forEach(el => {
+                const text = el.textContent;
+                const match = text.match(/RM([\d.]+)/);
+                if (match) {
+                    const rounded = formatCurrency(match[1]);
+                    el.textContent = text.replace(match[1], rounded);
+                }
+            });
+        }
+
+        // Tab switching logic for mobile - hide metrics when not in list view
+        function handleTabSwitch() {
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabText = this.textContent.toLowerCase().trim();
+                    
+                    // Update body data attribute for CSS targeting
+                    if (tabText.includes('calendar')) {
+                        document.body.setAttribute('data-tab', 'calendar');
+                    } else if (tabText.includes('chop')) {
+                        document.body.setAttribute('data-tab', 'chop');
+                    } else {
+                        document.body.setAttribute('data-tab', 'list');
+                    }
+                });
+            });
+        }
+
+        // Initialize on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(() => {
+                    roundAllCurrency();
+                    handleTabSwitch();
+                }, 100);
+            });
+        } else {
+            setTimeout(() => {
+                roundAllCurrency();
+                handleTabSwitch();
+            }, 100);
+        }
+
+        // Re-run rounding when content changes (for dynamic updates)
+        const observer = new MutationObserver(function(mutations) {
+            roundAllCurrency();
+        });
+
+        // Start observing when DOM is ready
+        if (document.body) {
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        }
+    </script>
 </body>
 </html>
