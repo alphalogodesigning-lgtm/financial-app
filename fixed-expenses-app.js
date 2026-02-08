@@ -30,6 +30,7 @@ const formatCurrency = (value) => {
             });
             const [draggedItem, setDraggedItem] = useState(null);
             const [viewMode, setViewMode] = useState('list');
+            const [selectedDay, setSelectedDay] = useState(null);
 
             useEffect(() => {
                 let isMounted = true;
@@ -305,13 +306,16 @@ const formatCurrency = (value) => {
                         <div className="card">
                             <h2 className="card-title">Monthly Payment Calendar</h2>
                             <div className="calendar">
-                                {calendarDays.map(({ day, expenses: dayExpenses, total }) => (
+                                {calendarDays.map(({ day, expenses: dayExpenses, total }) => {
+                                    const isSelected = selectedDay === day;
+                                    return (
                                     <div 
                                         key={day}
-                                        className={`calendar-day ${dayExpenses.length > 0 ? 'has-expense' : ''}`}
+                                        className={`calendar-day ${dayExpenses.length > 0 ? 'has-expense' : ''} ${isSelected ? 'is-selected' : ''}`}
+                                        onClick={() => setSelectedDay(isSelected ? null : day)}
                                     >
                                         <div className="day-number">{day}</div>
-                                        {dayExpenses.length > 0 && (
+                                        {dayExpenses.length > 0 && isSelected && (
                                             <div className="day-expenses">
                                                 {dayExpenses.map(exp => (
                                                     <div key={exp.id} style={{ fontSize: '0.65rem', marginBottom: '2px' }}>
@@ -324,7 +328,8 @@ const formatCurrency = (value) => {
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                );
+                                })}
                             </div>
                         </div>
                     )}
