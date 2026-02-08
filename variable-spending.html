@@ -540,7 +540,7 @@
         /* Regret toggle */
         .regret-toggle {
             position: absolute;
-            top: 20px;
+            bottom: 20px;
             right: 20px;
             background: rgba(255, 107, 107, 0.1);
             border: 1px solid rgba(255, 107, 107, 0.3);
@@ -553,6 +553,7 @@
             font-size: 0.8125rem;
             font-weight: 700;
             backdrop-filter: blur(10px);
+            z-index: 10;
         }
 
         .expense-item:hover .regret-toggle {
@@ -571,23 +572,28 @@
             gap: 10px;
             flex-wrap: wrap;
             margin-bottom: 24px;
+            padding: 6px;
+            background: rgba(26, 26, 26, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .category-filter {
             padding: 10px 20px;
-            background: rgba(26, 26, 26, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
             color: #888;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 700;
             font-size: 0.875rem;
-            backdrop-filter: blur(10px);
+            text-transform: capitalize;
         }
 
         .category-filter:hover {
-            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.1);
             color: #D4AF37;
             transform: translateY(-2px);
         }
@@ -595,7 +601,6 @@
         .category-filter.active {
             background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
             color: #0a0a0a;
-            border-color: #D4AF37;
             box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
         }
 
