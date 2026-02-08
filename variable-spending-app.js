@@ -1,6 +1,12 @@
 const { useState, useEffect } = React;
 
-const {\n    loadBudgetData,\n    saveBudgetData,\n    getInitialData,\n    CATEGORY_LIST,\n    calculateVariableSummary\n} = window.AppShared;
+const {
+    loadBudgetData,
+    saveBudgetData,
+    getInitialData,
+    CATEGORY_LIST,
+    calculateVariableSummary
+} = window.AppShared;
 
         function VariableSpending() {
             const [data, setData] = useState(getInitialData('variable-spending'));
@@ -51,8 +57,8 @@ const {\n    loadBudgetData,\n    saveBudgetData,\n    getInitialData,\n    CATE
 
             // Sort by date (newest first)
             const sortedExpenses = [...filteredExpenses].sort((a, b) => {
-                const dateA = new Date(`RM{a.date} RM{a.time}`);
-                const dateB = new Date(`RM{b.date} RM{b.time}`);
+                const dateA = new Date(`${a.date} ${a.time}`);
+                const dateB = new Date(`${b.date} ${b.time}`);
                 return dateB - dateA;
             });
 
@@ -221,19 +227,19 @@ const {\n    loadBudgetData,\n    saveBudgetData,\n    getInitialData,\n    CATE
 
                     {/* View Mode Tabs */}
                     <div className="nav-tabs">
-                        <button className={`nav-tab RM{viewMode === 'all' ? 'active' : ''}`} onClick={() => setViewMode('all')}>
+                        <button className={`nav-tab ${viewMode === 'all' ? 'active' : ''}`} onClick={() => setViewMode('all')}>
                             📋 All Expenses
                         </button>
-                        <button className={`nav-tab RM{viewMode === 'heatmap' ? 'active' : ''}`} onClick={() => setViewMode('heatmap')}>
+                        <button className={`nav-tab ${viewMode === 'heatmap' ? 'active' : ''}`} onClick={() => setViewMode('heatmap')}>
                             🔥 Spending Heatmap
                         </button>
-                        <button className={`nav-tab RM{viewMode === 'merchants' ? 'active' : ''}`} onClick={() => setViewMode('merchants')}>
+                        <button className={`nav-tab ${viewMode === 'merchants' ? 'active' : ''}`} onClick={() => setViewMode('merchants')}>
                             🏪 Merchant Frequency
                         </button>
-                        <button className={`nav-tab RM{viewMode === 'regrets' ? 'active' : ''}`} onClick={() => setViewMode('regrets')}>
+                        <button className={`nav-tab ${viewMode === 'regrets' ? 'active' : ''}`} onClick={() => setViewMode('regrets')}>
                             😬 Regret Tracker
                         </button>
-                        <button className={`nav-tab RM{viewMode === 'compare' ? 'active' : ''}`} onClick={() => setViewMode('compare')}>
+                        <button className={`nav-tab ${viewMode === 'compare' ? 'active' : ''}`} onClick={() => setViewMode('compare')}>
                             📊 Comparison
                         </button>
                     </div>
@@ -263,7 +269,7 @@ const {\n    loadBudgetData,\n    saveBudgetData,\n    getInitialData,\n    CATE
                         <>
                             <div className="category-pills">
                                 <button 
-                                    className={`category-pill RM{filterCategory === 'all' ? 'active' : ''}`}
+                                    className={`category-pill ${filterCategory === 'all' ? 'active' : ''}`}
                                     onClick={() => setFilterCategory('all')}
                                 >
                                     All
@@ -271,7 +277,7 @@ const {\n    loadBudgetData,\n    saveBudgetData,\n    getInitialData,\n    CATE
                                 {CATEGORY_LIST.map(cat => (
                                     <button 
                                         key={cat}
-                                        className={`category-pill RM{filterCategory === cat ? 'active' : ''}`}
+                                        className={`category-pill ${filterCategory === cat ? 'active' : ''}`}
                                         onClick={() => setFilterCategory(cat)}
                                     >
                                         {cat}
@@ -289,7 +295,7 @@ const {\n    loadBudgetData,\n    saveBudgetData,\n    getInitialData,\n    CATE
                                     sortedExpenses.map(expense => (
                                         <div 
                                             key={expense.id}
-                                            className={`expense-item RM{expense.regret ? 'regret' : ''}`}
+                                            className={`expense-item ${expense.regret ? 'regret' : ''}`}
                                             onClick={() => handleEditExpense(expense)}
                                         >
                                             {expense.photo ? (
@@ -318,7 +324,7 @@ const {\n    loadBudgetData,\n    saveBudgetData,\n    getInitialData,\n    CATE
                                                 </div>
                                             </div>
                                             <button 
-                                                className={`regret-toggle RM{expense.regret ? 'active' : ''}`}
+                                                className={`regret-toggle ${expense.regret ? 'active' : ''}`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     toggleRegret(expense.id);
@@ -344,7 +350,7 @@ const {\n    loadBudgetData,\n    saveBudgetData,\n    getInitialData,\n    CATE
                                 {heatmapData.map((day, index) => (
                                     <div 
                                         key={index}
-                                        className={`heatmap-cell level-RM{getHeatLevel(day.total)}`}
+                                        className={`heatmap-cell level-${getHeatLevel(day.total)}`}
                                     >
                                         <div className="day-label">{day.day}</div>
                                         {day.total > 0 && (
