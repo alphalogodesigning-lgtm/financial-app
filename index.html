@@ -77,6 +77,16 @@
             gap: 16px;
         }
 
+        .greeting {
+            margin: -12px 0 24px;
+        }
+
+        .greeting-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
         .header-title {
             font-size: 2rem;
             font-weight: 800;
@@ -729,6 +739,7 @@
                 category: 'Food',
                 date: new Date().toISOString().split('T')[0]
             });
+            const userName = '';
 
             useEffect(() => {
                 let isMounted = true;
@@ -765,6 +776,22 @@
             const remaining = income - totalSpent;
             const daysInMonth = 30;
             const today = new Date().getDate();
+            const greetingText = (() => {
+                const hour = new Date().getHours();
+                if (hour >= 0 && hour < 5) {
+                    return `Get some sleep${userName ? `, ${userName}` : ''}`;
+                }
+                if (hour < 12) {
+                    return `Good Morning${userName ? ` ${userName}` : ''}`;
+                }
+                if (hour < 17) {
+                    return `Good Afternoon${userName ? ` ${userName}` : ''}`;
+                }
+                if (hour < 21) {
+                    return `Good Evening${userName ? ` ${userName}` : ''}`;
+                }
+                return `Good Night${userName ? ` ${userName}` : ''}`;
+            })();
 
             // Fixed expenses are recurring commitments and must always form baseline burn.
             const baselineDailyBurn = totalFixed / daysInMonth;
@@ -863,6 +890,10 @@
                         <a href="projections.html" className="nav-link">🔮 Projections</a>
                         <a href="insights.html" className="nav-link">🧠 Insights</a>
                     </nav>
+
+                    <div className="greeting">
+                        <p className="greeting-text">{greetingText}</p>
+                    </div>
 
                     {/* Header */}
                     <div className="header">
