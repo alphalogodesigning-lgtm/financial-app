@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js"></script>
+    <script src="./app-shared.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
@@ -82,7 +83,6 @@
         }
 
         .greeting-text {
-<<<<<<< codex/add-personalized-greeting-feature
             font-size: 1.5rem;
             font-weight: 700;
             letter-spacing: -0.01em;
@@ -94,13 +94,7 @@
             font-weight: 800;
         }
 
-=======
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #fff;
-        }
-
->>>>>>> main
+        main
         .header-title {
             font-size: 2rem;
             font-weight: 800;
@@ -571,229 +565,7 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        const { supabaseClient, STORAGE_TABLE, waitForAuthSession } = window.SUPABASE_CONFIG;
-
-        const redirectToAuth = () => {
-            if (!window.location.pathname.endsWith('/auth.html') && !window.location.pathname.endsWith('auth.html')) {
-                window.location.replace('auth.html');
-            }
-        };
-
-        const resolveAuthSession = async () => {
-            if (!supabaseClient) return null;
-            const { data, error } = await supabaseClient.auth.getSession();
-            if (error) throw error;
-            if (data?.session) return data.session;
-            const refreshed = await supabaseClient.auth.refreshSession();
-            if (refreshed?.data?.session) return refreshed.data.session;
-            return waitForAuthSession();
-        };
-
-        const getAuthenticatedUser = async () => {
-            if (!supabaseClient) return null;
-            const session = await resolveAuthSession();
-            return session?.user || null;
-        };
-
-        const loadBudgetData = async () => {
-            const fallback = localStorage.getItem('budgetTrackerData');
-            if (!supabaseClient) {
-                return fallback ? JSON.parse(fallback) : null;
-            }
-            try {
-                const user = await getAuthenticatedUser();
-                if (!user) {
-                    redirectToAuth();
-                    return fallback ? JSON.parse(fallback) : null;
-                }
-                const { data, error } = await supabaseClient
-                    .from(STORAGE_TABLE)
-                    .select('data')
-                    .eq('user_id', user.id)
-                    .maybeSingle();
-                if (error) throw error;
-                if (data?.data) {
-                    localStorage.setItem('budgetTrackerData', JSON.stringify(data.data));
-                    return data.data;
-                }
-            } catch (err) {
-                console.warn('Supabase load failed, using local data.', err);
-            }
-            return fallback ? JSON.parse(fallback) : null;
-        };
-
-        const saveBudgetData = async (nextData) => {
-            localStorage.setItem('budgetTrackerData', JSON.stringify(nextData));
-            if (!supabaseClient) return;
-            try {
-                const user = await getAuthenticatedUser();
-                if (!user) {
-                    redirectToAuth();
-                    return;
-                }
-                const { error } = await supabaseClient
-                    .from(STORAGE_TABLE)
-                    .upsert({
-                        user_id: user.id,
-                        data: nextData,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'user_id' });
-                if (error) throw error;
-            } catch (err) {
-                console.warn('Supabase save failed, kept local data.', err);
-            }
-        };
-
-        const CATEGORIES = {
-            'Food': { color: '#66BB6A' },
-            'Transport': { color: '#89ABE3' },
-            'Shopping': { color: '#D4AF37' },
-            'Entertainment': { color: '#9C27B0' },
-            'Health': { color: '#FF6B6B' },
-            'Other': { color: '#888' }
-        };
-
-        const INITIAL_DATA = {
-            income: 5000,
-            fixedExpenses: [
-                { id: 1, name: 'Rent', amount: 1200, dueDate: 1, category: 'Housing', mood: 'necessary', status: 'pending' },
-                { id: 2, name: 'Internet', amount: 60, dueDate: 5, category: 'Utilities', mood: 'necessary', status: 'charged' },
-                { id: 3, name: 'Phone', amount: 45, dueDate: 10, category: 'Utilities', mood: 'necessary', status: 'charged' },
-                { id: 4, name: 'Gym', amount: 50, dueDate: 15, category: 'Health', mood: 'worth', status: 'pending' },
-                { id: 5, name: 'Netflix', amount: 15, dueDate: 20, category: 'Entertainment', mood: 'neutral', status: 'charged' },
-                { id: 6, name: 'Spotify', amount: 10, dueDate: 22, category: 'Entertainment', mood: 'worth', status: 'charged' },
-            ],
-            variableExpenses: [
-                { id: 1, name: 'Groceries', amount: 85, date: '2026-02-01', time: '18:00', category: 'Food', merchant: 'Whole Foods', regret: false, notes: '', photo: null },
-                { id: 2, name: 'Coffee', amount: 6, date: '2026-01-31', time: '08:30', category: 'Food', merchant: 'Starbucks', regret: false, notes: '', photo: null },
-                { id: 3, name: 'Dinner', amount: 45, date: '2026-01-30', time: '19:30', category: 'Food', merchant: 'Restaurant', regret: false, notes: '', photo: null },
-                { id: 4, name: 'Gas', amount: 50, date: '2026-01-29', time: '16:00', category: 'Transport', merchant: 'Shell', regret: false, notes: '', photo: null },
-                { id: 5, name: 'Shopping', amount: 120, date: '2026-01-28', time: '14:00', category: 'Shopping', merchant: 'Amazon', regret: true, notes: 'Impulse buy', photo: null },
-            ],
-            streak: 12
-        };
-
-        function ProgressRing({ progress, size = 120, strokeWidth = 8, color = '#D4AF37' }) {
-            const safeProgress = Number.isFinite(progress) ? Math.min(Math.max(progress, 0), 100) : 0;
-            const radius = (size - strokeWidth) / 2;
-            const circumference = radius * 2 * Math.PI;
-            const offset = circumference - (safeProgress / 100) * circumference;
-
-            return (
-                <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-                    <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={radius}
-                        stroke="#2a2a2a"
-                        strokeWidth={strokeWidth}
-                        fill="none"
-                    />
-                    <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={radius}
-                        stroke={color}
-                        strokeWidth={strokeWidth}
-                        fill="none"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={offset}
-                        strokeLinecap="round"
-                        style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                    />
-                </svg>
-            );
-        }
-
-        function BarChart({ data }) {
-            // Avoid division by 0 / NaN when there's no spending yet
-            const maxValue = Math.max(1, ...data.map(d => d.amount));
-            
-            return (
-                <div className="chart-container">
-                    {data.map((item, index) => (
-                        <div key={index} className="chart-bar">
-                            <div 
-                                className="bar" 
-                                style={{ 
-                                    height: `${(item.amount / maxValue) * 200}px`,
-                                    minHeight: item.amount > 0 ? '20px' : '0px'
-                                }}
-                            >
-                                {item.amount > 0 && (
-                                    <span className="bar-value">RM{item.amount}</span>
-                                )}
-                            </div>
-                            <span className="bar-label">{item.day}</span>
-                        </div>
-                    ))}
-                </div>
-            );
-        }
-
-
-        const CLEAN_STATE = {
-            income: 0,
-            fixedExpenses: [],
-            variableExpenses: [],
-            streak: 0,
-            categoryBudgets: {}
-        };
-
-        function Dashboard() {
-            const [data, setData] = useState(CLEAN_STATE);
-            const [isHydrated, setIsHydrated] = useState(false);
-            const [modalOpen, setModalOpen] = useState(false);
-            const [newExpense, setNewExpense] = useState({
-                name: '',
-                amount: '',
-                category: 'Food',
-                date: new Date().toISOString().split('T')[0]
-            });
-            const userName = '';
-
-            useEffect(() => {
-                let isMounted = true;
-                loadBudgetData().then((saved) => {
-                    if (!isMounted) return;
-                    if (saved) {
-                        setData(saved);
-                    }
-                    setIsHydrated(true);
-                });
-                return () => {
-                    isMounted = false;
-                };
-            }, []);
-
-            useEffect(() => {
-                if (!isHydrated) return;
-                saveBudgetData(data);
-            }, [data, isHydrated]);
-
-            const START_MESSAGE = "Set income to begin";
-
-            const income = Number.isFinite(data.income) ? data.income : 0;
-            const incomeSet = income > 0;
-
-            const toAmount = (value) => {
-                const parsed = Number(value);
-                return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-            };
-
-            const totalFixed = (data.fixedExpenses || []).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
-            const totalVariable = (data.variableExpenses || []).reduce((sum, exp) => sum + toAmount(exp.amount), 0);
-            const totalSpent = totalFixed + totalVariable;
-            const remaining = income - totalSpent;
-            const daysInMonth = 30;
-            const today = new Date().getDate();
-            const greetingText = (() => {
-                const hour = new Date().getHours();
-                if (hour >= 0 && hour < 5) {
-<<<<<<< codex/add-personalized-greeting-feature
+    <script type="text/babel" src="./index-app.js"></script>
                     return 'Get some sleep';
                 }
                 if (hour < 12) {
@@ -806,7 +578,7 @@
                     return 'Good Evening';
                 }
                 return 'Good Night';
-=======
+
                     return `Get some sleep${userName ? `, ${userName}` : ''}`;
                 }
                 if (hour < 12) {
@@ -819,7 +591,6 @@
                     return `Good Evening${userName ? ` ${userName}` : ''}`;
                 }
                 return `Good Night${userName ? ` ${userName}` : ''}`;
->>>>>>> main
             })();
 
             // Fixed expenses are recurring commitments and must always form baseline burn.
@@ -921,7 +692,6 @@
                     </nav>
 
                     <div className="greeting">
-<<<<<<< codex/add-personalized-greeting-feature
                         <p className="greeting-text">
                             {greetingText}
                             {userName && (
@@ -931,9 +701,6 @@
                                 </>
                             )}
                         </p>
-=======
-                        <p className="greeting-text">{greetingText}</p>
->>>>>>> main
                     </div>
 
                     {/* Header */}
@@ -1134,5 +901,6 @@
 
         ReactDOM.render(<Dashboard />, document.getElementById('root'));
     </script>
+ main
 </body>
 </html>
