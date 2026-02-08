@@ -31,6 +31,7 @@ const formatCurrency = (value) => {
             const [draggedItem, setDraggedItem] = useState(null);
             const [viewMode, setViewMode] = useState('list');
             const [selectedDay, setSelectedDay] = useState(null);
+            const [calendarModalOpen, setCalendarModalOpen] = useState(false);
 
             useEffect(() => {
                 let isMounted = true;
@@ -307,26 +308,19 @@ const formatCurrency = (value) => {
                             <h2 className="card-title">Monthly Payment Calendar</h2>
                             <div className="calendar">
                                 {calendarDays.map(({ day, expenses: dayExpenses, total }) => {
-                                    const isSelected = selectedDay === day;
                                     return (
                                     <div 
                                         key={day}
-                                        className={`calendar-day ${dayExpenses.length > 0 ? 'has-expense' : ''} ${isSelected ? 'is-selected' : ''}`}
-                                        onClick={() => setSelectedDay(isSelected ? null : day)}
+                                        className={`calendar-day ${dayExpenses.length > 0 ? 'has-expense' : ''}`}
+                                        onClick={() => {
+                                            if (dayExpenses.length === 0) {
+                                                return;
+                                            }
+                                            setSelectedDay(day);
+                                            setCalendarModalOpen(true);
+                                        }}
                                     >
                                         <div className="day-number">{day}</div>
-                                        {dayExpenses.length > 0 && isSelected && (
-                                            <div className="day-expenses">
-                                                {dayExpenses.map(exp => (
-                                                    <div key={exp.id} style={{ fontSize: '0.65rem', marginBottom: '2px' }}>
-                                                        {exp.name}: RM{formatCurrency(exp.amount)}
-                                                    </div>
-                                                ))}
-                                                <div className="day-total" style={{ fontWeight: '700', marginTop: '4px' }}>
-                                                    Total: RM{formatCurrency(total)}
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 );
                                 })}
@@ -431,6 +425,41 @@ const formatCurrency = (value) => {
                                     setEditingExpense(null);
                                 }}>
                                     Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        className={`modal ${calendarModalOpen ? 'active' : ''}`}
+                        onClick={(e) => e.target.className.includes('modal') && setCalendarModalOpen(false)}
+                    >
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <h2 className="modal-title">
+                                Day {selectedDay || ''} Expenses
+                            </h2>
+                            {selectedDay !== null && (
+                                <div className="calendar-day-details">
+                                    {expenses
+                                        .filter(exp => exp.dueDate === selectedDay)
+                                        .map(exp => (
+                                            <div key={exp.id} className="calendar-expense-row">
+                                                <span>{exp.name}</span>
+                                                <span>RM{formatCurrency(exp.amount)}</span>
+                                            </div>
+                                        ))}
+                                    <div className="calendar-expense-total">
+                                        Total: RM{formatCurrency(
+                                            expenses
+                                                .filter(exp => exp.dueDate === selectedDay)
+                                                .reduce((sum, exp) => sum + exp.amount, 0)
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="btn-row">
+                                <button className="btn-secondary" onClick={() => setCalendarModalOpen(false)}>
+                                    Close
                                 </button>
                             </div>
                         </div>
