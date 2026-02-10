@@ -71,13 +71,50 @@ function Dashboard() {
   const [data, setData] = useState(CLEAN_STATE);
   const [isHydrated, setIsHydrated] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [activeSettingsTab, setActiveSettingsTab] = useState('account');
+  const [profile, setProfile] = useState({
+    fullName: 'You',
+    email: 'Not connected',
+    avatarUrl: ''
+  });
   const [newExpense, setNewExpense] = useState({
     name: '',
     amount: '',
     category: 'Food',
     date: new Date().toISOString().split('T')[0]
   });
-  const userName = '';
+  const userName = profile.fullName || '';
+
+  useEffect(() => {
+    let active = true;
+    const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
+    if (!supabaseClient) return () => {
+      active = false;
+    };
+
+    supabaseClient.auth.getUser().then(({ data: authData }) => {
+      if (!active || !authData?.user) return;
+      const user = authData.user;
+      setProfile({
+        fullName: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'You',
+        email: user.email || 'Not connected',
+        avatarUrl: user.user_metadata?.avatar_url || ''
+      });
+    }).catch(() => {
+      if (!active) return;
+      setProfile((prev) => ({
+        ...prev,
+        fullName: prev.fullName || 'You',
+        email: prev.email || 'Not connected'
+      }));
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -201,6 +238,26 @@ function Dashboard() {
     setModalOpen(false);
   };
 
+  const openSettings = () => {
+    setProfileMenuOpen(false);
+    setSettingsOpen(true);
+  };
+
+  const handleLogout = async () => {
+    const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
+    if (supabaseClient) {
+      await supabaseClient.auth.signOut();
+    }
+    window.location.href = 'auth.html';
+  };
+
+  const handleDeleteAllData = async () => {
+    const confirmed = window.confirm('This will clear all local budget data from this browser. Continue?');
+    if (!confirmed) return;
+    localStorage.removeItem('budgetTrackerData');
+    window.location.reload();
+  };
+
   return (
     <div className="container">
       {/* Navigation */}
@@ -230,8 +287,29 @@ function Dashboard() {
           <h1 className="header-title">Command Center</h1>
           <p className="header-subtitle">Your financial overview at a glance</p>
         </div>
-        <div className="streak-badge">
-          🔥 {data.streak} day streak
+        <div className="header-actions">
+          <div className="streak-badge">
+            🔥 {data.streak} day streak
+          </div>
+          <div className="profile-menu-wrapper">
+            <button
+              className="profile-button"
+              onClick={() => setProfileMenuOpen((prev) => !prev)}
+              aria-label="Open profile and settings"
+            >
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Profile" className="profile-avatar" />
+              ) : (
+                <span>{(profile.fullName || 'Y').slice(0, 1).toUpperCase()}</span>
+              )}
+            </button>
+            {profileMenuOpen && (
+              <div className="profile-menu-dropdown">
+                <button className="profile-menu-item" onClick={openSettings}>⚙️ Settings & profile</button>
+                <button className="profile-menu-item" onClick={handleLogout}>↩ Log out</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -279,6 +357,73 @@ function Dashboard() {
           <div className="metric-value green-text">RM{dailyBurnRate.toFixed(2)}</div>
           <div className="metric-label">Daily Burn Rate</div>
           <div className="metric-subtext">Average per day</div>
+        </div>
+      </div>
+
+      <div className={`modal ${settingsOpen ? 'active' : ''}`}>
+        <div className="modal-content settings-modal">
+          <h2 className="modal-title">Settings & profile</h2>
+          <div className="settings-tabs">
+            <button
+              className={`settings-tab ${activeSettingsTab === 'account' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('account')}
+            >
+              Account details
+            </button>
+            <button
+              className={`settings-tab ${activeSettingsTab === 'subscription' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('subscription')}
+            >
+              Subscription plan
+            </button>
+            <button
+              className={`settings-tab ${activeSettingsTab === 'danger' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('danger')}
+            >
+              Danger zone
+            </button>
+          </div>
+
+          <div className="settings-panel">
+            {activeSettingsTab === 'account' && (
+              <div>
+                <div className="account-summary">
+                  <div className="profile-button profile-button-large" aria-hidden="true">
+                    {profile.avatarUrl ? (
+                      <img src={profile.avatarUrl} alt="Profile" className="profile-avatar" />
+                    ) : (
+                      <span>{(profile.fullName || 'Y').slice(0, 1).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div>
+                    <div className="account-name">{profile.fullName}</div>
+                    <div className="account-email">{profile.email}</div>
+                  </div>
+                </div>
+                <p className="account-note">Profile editing will be connected as account management grows.</p>
+              </div>
+            )}
+
+            {activeSettingsTab === 'subscription' && (
+              <div className="settings-placeholder">
+                <h3>Subscription plans (coming soon)</h3>
+                <p>This tab is ready. Stripe + plan controls will go here once plans are live.</p>
+              </div>
+            )}
+
+            {activeSettingsTab === 'danger' && (
+              <div className="settings-placeholder danger-panel">
+                <h3>Danger zone</h3>
+                <p>These actions are irreversible. Be careful.</p>
+                <button className="btn-secondary danger-btn" onClick={handleDeleteAllData}>Clear local data</button>
+                <button className="btn-secondary danger-btn" onClick={handleLogout}>Log out</button>
+              </div>
+            )}
+          </div>
+
+          <div className="btn-row">
+            <button className="btn-secondary" onClick={() => setSettingsOpen(false)}>Close</button>
+          </div>
         </div>
       </div>
 
