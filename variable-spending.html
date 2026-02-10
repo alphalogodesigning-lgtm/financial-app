@@ -1068,7 +1068,111 @@
         .stat-card:nth-child(4) { animation-delay: 0.2s; }
 
         .heatmap-cell:nth-child(n) { animation-delay: calc(0.02s * var(--cell-index, 0)); }
-    </style>
+
+        /* ============================================================
+           MOBILE PERFORMANCE — ≤640px
+           Kills: backdrop-filter, stagger animations, large shadows,
+           heatmap cell animations, hover transforms, ::before glows.
+           ============================================================ */
+        @media (max-width: 640px) {
+
+            /* 1. Kill ALL entrance animations */
+            .stat-card, .card, .expense-item, .heatmap-cell {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+
+            /* 2. Kill heatmap cell stagger — 35 cells × CSS anim = jank */
+            .heatmap-cell:nth-child(n) { animation-delay: 0s; }
+
+            /* 3. Remove every backdrop-filter */
+            .main-nav,
+            .nav-tabs,
+            .card,
+            .stat-card,
+            .expense-item,
+            .heatmap-cell,
+            .tag,
+            .category-filter,
+            .modal,
+            .modal-content,
+            .regret-toggle,
+            .delete-btn,
+            .photo-upload {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+            }
+
+            /* 4. Solid backgrounds */
+            .main-nav        { background: #1a1a1a; box-shadow: none; }
+            .nav-tabs        { background: #161616; }
+            .card            { background: #1a1a1a; box-shadow: none; border-color: rgba(255,255,255,0.08); }
+            .stat-card       { box-shadow: none; }
+            .stat-card:nth-child(1) { background: #161410; }
+            .stat-card:nth-child(2) { background: #161010; }
+            .stat-card:nth-child(3) { background: #101316; }
+            .stat-card:nth-child(4) { background: #101610; }
+            .expense-item    { background: #111; box-shadow: none; }
+            .expense-item.regret { box-shadow: none; }
+            .heatmap-cell    { backdrop-filter: none; }
+            .modal           { background: rgba(0,0,0,0.9); }
+            .modal-content   { background: #1a1a1a; box-shadow: none; }
+
+            /* 5. Kill ::before left-border glow layers */
+            .expense-item::before       { display: none; }
+            .expense-item.regret::before { display: none; }
+            .stat-card::before          { display: none; }
+            .heatmap-cell::before       { display: none; }
+
+            /* 6. Disable all hover transforms */
+            .stat-card:hover,
+            .card:hover,
+            .expense-item:hover,
+            .heatmap-cell:hover,
+            .expense-photo,
+            .expense-item:hover .expense-photo,
+            .tag:hover,
+            .category-filter:hover,
+            .merchant-item:hover,
+            .chop-item:hover,
+            .btn-primary:hover,
+            .btn-secondary:hover,
+            .quick-add-btn:hover,
+            .regret-toggle:hover,
+            .delete-btn:hover {
+                transform: none !important;
+                box-shadow: none;
+            }
+            .stat-card:hover::before  { opacity: 0; }
+            .expense-item:hover::before { opacity: 0; }
+            .heatmap-cell:hover::before { opacity: 0; }
+
+            /* 7. Heatmap cells — keep colour levels, drop shadows */
+            .heatmap-cell.level-1 { box-shadow: none; }
+            .heatmap-cell.level-2 { box-shadow: none; }
+            .heatmap-cell.level-3 { box-shadow: none; }
+            .heatmap-cell.level-4 { box-shadow: none; }
+            .heatmap-cell.level-5 { box-shadow: none; }
+
+            /* 8. Slim transitions */
+            .nav-tab, .expense-item, .heatmap-cell, .category-filter {
+                transition: opacity 0.15s ease, color 0.15s ease;
+            }
+
+            /* 9. Strip large box-shadows */
+            .nav-tab.active      { box-shadow: none; }
+            .nav-link.active     { box-shadow: none; }
+            .btn-primary         { box-shadow: none; }
+            .tag.regret          { box-shadow: none; }
+            .quick-add-btn       { box-shadow: 0 4px 12px rgba(212,175,55,0.3); }
+
+            /* 10. Regret items — simple left-border instead of glow */
+            .expense-item.regret {
+                border-left: 3px solid #FF6B6B;
+                border-color: rgba(255,107,107,0.4);
+            }
+        }
 </head>
 <body>
     <div id="root"></div>

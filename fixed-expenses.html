@@ -986,7 +986,86 @@
         .stat-card:nth-child(2) { animation-delay: 0.1s; }
         .stat-card:nth-child(3) { animation-delay: 0.15s; }
         .stat-card:nth-child(4) { animation-delay: 0.2s; }
-    </style>
+
+        /* ============================================================
+           MOBILE PERFORMANCE — ≤640px
+           Kills: backdrop-filter, entrance animations, large shadows,
+           hover transforms, ::before/::after glow layers on cards.
+           ============================================================ */
+        @media (max-width: 640px) {
+
+            /* 1. Kill entrance animations */
+            .stat-card, .card, .expense-card { animation: none; opacity: 1; transform: none; }
+
+            /* 2. Remove all backdrop-filter blurs */
+            .main-nav,
+            .nav-tabs,
+            .card,
+            .stat-card,
+            .expense-card,
+            .modal,
+            .modal-content,
+            .mood-btn,
+            .status-btn,
+            .delete-btn {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+            }
+
+            /* 3. Solid backgrounds */
+            .main-nav      { background: #1a1a1a; box-shadow: none; }
+            .nav-tabs      { background: #161616; }
+            .card          { background: #1a1a1a; box-shadow: none; border-color: rgba(255,255,255,0.08); }
+            .stat-card     { box-shadow: none; }
+            .expense-card  { background: #111; box-shadow: none; }
+            .modal         { background: rgba(0,0,0,0.9); }
+            .modal-content { background: #1a1a1a; box-shadow: none; }
+
+            /* 4. Kill ::before glow layers on cards */
+            .stat-card::before,
+            .expense-card::before { display: none; }
+
+            /* 5. Disable hover transforms */
+            .stat-card:hover,
+            .card:hover,
+            .expense-card:hover,
+            .nav-link:hover,
+            .calendar-day:hover,
+            .mood-btn:hover,
+            .status-btn:hover,
+            .chop-item:hover,
+            .btn-primary:hover,
+            .btn-secondary:hover,
+            .quick-add-btn:hover {
+                transform: none !important;
+                box-shadow: none;
+            }
+            .stat-card:hover::before,
+            .expense-card:hover::before { opacity: 0; }
+
+            /* 6. Slim transitions */
+            .nav-tab, .expense-card, .calendar-day, .mood-btn, .status-btn {
+                transition: opacity 0.15s ease, color 0.15s ease;
+            }
+
+            /* 7. Strip large box-shadows */
+            .nav-tab.active      { box-shadow: none; }
+            .nav-link.active     { box-shadow: none; }
+            .btn-primary         { box-shadow: none; }
+            .status-btn.active.charged  { box-shadow: none; }
+            .status-btn.active.pending  { box-shadow: none; }
+            .mood-btn.necessary,
+            .mood-btn.worth,
+            .mood-btn.neutral    { box-shadow: none; }
+            .quick-add-btn       { box-shadow: 0 4px 12px rgba(212,175,55,0.3); }
+
+            /* 8. Calendar — lighter cells */
+            .calendar-day {
+                background: #111;
+                box-shadow: none;
+            }
+            .calendar-day.has-expense { box-shadow: none; }
+        }
 </head>
 <body>
     <div id="root"></div>

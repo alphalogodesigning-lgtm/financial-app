@@ -1089,6 +1089,74 @@
         .stat-card:nth-child(3) { animation-delay: 0.15s; }
         .stat-card:nth-child(4) { animation-delay: 0.2s; }
 
+        /* ============================================================
+           MOBILE PERFORMANCE — ≤640px
+           Kills: backdrop-filter, infinite pulse anims, large shadows,
+           hover transforms, ::before/::after glow layers.
+           Keeps: colours, gradients, typography, layout.
+           ============================================================ */
+        @media (max-width: 640px) {
+
+            /* 1. Kill all infinite pulse animations + their elements */
+            .stat-card::after { animation: none; display: none; }
+
+            /* 2. Kill entrance animations — just show immediately */
+            .stat-card, .card { animation: none; opacity: 1; transform: none; }
+
+            /* 3. Remove every backdrop-filter blur (GPU killer #1) */
+            .main-nav,
+            .card,
+            .stat-card,
+            .modal,
+            .greeting,
+            .modal-content {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+            }
+
+            /* 4. Solid backgrounds instead of translucent+blur */
+            .main-nav        { background: #1a1a1a; box-shadow: none; }
+            .card            { background: #1a1a1a; box-shadow: none; border-color: rgba(255,255,255,0.08); }
+            .stat-card       { box-shadow: none; }
+            .stat-card:nth-child(1) { background: #161410; }
+            .stat-card:nth-child(2) { background: #101316; }
+            .stat-card:nth-child(3) { background: #161010; }
+            .stat-card:nth-child(4) { background: #101610; }
+            .greeting        { background: rgba(212,175,55,0.08); }
+            .modal           { background: rgba(0,0,0,0.9); }
+            .modal-content   { background: #1a1a1a; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+
+            /* 5. Kill ::before glow lines — extra paint layers */
+            .stat-card::before { display: none; }
+            .stat-card:hover::before { opacity: 0; }
+
+            /* 6. Disable all hover transforms — no hover on touch */
+            .stat-card:hover,
+            .card:hover,
+            .nav-link:hover,
+            .expense-item:hover,
+            .bar:hover,
+            .streak-badge:hover,
+            .btn-primary:hover,
+            .btn-secondary:hover,
+            .quick-add-btn:hover {
+                transform: none !important;
+                box-shadow: none;
+            }
+
+            /* 7. Slim down transitions — only fast opacity/color */
+            .nav-link, .expense-item, .category-fill {
+                transition: opacity 0.15s ease, color 0.15s ease;
+            }
+
+            /* 8. Strip large box-shadows */
+            .nav-link.active  { box-shadow: none; }
+            .btn-primary      { box-shadow: none; }
+            .streak-badge     { box-shadow: none; }
+            .category-fill    { box-shadow: none; }
+            .quick-add-btn    { box-shadow: 0 4px 12px rgba(212,175,55,0.3); }
+        }
+
         /* ── MOBILE-ONLY: Settings & Profile modal ─────────────────────── */
         @media (max-width: 640px) {
 
