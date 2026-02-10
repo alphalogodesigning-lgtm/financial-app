@@ -579,137 +579,146 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className={`modal ${settingsOpen ? 'active' : ''}`}>
-        <div className="modal-content settings-modal">
-          <h2 className="modal-title">Settings & profile</h2>
-          <div className="settings-tabs">
-            <button
-              className={`settings-tab ${activeSettingsTab === 'account' ? 'active' : ''}`}
-              onClick={() => setActiveSettingsTab('account')}
-            >
-              Account details
-            </button>
-            <button
-              className={`settings-tab ${activeSettingsTab === 'subscription' ? 'active' : ''}`}
-              onClick={() => setActiveSettingsTab('subscription')}
-            >
-              Subscription plan
-            </button>
-            <button
-              className={`settings-tab ${activeSettingsTab === 'danger' ? 'active' : ''}`}
-              onClick={() => setActiveSettingsTab('danger')}
-            >
-              Danger zone
-            </button>
+      <div className={`modal ${settingsOpen ? 'active settings-active' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal')) setSettingsOpen(false); }}>
+        <div className="modal-content settings-modal" onClick={(e) => e.stopPropagation()}>
+
+          {/* ── Fixed header: title + tabs ── */}
+          <div className="settings-modal-header">
+            <h2 className="modal-title">Settings &amp; profile</h2>
+            <div className="settings-tabs">
+              <button
+                className={`settings-tab ${activeSettingsTab === 'account' ? 'active' : ''}`}
+                onClick={() => setActiveSettingsTab('account')}
+              >
+                Account
+              </button>
+              <button
+                className={`settings-tab ${activeSettingsTab === 'subscription' ? 'active' : ''}`}
+                onClick={() => setActiveSettingsTab('subscription')}
+              >
+                Subscription
+              </button>
+              <button
+                className={`settings-tab ${activeSettingsTab === 'danger' ? 'active' : ''}`}
+                onClick={() => setActiveSettingsTab('danger')}
+              >
+                Danger zone
+              </button>
+            </div>
           </div>
 
-          <div className="settings-panel">
-            {activeSettingsTab === 'account' && (
-              <div>
-                <div className="account-summary">
-                  <div className="profile-button profile-button-large" aria-hidden="true">
-                    {profile.avatarUrl ? (
-                      <img src={profile.avatarUrl} alt="Profile" className="profile-avatar" />
-                    ) : (
-                      <span>{(profile.fullName || 'Y').slice(0, 1).toUpperCase()}</span>
+          {/* ── Scrollable body ── */}
+          <div className="settings-modal-body">
+            <div className="settings-panel">
+              {activeSettingsTab === 'account' && (
+                <div>
+                  <div className="account-summary">
+                    <div className="profile-button profile-button-large" aria-hidden="true">
+                      {profile.avatarUrl ? (
+                        <img src={profile.avatarUrl} alt="Profile" className="profile-avatar" />
+                      ) : (
+                        <span>{(profile.fullName || 'Y').slice(0, 1).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div>
+                      <div className="account-name">{profile.fullName}</div>
+                      <div className="account-email">{profile.email}</div>
+                    </div>
+                  </div>
+                  <div className="account-editor">
+                    <div className="account-field">
+                      <label className="form-label" htmlFor="account-name-input">Name</label>
+                      <input
+                        id="account-name-input"
+                        type="text"
+                        value={accountForm.fullName}
+                        onChange={(event) => handleAccountFieldChange('fullName', event.target.value)}
+                        placeholder="Enter your display name"
+                        autoComplete="name"
+                        maxLength={80}
+                      />
+                      <button className="btn-primary account-action-btn" onClick={handleNameSave} disabled={isSavingName || isSavingPassword}>
+                        {isSavingName ? 'Saving...' : 'Save name'}
+                      </button>
+                    </div>
+
+                    <div className="account-field">
+                      <label className="form-label" htmlFor="account-email-input">Email</label>
+                      <input id="account-email-input" type="email" value={profile.email} disabled readOnly aria-readonly="true" />
+                      <p className="account-help-text">Email changes are disabled to protect your login and billing identity.</p>
+                    </div>
+
+                    <div className="account-field">
+                      <label className="form-label" htmlFor="account-current-password-input">Current password</label>
+                      <input
+                        id="account-current-password-input"
+                        type="password"
+                        value={accountForm.currentPassword}
+                        onChange={(event) => handleAccountFieldChange('currentPassword', event.target.value)}
+                        placeholder="Enter current password"
+                        autoComplete="current-password"
+                      />
+
+                      <label className="form-label" htmlFor="account-new-password-input">New password</label>
+                      <input
+                        id="account-new-password-input"
+                        type="password"
+                        value={accountForm.newPassword}
+                        onChange={(event) => handleAccountFieldChange('newPassword', event.target.value)}
+                        placeholder="Minimum 8 characters"
+                        autoComplete="new-password"
+                      />
+
+                      <label className="form-label" htmlFor="account-confirm-password-input">Confirm new password</label>
+                      <input
+                        id="account-confirm-password-input"
+                        type="password"
+                        value={accountForm.confirmPassword}
+                        onChange={(event) => handleAccountFieldChange('confirmPassword', event.target.value)}
+                        placeholder="Retype new password"
+                        autoComplete="new-password"
+                      />
+
+                      <button className="btn-primary account-action-btn" onClick={handlePasswordSave} disabled={isSavingName || isSavingPassword}>
+                        {isSavingPassword ? 'Updating...' : 'Change password'}
+                      </button>
+                    </div>
+
+                    {accountStatus.message && (
+                      <p className={`account-status account-status-${accountStatus.type || 'info'}`}>
+                        {accountStatus.message}
+                      </p>
                     )}
                   </div>
-                  <div>
-                    <div className="account-name">{profile.fullName}</div>
-                    <div className="account-email">{profile.email}</div>
+                </div>
+              )}
+
+              {activeSettingsTab === 'subscription' && (
+                <div className="settings-placeholder">
+                  <h3>Subscription plans (coming soon)</h3>
+                  <p>This tab is ready. Stripe + plan controls will go here once plans are live.</p>
+                </div>
+              )}
+
+              {activeSettingsTab === 'danger' && (
+                <div className="settings-placeholder">
+                  <h3>Danger zone</h3>
+                  <p>These actions are permanent. Be careful.</p>
+                  <div className="danger-actions">
+                    <button className="btn-secondary danger-btn" onClick={handleDeleteAllData}>Clear all budget data</button>
+                    <button className="btn-secondary danger-btn danger-btn-destructive" onClick={handleDeleteAccount}>Delete account</button>
+                    <button className="btn-secondary danger-btn" onClick={handleLogout}>Log out</button>
                   </div>
                 </div>
-                <div className="account-editor">
-                  <div className="account-field">
-                    <label className="form-label" htmlFor="account-name-input">Name</label>
-                    <input
-                      id="account-name-input"
-                      type="text"
-                      value={accountForm.fullName}
-                      onChange={(event) => handleAccountFieldChange('fullName', event.target.value)}
-                      placeholder="Enter your display name"
-                      autoComplete="name"
-                      maxLength={80}
-                    />
-                    <button className="btn-primary account-action-btn" onClick={handleNameSave} disabled={isSavingName || isSavingPassword}>
-                      {isSavingName ? 'Saving...' : 'Save name'}
-                    </button>
-                  </div>
-
-                  <div className="account-field">
-                    <label className="form-label" htmlFor="account-email-input">Email</label>
-                    <input id="account-email-input" type="email" value={profile.email} disabled readOnly aria-readonly="true" />
-                    <p className="account-help-text">Email changes are disabled to protect your login and billing identity.</p>
-                  </div>
-
-                  <div className="account-field">
-                    <label className="form-label" htmlFor="account-current-password-input">Current password</label>
-                    <input
-                      id="account-current-password-input"
-                      type="password"
-                      value={accountForm.currentPassword}
-                      onChange={(event) => handleAccountFieldChange('currentPassword', event.target.value)}
-                      placeholder="Enter current password"
-                      autoComplete="current-password"
-                    />
-
-                    <label className="form-label" htmlFor="account-new-password-input">New password</label>
-                    <input
-                      id="account-new-password-input"
-                      type="password"
-                      value={accountForm.newPassword}
-                      onChange={(event) => handleAccountFieldChange('newPassword', event.target.value)}
-                      placeholder="Minimum 8 characters"
-                      autoComplete="new-password"
-                    />
-
-                    <label className="form-label" htmlFor="account-confirm-password-input">Confirm new password</label>
-                    <input
-                      id="account-confirm-password-input"
-                      type="password"
-                      value={accountForm.confirmPassword}
-                      onChange={(event) => handleAccountFieldChange('confirmPassword', event.target.value)}
-                      placeholder="Retype new password"
-                      autoComplete="new-password"
-                    />
-
-                    <button className="btn-primary account-action-btn" onClick={handlePasswordSave} disabled={isSavingName || isSavingPassword}>
-                      {isSavingPassword ? 'Updating...' : 'Change password'}
-                    </button>
-                  </div>
-
-                  {accountStatus.message && (
-                    <p className={`account-status account-status-${accountStatus.type || 'info'}`}>
-                      {accountStatus.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeSettingsTab === 'subscription' && (
-              <div className="settings-placeholder">
-                <h3>Subscription plans (coming soon)</h3>
-                <p>This tab is ready. Stripe + plan controls will go here once plans are live.</p>
-              </div>
-            )}
-
-            {activeSettingsTab === 'danger' && (
-              <div className="settings-placeholder">
-                <h3>Danger zone</h3>
-                <p>These actions are permanent. Be careful.</p>
-                <div className="danger-actions">
-                  <button className="btn-secondary danger-btn" onClick={handleDeleteAllData}>Clear all budget data</button>
-                  <button className="btn-secondary danger-btn danger-btn-destructive" onClick={handleDeleteAccount}>Delete account</button>
-                  <button className="btn-secondary danger-btn" onClick={handleLogout}>Log out</button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          <div className="btn-row">
+          {/* ── Fixed footer: close ── */}
+          <div className="settings-modal-footer">
             <button className="btn-secondary" onClick={() => setSettingsOpen(false)}>Close</button>
           </div>
+
         </div>
       </div>
 
