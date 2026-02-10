@@ -382,19 +382,19 @@
             margin-top: 4px;
         }
 
-        /* Expense Item - Premium with photo */
+        /* Expense Item — clean, no photo */
         .expense-item {
             display: flex;
-            gap: 20px;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(15, 15, 15, 0.8) 0%, rgba(10, 10, 10, 0.8) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px;
+            background: rgba(18, 18, 18, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: 16px;
-            margin-bottom: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 12px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             position: relative;
-            backdrop-filter: blur(10px);
             overflow: hidden;
         }
 
@@ -403,59 +403,46 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 4px;
+            width: 3px;
             height: 100%;
-            background: linear-gradient(180deg, #D4AF37 0%, #FFD700 100%);
+            background: var(--cat-color, #D4AF37);
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.2s ease;
+            border-radius: 0 2px 2px 0;
         }
 
         .expense-item:hover {
-            border-color: rgba(212, 175, 55, 0.4);
-            transform: translateX(4px);
-            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
+            border-color: rgba(255,255,255,0.14);
+            transform: translateX(3px);
+            background: rgba(24, 24, 24, 0.95);
         }
 
-        .expense-item:hover::before {
-            opacity: 1;
-        }
+        .expense-item:hover::before { opacity: 1; }
 
         .expense-item.regret {
-            border-color: rgba(255, 107, 107, 0.5);
-            background: linear-gradient(135deg, rgba(255, 107, 107, 0.08) 0%, rgba(255, 107, 107, 0.12) 100%);
-            box-shadow: 0 4px 16px rgba(255, 107, 107, 0.15);
+            border-color: rgba(255, 107, 107, 0.35);
+            background: rgba(255, 107, 107, 0.06);
         }
-
         .expense-item.regret::before {
-            background: linear-gradient(180deg, #FF6B6B 0%, #FF8585 100%);
+            background: #FF6B6B;
             opacity: 1;
         }
-
         .expense-item.regret:hover {
-            border-color: rgba(255, 107, 107, 0.7);
-            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.25);
+            border-color: rgba(255, 107, 107, 0.55);
         }
 
-        /* Photo styling */
-        .expense-photo {
-            width: 90px;
-            height: 90px;
-            border-radius: 12px;
-            object-fit: cover;
-            background: linear-gradient(135deg, rgba(26, 26, 26, 0.8) 0%, rgba(20, 20, 20, 0.8) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        /* Category icon badge */
+        .expense-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #888;
-            font-size: 2.25rem;
+            font-size: 1.25rem;
             flex-shrink: 0;
-            transition: all 0.3s ease;
-        }
-
-        .expense-item:hover .expense-photo {
-            border-color: rgba(212, 175, 55, 0.3);
-            transform: scale(1.05);
+            background: var(--cat-bg, rgba(212,175,55,0.12));
+            border: 1px solid var(--cat-border, rgba(212,175,55,0.2));
         }
 
         .expense-content {
@@ -467,43 +454,50 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             gap: 12px;
         }
 
         .expense-name {
-            font-weight: 800;
+            font-weight: 700;
             color: #fff;
-            font-size: 1.25rem;
+            font-size: 1rem;
             letter-spacing: -0.01em;
             flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .expense-amount {
             font-weight: 900;
-            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 1.5rem;
+            color: #D4AF37;
+            font-size: 1.125rem;
             white-space: nowrap;
         }
 
         .expense-meta {
             display: flex;
-            gap: 16px;
-            font-size: 0.875rem;
-            color: #888;
+            gap: 12px;
+            font-size: 0.78rem;
+            color: #666;
             flex-wrap: wrap;
-            margin-bottom: 12px;
         }
 
         .expense-meta > span {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             font-weight: 500;
         }
+
+        /* Category color token per category name */
+        .expense-item[data-cat="Food"]          { --cat-color:#FF8C42; --cat-bg:rgba(255,140,66,0.1); --cat-border:rgba(255,140,66,0.2); }
+        .expense-item[data-cat="Transport"]     { --cat-color:#4FC3F7; --cat-bg:rgba(79,195,247,0.1); --cat-border:rgba(79,195,247,0.2); }
+        .expense-item[data-cat="Shopping"]      { --cat-color:#CE93D8; --cat-bg:rgba(206,147,216,0.1); --cat-border:rgba(206,147,216,0.2); }
+        .expense-item[data-cat="Entertainment"] { --cat-color:#F06292; --cat-bg:rgba(240,98,146,0.1); --cat-border:rgba(240,98,146,0.2); }
+        .expense-item[data-cat="Health"]        { --cat-color:#66BB6A; --cat-bg:rgba(102,187,106,0.1); --cat-border:rgba(102,187,106,0.2); }
+        .expense-item[data-cat="Other"]         { --cat-color:#90A4AE; --cat-bg:rgba(144,164,174,0.1); --cat-border:rgba(144,164,174,0.2); }
 
         /* Tags */
         .expense-tags {
@@ -566,43 +560,70 @@
             transform: scale(1.05);
         }
 
-        /* Category filters */
-        .category-filters {
+        /* Category pills — colorful, per-category */
+        .category-pills {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             margin-bottom: 24px;
-            padding: 6px;
-            background: rgba(26, 26, 26, 0.4);
-            backdrop-filter: blur(10px);
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
         }
 
-        .category-filter {
-            padding: 10px 20px;
-            background: transparent;
-            border: none;
-            border-radius: 10px;
-            color: #888;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        @media (max-width: 640px) {
+            .category-pills {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
+                margin-bottom: 20px;
+            }
+            .category-pills::-webkit-scrollbar { display: none; }
+            .category-pill { flex: 0 0 auto; }
+        }
+
+        .category-pill {
+            padding: 8px 18px;
+            border-radius: 999px;
             font-weight: 700;
-            font-size: 0.875rem;
-            text-transform: capitalize;
+            font-size: 0.8125rem;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+            background: rgba(255,255,255,0.04);
+            color: #666;
         }
+        .category-pill:hover { transform: translateY(-2px); }
 
-        .category-filter:hover {
-            background: rgba(212, 175, 55, 0.1);
-            color: #D4AF37;
-            transform: translateY(-2px);
-        }
-
-        .category-filter.active {
-            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
-            color: #0a0a0a;
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
-        }
+        /* All */
+        .category-pill[data-cat="all"]                { color: #D4AF37; border-color: rgba(212,175,55,0.3); }
+        .category-pill[data-cat="all"].active          { background: linear-gradient(135deg, #D4AF37, #FFD700); color: #0a0a0a; border-color: transparent; box-shadow: 0 4px 14px rgba(212,175,55,0.4); }
+        .category-pill[data-cat="all"]:hover:not(.active) { background: rgba(212,175,55,0.12); color: #D4AF37; }
+        /* Food */
+        .category-pill[data-cat="Food"]               { color: #FF8C42; border-color: rgba(255,140,66,0.3); }
+        .category-pill[data-cat="Food"].active         { background: linear-gradient(135deg, #FF8C42, #FFA55E); color: #0a0a0a; border-color: transparent; box-shadow: 0 4px 14px rgba(255,140,66,0.4); }
+        .category-pill[data-cat="Food"]:hover:not(.active) { background: rgba(255,140,66,0.12); color: #FF8C42; }
+        /* Transport */
+        .category-pill[data-cat="Transport"]          { color: #4FC3F7; border-color: rgba(79,195,247,0.3); }
+        .category-pill[data-cat="Transport"].active    { background: linear-gradient(135deg, #4FC3F7, #81D4FA); color: #0a0a0a; border-color: transparent; box-shadow: 0 4px 14px rgba(79,195,247,0.4); }
+        .category-pill[data-cat="Transport"]:hover:not(.active) { background: rgba(79,195,247,0.12); color: #4FC3F7; }
+        /* Shopping */
+        .category-pill[data-cat="Shopping"]           { color: #CE93D8; border-color: rgba(206,147,216,0.3); }
+        .category-pill[data-cat="Shopping"].active     { background: linear-gradient(135deg, #CE93D8, #E1BEE7); color: #0a0a0a; border-color: transparent; box-shadow: 0 4px 14px rgba(206,147,216,0.4); }
+        .category-pill[data-cat="Shopping"]:hover:not(.active) { background: rgba(206,147,216,0.12); color: #CE93D8; }
+        /* Entertainment */
+        .category-pill[data-cat="Entertainment"]      { color: #F06292; border-color: rgba(240,98,146,0.3); }
+        .category-pill[data-cat="Entertainment"].active{ background: linear-gradient(135deg, #F06292, #F48FB1); color: #0a0a0a; border-color: transparent; box-shadow: 0 4px 14px rgba(240,98,146,0.4); }
+        .category-pill[data-cat="Entertainment"]:hover:not(.active) { background: rgba(240,98,146,0.12); color: #F06292; }
+        /* Health */
+        .category-pill[data-cat="Health"]             { color: #66BB6A; border-color: rgba(102,187,106,0.3); }
+        .category-pill[data-cat="Health"].active       { background: linear-gradient(135deg, #66BB6A, #81C784); color: #0a0a0a; border-color: transparent; box-shadow: 0 4px 14px rgba(102,187,106,0.4); }
+        .category-pill[data-cat="Health"]:hover:not(.active) { background: rgba(102,187,106,0.12); color: #66BB6A; }
+        /* Other */
+        .category-pill[data-cat="Other"]              { color: #90A4AE; border-color: rgba(144,164,174,0.3); }
+        .category-pill[data-cat="Other"].active        { background: linear-gradient(135deg, #90A4AE, #B0BEC5); color: #0a0a0a; border-color: transparent; box-shadow: 0 4px 14px rgba(144,164,174,0.4); }
+        .category-pill[data-cat="Other"]:hover:not(.active) { background: rgba(144,164,174,0.12); color: #90A4AE; }
 
         /* Merchant frequency */
         .merchant-item {
@@ -886,39 +907,7 @@
             transform: scale(1.05);
         }
 
-        /* Photo upload */
-        .photo-upload {
-            width: 100%;
-            height: 140px;
-            background: rgba(10, 10, 10, 0.6);
-            border: 2px dashed rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            backdrop-filter: blur(10px);
-        }
 
-        .photo-upload:hover {
-            border-color: #D4AF37;
-            background: rgba(212, 175, 55, 0.05);
-        }
-
-        .photo-upload input {
-            display: none;
-        }
-
-        .photo-preview {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
 
         @media (max-width: 968px) {
             .comparison-grid {
@@ -1006,14 +995,7 @@
             }
 
             .expense-item {
-                padding: 16px;
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .expense-photo {
-                width: 100%;
-                height: 160px;
+                padding: 14px 16px;
             }
 
             .heatmap-grid {
@@ -1094,12 +1076,11 @@
             .expense-item,
             .heatmap-cell,
             .tag,
-            .category-filter,
+            .category-pill,
             .modal,
             .modal-content,
             .regret-toggle,
-            .delete-btn,
-            .photo-upload {
+            .delete-btn {
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
             }
@@ -1130,10 +1111,8 @@
             .card:hover,
             .expense-item:hover,
             .heatmap-cell:hover,
-            .expense-photo,
-            .expense-item:hover .expense-photo,
             .tag:hover,
-            .category-filter:hover,
+            .category-pill:hover,
             .merchant-item:hover,
             .chop-item:hover,
             .btn-primary:hover,
@@ -1156,7 +1135,7 @@
             .heatmap-cell.level-5 { box-shadow: none; }
 
             /* 8. Slim transitions */
-            .nav-tab, .expense-item, .heatmap-cell, .category-filter {
+            .nav-tab, .expense-item, .heatmap-cell, .category-pill {
                 transition: opacity 0.15s ease, color 0.15s ease;
             }
 

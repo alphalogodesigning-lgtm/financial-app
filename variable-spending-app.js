@@ -27,7 +27,6 @@ const {
             });
             const [viewMode, setViewMode] = useState('all'); // 'all', 'heatmap', 'merchants', 'regrets', 'compare'
             const [filterCategory, setFilterCategory] = useState('all');
-            const [photoPreview, setPhotoPreview] = useState(null);
 
             useEffect(() => {
                 let isMounted = true;
@@ -172,7 +171,6 @@ const {
                     regret: expense.regret,
                     photo: expense.photo
                 });
-                setPhotoPreview(expense.photo);
                 setModalOpen(true);
             };
 
@@ -194,17 +192,6 @@ const {
                 }));
             };
 
-            const handlePhotoUpload = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        setPhotoPreview(reader.result);
-                        setNewExpense({ ...newExpense, photo: reader.result });
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
 
             return (
                 <div className="container">
@@ -267,23 +254,28 @@ const {
                     {/* ALL EXPENSES VIEW */}
                     {viewMode === 'all' && (
                         <>
-                            <div className="category-pills">
-                                <button 
-                                    className={`category-pill ${filterCategory === 'all' ? 'active' : ''}`}
-                                    onClick={() => setFilterCategory('all')}
-                                >
-                                    All
-                                </button>
-                                {CATEGORY_LIST.map(cat => (
-                                    <button 
-                                        key={cat}
-                                        className={`category-pill ${filterCategory === cat ? 'active' : ''}`}
-                                        onClick={() => setFilterCategory(cat)}
-                                    >
-                                        {cat}
-                                    </button>
-                                ))}
-                            </div>
+                        {/* Category Pills */}
+                        {(() => {
+                            const CAT_ICONS = {
+                                all: '🌀', Food: '🍜', Transport: '🚗', Shopping: '🛍️',
+                                Entertainment: '🎮', Health: '💪', Other: '📦'
+                            };
+                            const allCats = ['all', ...CATEGORY_LIST];
+                            return (
+                                <div className="category-pills">
+                                    {allCats.map(cat => (
+                                        <button
+                                            key={cat}
+                                            className={`category-pill ${filterCategory === cat ? 'active' : ''}`}
+                                            data-cat={cat}
+                                            onClick={() => setFilterCategory(cat)}
+                                        >
+                                            {CAT_ICONS[cat] || '📦'} {cat === 'all' ? 'All' : cat}
+                                        </button>
+                                    ))}
+                                </div>
+                            );
+                        })()}
 
                             <div className="card">
                                 <h2 className="card-title">Recent Purchases</h2>
@@ -292,17 +284,18 @@ const {
                                         No expenses yet. Click the + button to add one.
                                     </p>
                                 ) : (
-                                    sortedExpenses.map(expense => (
+                                    sortedExpenses.map(expense => {
+                                        const CAT_ICONS = { Food:'🍜', Transport:'🚗', Shopping:'🛍️', Entertainment:'🎮', Health:'💪', Other:'📦' };
+                                        return (
                                         <div 
                                             key={expense.id}
                                             className={`expense-item ${expense.regret ? 'regret' : ''}`}
+                                            data-cat={expense.category}
                                             onClick={() => handleEditExpense(expense)}
                                         >
-                                            {expense.photo ? (
-                                                <img src={expense.photo} alt="Receipt" className="expense-photo" />
-                                            ) : (
-                                                <div className="expense-photo">📄</div>
-                                            )}
+                                            <div className="expense-icon">
+                                                {CAT_ICONS[expense.category] || '📦'}
+                                            </div>
                                             <div className="expense-content">
                                                 <div className="expense-header-row">
                                                     <div className="expense-name">{expense.name}</div>
@@ -315,13 +308,13 @@ const {
                                                     {expense.merchant && <span>🏪 {expense.merchant}</span>}
                                                 </div>
                                                 {expense.notes && (
-                                                    <p style={{ fontSize: '0.875rem', color: '#888', marginTop: '8px' }}>
+                                                    <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '6px' }}>
                                                         {expense.notes}
                                                     </p>
                                                 )}
-                                                <div className="expense-tags">
-                                                    {expense.regret && <span className="tag regret">😬 Regret</span>}
-                                                </div>
+                                                {expense.regret && (
+                                                    <span style={{ fontSize: '0.75rem', color: '#FF6B6B', fontWeight: 700, marginTop: '4px', display: 'inline-block' }}>😬 Regret</span>
+                                                )}
                                             </div>
                                             <button 
                                                 className={`regret-toggle ${expense.regret ? 'active' : ''}`}
@@ -333,7 +326,8 @@ const {
                                                 😬
                                             </button>
                                         </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </>
@@ -395,13 +389,13 @@ const {
                                     No regrets yet! (That's good... or you're in denial 😅)
                                 </p>
                             ) : (
-                                expenses.filter(e => e.regret).map(expense => (
-                                    <div key={expense.id} className="expense-item regret">
-                                        {expense.photo ? (
-                                            <img src={expense.photo} alt="Receipt" className="expense-photo" />
-                                        ) : (
-                                            <div className="expense-photo">📄</div>
-                                        )}
+                                expenses.filter(e => e.regret).map(expense => {
+                                    const CAT_ICONS = { Food:'🍜', Transport:'🚗', Shopping:'🛍️', Entertainment:'🎮', Health:'💪', Other:'📦' };
+                                    return (
+                                    <div key={expense.id} className="expense-item regret" data-cat={expense.category}>
+                                        <div className="expense-icon">
+                                            {CAT_ICONS[expense.category] || '📦'}
+                                        </div>
                                         <div className="expense-content">
                                             <div className="expense-header-row">
                                                 <div className="expense-name">{expense.name}</div>
@@ -412,13 +406,14 @@ const {
                                                 <span>🏪 {expense.merchant}</span>
                                             </div>
                                             {expense.notes && (
-                                                <p style={{ fontSize: '0.875rem', color: '#FF6B6B', marginTop: '8px' }}>
+                                                <p style={{ fontSize: '0.8rem', color: '#FF6B6B', marginTop: '6px' }}>
                                                     "{expense.notes}"
                                                 </p>
                                             )}
                                         </div>
                                     </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                     )}
@@ -518,7 +513,6 @@ const {
                                 {editingExpense ? 'Edit Expense' : 'Add Expense'}
                             </h2>
 
-                            
 
                             <div className="form-group">
                                 <label className="form-label">Name</label>
