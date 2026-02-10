@@ -873,6 +873,78 @@
             font-size: 0.92rem;
         }
 
+        .account-editor {
+            display: grid;
+            gap: 16px;
+        }
+
+        .account-field {
+            display: grid;
+            gap: 8px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .account-field .form-label {
+            margin-bottom: 0;
+            margin-top: 4px;
+        }
+
+        .account-field input:disabled {
+            color: #aaa;
+            opacity: 0.95;
+            cursor: not-allowed;
+            background: rgba(18, 18, 18, 0.9);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .account-help-text {
+            color: #8f8f8f;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .account-action-btn {
+            width: 100%;
+            margin-top: 6px;
+        }
+
+        .account-action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .account-status {
+            margin: 2px 0 0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .account-status-success {
+            color: #9fe6a3;
+            border-color: rgba(102, 187, 106, 0.4);
+            background: rgba(102, 187, 106, 0.12);
+        }
+
+        .account-status-error {
+            color: #ffb4b4;
+            border-color: rgba(255, 107, 107, 0.4);
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .account-status-info {
+            color: #d5d5d5;
+            border-color: rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
         .settings-placeholder h3 {
             color: #fff;
             margin-bottom: 8px;
@@ -1320,6 +1392,19 @@
                 border: 1px solid rgba(212, 175, 55, 0.12);
                 border-radius: 12px;
                 line-height: 1.5;
+            }
+
+            .account-field {
+                padding: 12px;
+                gap: 7px;
+            }
+
+            .account-help-text {
+                font-size: 0.8rem;
+            }
+
+            .account-status {
+                font-size: 0.84rem;
             }
 
             /* ── Subscription panel ── */
