@@ -11,263 +11,368 @@
     <script src="./supabase-config.js"></script>
     <script src="./app-shared.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,800&display=swap');
+
         :root {
-            --bg-0: #07090f;
-            --bg-1: #0e1322;
-            --card: rgba(16, 20, 33, 0.72);
-            --card-border: rgba(255, 255, 255, 0.12);
-            --text-main: #f8f9fc;
-            --text-soft: #b9c2d6;
-            --gold-1: #ffd44d;
-            --gold-2: #ffb703;
-            --accent: #70e3ff;
-            --danger: #ff8f8f;
-            --success: #90f2b9;
+            --black:     #0a0a0a;
+            --surface:   #141414;
+            --surface-2: #1a1a1a;
+            --gold-1:    #D4AF37;
+            --gold-2:    #FFD700;
+            --text:      #f0f0f0;
+            --muted:     #666;
+            --border:    rgba(255,255,255,0.07);
+            --success:   #66BB6A;
+            --danger:    #FF6B6B;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            margin: 0;
             min-height: 100vh;
-            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-            color: var(--text-main);
-            background:
-                radial-gradient(1200px 700px at 10% 10%, #1b2a55 0%, transparent 55%),
-                radial-gradient(900px 600px at 90% 25%, #3e1f62 0%, transparent 55%),
-                radial-gradient(800px 500px at 50% 95%, #0d3b3e 0%, transparent 50%),
-                linear-gradient(140deg, var(--bg-0), var(--bg-1));
+            font-family: 'DM Sans', -apple-system, sans-serif;
+            color: var(--text);
+            background: var(--black);
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Subtle gold grid — matches dashboard vibe */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(212,175,55,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212,175,55,0.03) 1px, transparent 1px);
+            background-size: 52px 52px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Gold beam — fires once on load, then gone ── */
         .fx-layer {
             position: fixed;
             inset: 0;
             pointer-events: none;
-            overflow: hidden;
             z-index: 0;
+            overflow: hidden;
         }
 
-        .orb {
+        .beam {
             position: absolute;
-            filter: blur(30px);
-            border-radius: 50%;
-            opacity: 0.36;
-            animation: drift 18s ease-in-out infinite;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 120%;
+            background: linear-gradient(
+                180deg,
+                transparent    0%,
+                transparent   15%,
+                rgba(212,175,55,0.6) 40%,
+                rgba(255,215,0,1.0) 50%,
+                rgba(212,175,55,0.6) 60%,
+                transparent   85%,
+                transparent  100%
+            );
+            animation: beam-sweep 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            opacity: 0;
         }
 
-        .orb.one {
-            width: 320px;
-            height: 320px;
-            left: -60px;
-            top: 25%;
-            background: #4e8dff;
+        /* Wide soft halo around the beam */
+        .beam::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            width: 280px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: inherit;
+            filter: blur(48px);
+            opacity: 0.3;
         }
 
-        .orb.two {
-            width: 260px;
-            height: 260px;
-            right: 8%;
-            top: 8%;
-            background: #a26cff;
-            animation-delay: -4s;
+        @keyframes beam-sweep {
+            0%   { opacity: 0;    transform: translateX(-50%) translateY(-8%) scaleY(0.5); }
+            20%  { opacity: 1; }
+            55%  { opacity: 0.9;  transform: translateX(-50%) translateY(0%)   scaleY(1); }
+            100% { opacity: 0;    transform: translateX(-50%) translateY(4%)   scaleY(1.05); }
         }
 
-        .orb.three {
-            width: 300px;
-            height: 300px;
-            right: 15%;
-            bottom: -80px;
-            background: #1dd3b0;
-            animation-delay: -9s;
-        }
-
-        @keyframes drift {
-            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-            50% { transform: translate3d(12px, -18px, 0) scale(1.08); }
-        }
-
+        /* ── Layout ── */
         .wrap {
             position: relative;
             z-index: 1;
             min-height: 100vh;
             display: grid;
             place-items: center;
-            padding: 28px 16px;
+            padding: 32px 16px;
         }
 
+        /* ── Card ── */
         .card {
             width: 100%;
-            max-width: 470px;
-            padding: 30px;
+            max-width: 460px;
+            padding: 40px 36px 36px;
             border-radius: 24px;
-            border: 1px solid var(--card-border);
-            background: var(--card);
-            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            background: linear-gradient(
+                160deg,
+                rgba(26,26,26,0.96) 0%,
+                rgba(14,14,14,0.99) 100%
+            );
+            backdrop-filter: blur(24px);
             box-shadow:
-                0 24px 60px rgba(0, 0, 0, 0.45),
-                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+                0 0 0 1px rgba(212,175,55,0.06),
+                0 40px 80px rgba(0,0,0,0.7);
+            animation: card-rise 0.55s 0.15s cubic-bezier(0.4,0,0.2,1) both;
         }
 
+        @keyframes card-rise {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Gold top-edge accent line */
+        .card::before {
+            content: '';
+            display: block;
+            height: 1px;
+            margin: -40px -36px 36px;
+            background: linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent);
+            border-radius: 24px 24px 0 0;
+        }
+
+        /* ── Brand chip ── */
         .brand-chip {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.06em;
+            gap: 7px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: #121212;
-            padding: 6px 12px;
+            color: #0a0a0a;
+            padding: 5px 13px 5px 9px;
             border-radius: 999px;
             background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
-            margin-bottom: 14px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(212,175,55,0.35);
+            animation: slide-in 0.45s 0.5s cubic-bezier(0.4,0,0.2,1) both;
         }
 
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateX(-10px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── Heading ── */
         h1 {
-            margin: 0;
-            font-size: clamp(30px, 5vw, 42px);
-            line-height: 1.05;
+            font-family: 'DM Serif Display', Georgia, serif;
+            font-weight: 400;
+            font-size: clamp(30px, 5.5vw, 42px);
+            line-height: 1.06;
             letter-spacing: -0.02em;
+            color: #fff;
+            animation: fade-up 0.45s 0.6s cubic-bezier(0.4,0,0.2,1) both;
         }
 
+        h1 em {
+            font-style: italic;
+            background: linear-gradient(135deg, var(--gold-1) 0%, var(--gold-2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Subtitle ── */
         p {
             margin: 10px 0 0;
-            color: var(--text-soft);
-            font-size: 15px;
-            line-height: 1.5;
+            color: var(--muted);
+            font-size: 14.5px;
+            line-height: 1.55;
+            font-weight: 500;
+            animation: fade-up 0.45s 0.68s cubic-bezier(0.4,0,0.2,1) both;
         }
 
+        /* ── Thin gold divider ── */
+        .divider {
+            margin: 22px 0 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(212,175,55,0.18), transparent);
+            animation: fade-up 0.45s 0.72s cubic-bezier(0.4,0,0.2,1) both;
+        }
+
+        /* ── Tab switcher ── */
         .tabs {
-            margin-top: 22px;
+            margin-top: 20px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            padding: 6px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            gap: 0;
+            padding: 4px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            animation: fade-up 0.45s 0.76s cubic-bezier(0.4,0,0.2,1) both;
         }
 
         .tab {
             padding: 11px 10px;
-            border-radius: 10px;
-            border: 1px solid transparent;
+            border-radius: 9px;
+            border: none;
             background: transparent;
-            color: #c8d1e5;
-            font-size: 15px;
-            font-weight: 600;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all .2s ease;
+            transition: color 0.15s ease;
+            letter-spacing: 0.01em;
         }
 
-        .tab:hover:not(:disabled) {
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.06);
-        }
+        .tab:hover:not(:disabled) { color: #ccc; }
 
         .tab.active {
             background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
-            color: #101010;
-            border-color: transparent;
-            box-shadow: 0 6px 20px rgba(255, 183, 3, 0.35);
+            color: #0a0a0a;
+            box-shadow: 0 3px 14px rgba(212,175,55,0.32);
         }
 
-        form { margin-top: 16px; }
+        /* ── Form ── */
+        form {
+            margin-top: 18px;
+            animation: fade-up 0.45s 0.8s cubic-bezier(0.4,0,0.2,1) both;
+        }
 
         .field {
             width: 100%;
-            padding: 13px 14px;
+            padding: 13px 16px;
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            background: rgba(4, 8, 17, 0.66);
-            color: var(--text-main);
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.45);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
             margin-bottom: 12px;
             outline: none;
-            transition: border-color .2s ease, box-shadow .2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
+
+        .field::placeholder { color: rgba(255,255,255,0.2); }
 
         .field:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(112, 227, 255, 0.16);
+            border-color: rgba(212,175,55,0.55);
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.09);
         }
 
+        /* ── Submit button ── */
         .primary {
             width: 100%;
             border: none;
             border-radius: 12px;
-            padding: 13px;
-            font-size: 16px;
+            padding: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
             font-weight: 800;
-            letter-spacing: 0.01em;
-            color: #151515;
+            letter-spacing: 0.02em;
+            color: #0a0a0a;
             cursor: pointer;
             background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
-            transition: transform .12s ease, box-shadow .2s ease, filter .2s ease;
-            box-shadow: 0 12px 28px rgba(255, 183, 3, 0.28);
+            box-shadow: 0 8px 28px rgba(212,175,55,0.32);
+            transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
         }
 
         .primary:hover:not(:disabled) {
-            transform: translateY(-1px);
-            filter: brightness(1.03);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 36px rgba(212,175,55,0.44);
+            filter: brightness(1.05);
         }
 
+        .primary:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 4px 14px rgba(212,175,55,0.28);
+        }
+
+        /* ── Disabled states ── */
         .primary:disabled,
         .tab:disabled,
         .field:disabled {
             cursor: not-allowed;
-            opacity: 0.75;
+            opacity: 0.6;
         }
 
+        /* ── Account success box ── */
         .account-box {
             margin-top: 16px;
-            border-radius: 14px;
-            padding: 12px;
-            border: 1px solid rgba(144, 242, 185, 0.24);
-            background: rgba(58, 172, 112, 0.11);
-            color: #d9ffe9;
-            font-size: 14px;
-            line-height: 1.45;
+            border-radius: 12px;
+            padding: 14px 16px;
+            border: 1px solid rgba(102,187,106,0.22);
+            background: rgba(102,187,106,0.07);
+            color: #c5f0c8;
+            font-size: 13.5px;
+            line-height: 1.55;
+            font-weight: 500;
         }
 
         .account-box code {
-            background: rgba(0, 0, 0, 0.28);
-            padding: 2px 6px;
-            border-radius: 7px;
-            color: #cbffe1;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 7px;
+            border-radius: 6px;
+            color: #a8f0b0;
+            font-size: 12.5px;
         }
 
-        .small {
-            margin-top: 16px;
-            text-align: center;
-        }
-
-        a {
-            color: #ffd665;
-            font-weight: 600;
-        }
-
+        /* ── Status line ── */
         .status {
             margin-top: 14px;
             min-height: 20px;
-            font-size: 14px;
-            color: #b8ddff;
+            font-size: 13.5px;
+            color: var(--muted);
+            font-weight: 500;
         }
 
-        .status.error { color: var(--danger); }
+        .status.error   { color: var(--danger); }
         .status.success { color: var(--success); }
 
-        @media (max-width: 560px) {
-            .card { padding: 22px; border-radius: 18px; }
+        /* ── Small helper ── */
+        .small {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        a {
+            color: var(--gold-1);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        a:hover { color: var(--gold-2); }
+
+        /* ── Mobile ── */
+        @media (max-width: 520px) {
+            .card {
+                padding: 32px 22px 28px;
+                border-radius: 20px;
+            }
+            .card::before {
+                margin: -32px -22px 32px;
+            }
+            h1 { font-size: 28px; }
         }
     </style>
 </head>
 <body>
     <div class="fx-layer">
-        <div class="orb one"></div>
-        <div class="orb two"></div>
-        <div class="orb three"></div>
+        <div class="beam"></div>
     </div>
 
     <div id="root"></div>
