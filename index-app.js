@@ -79,6 +79,18 @@ function Dashboard() {
     email: 'Not connected',
     avatarUrl: ''
   });
+  const [accountForm, setAccountForm] = useState({
+    fullName: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [accountStatus, setAccountStatus] = useState({
+    type: '',
+    message: ''
+  });
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [newExpense, setNewExpense] = useState({
     name: '',
     amount: '',
@@ -108,6 +120,10 @@ function Dashboard() {
         email: user.email || 'Not connected',
         avatarUrl: user.user_metadata?.avatar_url || ''
       });
+      setAccountForm((prev) => ({
+        ...prev,
+        fullName: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'You'
+      }));
     }).catch(() => {
       if (!active) return;
       setProfile((prev) => ({
@@ -270,7 +286,138 @@ function Dashboard() {
 
   const openSettings = () => {
     setProfileMenuOpen(false);
+    setAccountStatus({ type: '', message: '' });
+    setAccountForm((prev) => ({
+      ...prev,
+      fullName: profile.fullName || '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    }));
     setSettingsOpen(true);
+  };
+
+  const handleAccountFieldChange = (field, value) => {
+    setAccountForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleNameSave = async () => {
+    if (isSavingName) return;
+
+    const nextName = accountForm.fullName.trim();
+    if (!nextName) {
+      setAccountStatus({ type: 'error', message: 'Name cannot be empty.' });
+      return;
+    }
+
+    if (nextName === profile.fullName) {
+      setAccountStatus({ type: 'info', message: 'No name change detected.' });
+      return;
+    }
+
+    const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
+    if (!supabaseClient) {
+      setAccountStatus({ type: 'error', message: 'Account service is unavailable. Please try again shortly.' });
+      return;
+    }
+
+    setIsSavingName(true);
+    setAccountStatus({ type: 'info', message: 'Saving your display name...' });
+
+    try {
+      const { data: updatedUser, error } = await supabaseClient.auth.updateUser({
+        data: {
+          full_name: nextName,
+          name: nextName
+        }
+      });
+
+      if (error) {
+        setAccountStatus({ type: 'error', message: error.message || 'Unable to update your name.' });
+        return;
+      }
+
+      const updatedFullName = updatedUser?.user?.user_metadata?.full_name
+        || updatedUser?.user?.user_metadata?.name
+        || nextName;
+
+      setProfile((prev) => ({ ...prev, fullName: updatedFullName }));
+      setAccountForm((prev) => ({ ...prev, fullName: updatedFullName }));
+      setAccountStatus({ type: 'success', message: 'Name updated successfully.' });
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  const handlePasswordSave = async () => {
+    if (isSavingPassword) return;
+
+    const currentPassword = accountForm.currentPassword;
+    const newPassword = accountForm.newPassword;
+    const confirmPassword = accountForm.confirmPassword;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setAccountStatus({ type: 'error', message: 'Fill in current password, new password, and confirmation.' });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setAccountStatus({ type: 'error', message: 'New password must be at least 8 characters.' });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setAccountStatus({ type: 'error', message: 'New password and confirmation do not match.' });
+      return;
+    }
+
+    const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
+    if (!supabaseClient) {
+      setAccountStatus({ type: 'error', message: 'Account service is unavailable. Please try again shortly.' });
+      return;
+    }
+
+    setIsSavingPassword(true);
+    setAccountStatus({ type: 'info', message: 'Verifying current password...' });
+
+    try {
+      const { data: authData } = await supabaseClient.auth.getUser();
+      const email = authData?.user?.email;
+
+      if (!email) {
+        setAccountStatus({ type: 'error', message: 'Unable to verify account email. Please sign in again.' });
+        return;
+      }
+
+      const { error: verifyError } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password: currentPassword
+      });
+
+      if (verifyError) {
+        setAccountStatus({ type: 'error', message: 'Current password is incorrect.' });
+        return;
+      }
+
+      const { error: updateError } = await supabaseClient.auth.updateUser({
+        password: newPassword
+      });
+
+      if (updateError) {
+        setAccountStatus({ type: 'error', message: updateError.message || 'Unable to update password.' });
+        return;
+      }
+
+      setAccountForm((prev) => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }));
+      setAccountStatus({ type: 'success', message: 'Password changed successfully.' });
+    } finally {
+      setIsSavingPassword(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -472,7 +619,71 @@ function Dashboard() {
                     <div className="account-email">{profile.email}</div>
                   </div>
                 </div>
-                <p className="account-note">Profile editing will be connected as account management grows.</p>
+                <div className="account-editor">
+                  <div className="account-field">
+                    <label className="form-label" htmlFor="account-name-input">Name</label>
+                    <input
+                      id="account-name-input"
+                      type="text"
+                      value={accountForm.fullName}
+                      onChange={(event) => handleAccountFieldChange('fullName', event.target.value)}
+                      placeholder="Enter your display name"
+                      autoComplete="name"
+                      maxLength={80}
+                    />
+                    <button className="btn-primary account-action-btn" onClick={handleNameSave} disabled={isSavingName || isSavingPassword}>
+                      {isSavingName ? 'Saving...' : 'Save name'}
+                    </button>
+                  </div>
+
+                  <div className="account-field">
+                    <label className="form-label" htmlFor="account-email-input">Email</label>
+                    <input id="account-email-input" type="email" value={profile.email} disabled readOnly aria-readonly="true" />
+                    <p className="account-help-text">Email changes are disabled to protect your login and billing identity.</p>
+                  </div>
+
+                  <div className="account-field">
+                    <label className="form-label" htmlFor="account-current-password-input">Current password</label>
+                    <input
+                      id="account-current-password-input"
+                      type="password"
+                      value={accountForm.currentPassword}
+                      onChange={(event) => handleAccountFieldChange('currentPassword', event.target.value)}
+                      placeholder="Enter current password"
+                      autoComplete="current-password"
+                    />
+
+                    <label className="form-label" htmlFor="account-new-password-input">New password</label>
+                    <input
+                      id="account-new-password-input"
+                      type="password"
+                      value={accountForm.newPassword}
+                      onChange={(event) => handleAccountFieldChange('newPassword', event.target.value)}
+                      placeholder="Minimum 8 characters"
+                      autoComplete="new-password"
+                    />
+
+                    <label className="form-label" htmlFor="account-confirm-password-input">Confirm new password</label>
+                    <input
+                      id="account-confirm-password-input"
+                      type="password"
+                      value={accountForm.confirmPassword}
+                      onChange={(event) => handleAccountFieldChange('confirmPassword', event.target.value)}
+                      placeholder="Retype new password"
+                      autoComplete="new-password"
+                    />
+
+                    <button className="btn-primary account-action-btn" onClick={handlePasswordSave} disabled={isSavingName || isSavingPassword}>
+                      {isSavingPassword ? 'Updating...' : 'Change password'}
+                    </button>
+                  </div>
+
+                  {accountStatus.message && (
+                    <p className={`account-status account-status-${accountStatus.type || 'info'}`}>
+                      {accountStatus.message}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
