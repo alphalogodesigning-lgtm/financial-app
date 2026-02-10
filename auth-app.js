@@ -138,7 +138,6 @@ const { supabaseClient } = window.AppShared;
                             </div>
                         )}
 
-                        <div className="small"><a href="index.html">Go to Dashboard</a></div>
                         <div className={`status ${statusType}`}>{status}</div>
                     </div>
                 </div>
