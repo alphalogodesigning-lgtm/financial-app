@@ -1088,6 +1088,221 @@
         .stat-card:nth-child(2) { animation-delay: 0.1s; }
         .stat-card:nth-child(3) { animation-delay: 0.15s; }
         .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+        /* ── MOBILE-ONLY: Settings & Profile modal ─────────────────────── */
+        @media (max-width: 640px) {
+
+            /* Modal sheet slides up from bottom */
+            .modal.active {
+                align-items: flex-end;
+                padding: 0;
+            }
+
+            .settings-modal {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 28px 28px 0 0;
+                padding: 0;
+                overflow: hidden;
+                animation: sheetUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            @keyframes sheetUp {
+                from { transform: translateY(100%); opacity: 0.6; }
+                to   { transform: translateY(0);    opacity: 1;   }
+            }
+
+            /* Drag handle at top */
+            .settings-modal::before {
+                content: '';
+                display: block;
+                width: 40px;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.18);
+                border-radius: 2px;
+                margin: 14px auto 0;
+            }
+
+            /* Inner padding wrapper */
+            .settings-modal > * {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            /* Title */
+            .settings-modal .modal-title {
+                font-size: 1.75rem;
+                font-weight: 900;
+                letter-spacing: -0.03em;
+                padding-top: 20px;
+                padding-bottom: 0;
+                margin-bottom: 20px;
+                background: linear-gradient(135deg, #fff 0%, #D4AF37 60%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            /* Tab row — horizontal pill strip */
+            .settings-tabs {
+                display: flex;
+                gap: 0;
+                margin-bottom: 20px;
+                padding: 5px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                flex-wrap: nowrap;
+            }
+
+            .settings-tab {
+                flex: 1;
+                text-align: center;
+                padding: 10px 8px;
+                border-radius: 10px;
+                font-size: 0.8125rem;
+                font-weight: 700;
+                border: none;
+                color: #888;
+                background: transparent;
+                white-space: nowrap;
+                transition: all 0.2s ease;
+            }
+
+            .settings-tab.active {
+                background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+                color: #0a0a0a;
+                box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35);
+            }
+
+            /* Panel container */
+            .settings-panel {
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.07);
+                border-radius: 18px;
+                padding: 20px;
+                margin-bottom: 16px;
+            }
+
+            /* ── Account details panel ── */
+            .account-summary {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 14px;
+                margin-bottom: 16px;
+            }
+
+            /* Big avatar with gold ring */
+            .profile-button-large {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                border: 3px solid transparent;
+                background:
+                    linear-gradient(#1a1a1a, #1a1a1a) padding-box,
+                    linear-gradient(135deg, #D4AF37, #FFD700) border-box;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+                font-weight: 900;
+                color: #D4AF37;
+                box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
+                flex-shrink: 0;
+            }
+
+            .account-name {
+                font-size: 1.25rem;
+                font-weight: 800;
+                color: #fff;
+                letter-spacing: -0.01em;
+            }
+
+            .account-email {
+                font-size: 0.875rem;
+                color: #888;
+                margin-top: 2px;
+            }
+
+            .account-note {
+                text-align: center;
+                font-size: 0.875rem;
+                color: #666;
+                padding: 12px 16px;
+                background: rgba(212, 175, 55, 0.06);
+                border: 1px solid rgba(212, 175, 55, 0.12);
+                border-radius: 12px;
+                line-height: 1.5;
+            }
+
+            /* ── Subscription panel ── */
+            .settings-placeholder h3 {
+                font-size: 1.125rem;
+                font-weight: 800;
+                color: #fff;
+                margin-bottom: 8px;
+                letter-spacing: -0.01em;
+            }
+
+            .settings-placeholder p {
+                font-size: 0.875rem;
+                color: #888;
+                line-height: 1.6;
+            }
+
+            /* ── Danger zone panel ── */
+            .danger-actions {
+                gap: 10px;
+                margin-top: 14px;
+            }
+
+            .danger-btn {
+                border-radius: 14px;
+                padding: 14px 18px;
+                font-size: 0.9375rem;
+                font-weight: 700;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: #ddd;
+                transition: all 0.2s ease;
+            }
+
+            .danger-btn:active {
+                transform: scale(0.98);
+            }
+
+            .danger-btn-destructive {
+                color: #FF6B6B;
+                border-color: rgba(255, 107, 107, 0.25);
+                background: rgba(255, 107, 107, 0.06);
+            }
+
+            .danger-btn-destructive:active {
+                background: rgba(255, 107, 107, 0.12);
+            }
+
+            /* ── Close button ── */
+            .settings-modal .btn-secondary {
+                display: block;
+                width: calc(100% - 48px);
+                margin: 0 24px 28px;
+                padding: 15px;
+                text-align: center;
+                border-radius: 16px;
+                font-size: 1rem;
+                font-weight: 700;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: rgba(255, 255, 255, 0.05);
+                color: #fff;
+            }
+
+            .settings-modal .btn-secondary:active {
+                background: rgba(255, 255, 255, 0.1);
+                transform: scale(0.98);
+            }
+        }
+        /* ── END mobile settings modal ─────────────────────────────────── */
     </style>
 </head>
 <body>
