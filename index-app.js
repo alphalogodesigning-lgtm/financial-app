@@ -85,6 +85,11 @@ function Dashboard() {
     category: 'Food',
     date: new Date().toISOString().split('T')[0]
   });
+  const [newIncome, setNewIncome] = useState({
+    title: '',
+    amount: '',
+    date: new Date().toISOString().split('T')[0]
+  });
   const userName = profile.fullName || '';
 
   useEffect(() => {
@@ -235,6 +240,30 @@ function Dashboard() {
     }));
 
     setNewExpense({ name: '', amount: '', category: 'Food', date: new Date().toISOString().split('T')[0] });
+    setModalOpen(false);
+  };
+
+  const handleAddIncome = () => {
+    if (!newIncome.title || !newIncome.amount) return;
+
+    const amount = parseFloat(newIncome.amount);
+    if (Number.isNaN(amount) || amount <= 0) return;
+
+    const incomeEntry = {
+      id: Date.now(),
+      title: newIncome.title,
+      amount,
+      date: newIncome.date,
+      time: new Date().toTimeString().slice(0, 5)
+    };
+
+    setData((prev) => ({
+      ...prev,
+      income: (Number(prev.income) || 0) + amount,
+      incomeEntries: [incomeEntry, ...(prev.incomeEntries || [])]
+    }));
+
+    setNewIncome({ title: '', amount: '', date: new Date().toISOString().split('T')[0] });
     setModalOpen(false);
   };
 
@@ -565,6 +594,7 @@ function Dashboard() {
 
       <div className={`modal ${modalOpen ? 'active' : ''}`} onClick={(event) => event.target.className.includes('modal') && setModalOpen(false)}>
         <div className="modal-content" onClick={(event) => event.stopPropagation()}>
+          <p className="modal-section-label">Add Quick Expense</p>
           <h2 className="modal-title">Add Expense</h2>
           <div className="form-group">
             <label className="form-label">Name</label>
@@ -604,6 +634,36 @@ function Dashboard() {
               Cancel
             </button>
           </div>
+
+          <p className="modal-section-label bonus-pay-label">Add Bonus Pay</p>
+          <div className="form-group">
+            <label className="form-label">Bonus title</label>
+            <input
+              type="text"
+              value={newIncome.title}
+              onChange={(event) => setNewIncome({ ...newIncome, title: event.target.value })}
+              placeholder="Debt Return - Arvin"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Amount</label>
+            <input
+              type="number"
+              step="0.01"
+              value={newIncome.amount}
+              onChange={(event) => setNewIncome({ ...newIncome, amount: event.target.value })}
+              placeholder="0.00"
+            />
+          </div>
+          <div className="btn-row">
+            <button className="btn-primary" onClick={handleAddIncome}>
+              Add Income
+            </button>
+            <button className="btn-secondary" onClick={() => setModalOpen(false)}>
+              Cancel
+            </button>
+          </div>
+          <p className="modal-footnote">Add Quick Expense</p>
         </div>
       </div>
     </div>

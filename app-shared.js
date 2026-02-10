@@ -113,7 +113,8 @@
       { id: 5, name: 'Shopping', amount: 120, date: '2026-01-28', time: '14:00', category: 'Shopping', merchant: 'Amazon', regret: true, notes: 'Impulse buy', photo: null }
     ],
     streak: 12,
-    categoryBudgets: {}
+    categoryBudgets: {},
+    incomeEntries: []
   };
 
   const CLEAN_STATE = {
@@ -121,7 +122,8 @@
     fixedExpenses: [],
     variableExpenses: [],
     streak: 0,
-    categoryBudgets: {}
+    categoryBudgets: {},
+    incomeEntries: []
   };
 
   const PAGE_DEFAULTS = {
@@ -130,25 +132,29 @@
       income: 5000,
       fixedExpenses: [],
       variableExpenses: [],
-      streak: 0
+      streak: 0,
+      incomeEntries: []
     },
     'variable-spending': {
       income: 5000,
       fixedExpenses: [],
       variableExpenses: [],
-      streak: 0
+      streak: 0,
+      incomeEntries: []
     },
     projections: {
       income: 5000,
       fixedExpenses: [],
       variableExpenses: [],
-      streak: 0
+      streak: 0,
+      incomeEntries: []
     },
     insights: {
       income: 0,
       fixedExpenses: [],
       variableExpenses: [],
       streak: 0,
+      incomeEntries: [],
       roast_level: 'honest'
     }
   };
