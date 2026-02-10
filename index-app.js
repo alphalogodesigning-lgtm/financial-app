@@ -252,10 +252,52 @@ function Dashboard() {
   };
 
   const handleDeleteAllData = async () => {
-    const confirmed = window.confirm('This will clear all local budget data from this browser. Continue?');
+    const confirmed = window.confirm('This will clear all your budget data for this account and this browser. Continue?');
     if (!confirmed) return;
+
+    const resetData = {
+      ...CLEAN_STATE,
+      categoryBudgets: {}
+    };
+
+    setData(resetData);
     localStorage.removeItem('budgetTrackerData');
-    window.location.reload();
+
+    try {
+      await saveBudgetData(resetData, { redirect: false });
+      window.alert('Budget data cleared.');
+    } catch (error) {
+      window.alert('Local data was cleared, but cloud sync may still contain older data.');
+    }
+
+    setSettingsOpen(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    const firstConfirm = window.confirm('Delete your account permanently? This removes your login + all budget data.');
+    if (!firstConfirm) return;
+
+    const secondConfirm = window.confirm('Final confirmation: this cannot be undone. Proceed?');
+    if (!secondConfirm) return;
+
+    const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
+    if (!supabaseClient) {
+      window.alert('Supabase is not connected. Account deletion requires Supabase configuration.');
+      return;
+    }
+
+    const { error } = await supabaseClient.rpc('delete_my_account');
+
+    if (error) {
+      window.alert(
+        'Account deletion requires a Supabase RPC named delete_my_account. Please add it in Supabase SQL editor (details shared in PR notes).'
+      );
+      return;
+    }
+
+    localStorage.removeItem('budgetTrackerData');
+    await supabaseClient.auth.signOut();
+    window.location.href = 'auth.html';
   };
 
   return (
@@ -412,11 +454,14 @@ function Dashboard() {
             )}
 
             {activeSettingsTab === 'danger' && (
-              <div className="settings-placeholder danger-panel">
+              <div className="settings-placeholder">
                 <h3>Danger zone</h3>
-                <p>These actions are irreversible. Be careful.</p>
-                <button className="btn-secondary danger-btn" onClick={handleDeleteAllData}>Clear local data</button>
-                <button className="btn-secondary danger-btn" onClick={handleLogout}>Log out</button>
+                <p>These actions are permanent. Be careful.</p>
+                <div className="danger-actions">
+                  <button className="btn-secondary danger-btn" onClick={handleDeleteAllData}>Clear all budget data</button>
+                  <button className="btn-secondary danger-btn danger-btn-destructive" onClick={handleDeleteAccount}>Delete account</button>
+                  <button className="btn-secondary danger-btn" onClick={handleLogout}>Log out</button>
+                </div>
               </div>
             )}
           </div>

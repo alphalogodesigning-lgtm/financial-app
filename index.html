@@ -866,16 +866,28 @@
             margin-bottom: 12px;
         }
 
-        .danger-panel {
-            border: 1px solid rgba(255, 107, 107, 0.25);
-            background: rgba(255, 107, 107, 0.04);
+        .danger-actions {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .danger-btn {
             width: 100%;
-            margin-bottom: 8px;
-            border-color: rgba(255, 107, 107, 0.6);
-            color: #FF6B6B;
+            margin: 0;
+            color: #E0E0E0;
+            border-color: rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .danger-btn:hover {
+            border-color: rgba(212, 175, 55, 0.6);
+            color: #fff;
+            background: rgba(212, 175, 55, 0.08);
+        }
+
+        .danger-btn-destructive {
+            color: #ff9a9a;
         }
 
         /* Expense list */
