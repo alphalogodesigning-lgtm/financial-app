@@ -84,6 +84,79 @@
             gap: 24px;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .profile-menu-wrapper {
+            position: relative;
+        }
+
+        .profile-button {
+            width: 44px;
+            height: 44px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(137, 171, 227, 0.2) 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            overflow: hidden;
+            font-size: 1rem;
+        }
+
+        .profile-button:hover {
+            border-color: rgba(212, 175, 55, 0.6);
+        }
+
+        .profile-button-large {
+            width: 64px;
+            height: 64px;
+            cursor: default;
+        }
+
+        .profile-avatar {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-menu-dropdown {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            min-width: 190px;
+            background: #151515;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 8px;
+            display: grid;
+            gap: 6px;
+            z-index: 10;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .profile-menu-item {
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: 1px solid transparent;
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+
+        .profile-menu-item:hover {
+            border-color: rgba(212, 175, 55, 0.35);
+            background: rgba(212, 175, 55, 0.08);
+        }
+
         .header-left {
             flex: 1;
         }
@@ -421,6 +494,11 @@
                 gap: 16px;
             }
 
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
             .greeting {
                 padding: 12px 16px;
                 margin-bottom: 12px;
@@ -717,6 +795,99 @@
 
         .btn-row button {
             flex: 1;
+        }
+
+        .settings-modal {
+            max-width: 620px;
+        }
+
+        .settings-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .settings-tab {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #c6c6c6;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .settings-tab.active {
+            border-color: rgba(212, 175, 55, 0.6);
+            color: #0a0a0a;
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+        }
+
+        .settings-panel {
+            background: rgba(10, 10, 10, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 18px;
+            min-height: 180px;
+        }
+
+        .account-summary {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .account-name {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .account-email {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 2px;
+        }
+
+        .account-note {
+            color: #999;
+            font-size: 0.92rem;
+        }
+
+        .settings-placeholder h3 {
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .settings-placeholder p {
+            color: #aaa;
+            font-size: 0.92rem;
+            margin-bottom: 12px;
+        }
+
+        .danger-actions {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .danger-btn {
+            width: 100%;
+            margin: 0;
+            color: #E0E0E0;
+            border-color: rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .danger-btn:hover {
+            border-color: rgba(212, 175, 55, 0.6);
+            color: #fff;
+            background: rgba(212, 175, 55, 0.08);
+        }
+
+        .danger-btn-destructive {
+            color: #ff9a9a;
         }
 
         /* Expense list */
