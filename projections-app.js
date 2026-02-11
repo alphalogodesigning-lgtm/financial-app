@@ -59,7 +59,7 @@ function Projections() {
                 </div>
                 <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
                     <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🔮</div>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '1.25rem', fontWeight: 800, color: '#D4AF37', marginBottom: '8px' }}>
+                    <div style={{ fontFamily: 'Inter, -apple-system, sans-serif', fontSize: '1.25rem', fontWeight: 800, color: '#D4AF37', marginBottom: '8px' }}>
                         {START_MESSAGE}
                     </div>
                     <p style={{ color: '#666', fontSize: '0.9rem' }}>Set your income on the Dashboard to unlock projections.</p>
