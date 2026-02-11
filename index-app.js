@@ -144,10 +144,23 @@ function Dashboard() {
     let isMounted = true;
     loadBudgetData({ replace: true }).then((saved) => {
       if (!isMounted) return;
+      if (!saved || saved.onboarding_complete === false) {
+        window.location.replace('onboarding.html');
+        return;
+      }
       if (saved) {
-        setData({
+        const normalizedSaved = {
+          ...CLEAN_STATE,
           ...saved,
-          streak: calculateExpenseStreak(saved.variableExpenses || [])
+          fixedExpenses: Array.isArray(saved.fixedExpenses) ? saved.fixedExpenses : [],
+          variableExpenses: Array.isArray(saved.variableExpenses) ? saved.variableExpenses : [],
+          categoryBudgets: saved.categoryBudgets && typeof saved.categoryBudgets === 'object' ? saved.categoryBudgets : {},
+          incomeEntries: Array.isArray(saved.incomeEntries) ? saved.incomeEntries : []
+        };
+
+        setData({
+          ...normalizedSaved,
+          streak: calculateExpenseStreak(normalizedSaved.variableExpenses)
         });
       }
       setIsHydrated(true);
@@ -176,7 +189,8 @@ function Dashboard() {
     budgetPct
   } = calculateBurnMetrics(data);
 
-  const categorySpending = calculateCategorySpending(data.variableExpenses || []);
+  const variableExpenses = data.variableExpenses || [];
+  const categorySpending = calculateCategorySpending(variableExpenses);
   const categoryBudgets = data.categoryBudgets || {};
 
   const greetingText = (() => {
@@ -215,7 +229,7 @@ function Dashboard() {
 
   const spendingTrend = Array.from({ length: 7 }, (_, i) => {
     const dateStr = dateTime.getDateKeyDaysAgo(6 - i);
-    const daySpending = (data.variableExpenses || [])
+    const daySpending = variableExpenses
       .filter((exp) => exp.date === dateStr)
       .reduce((sum, exp) => sum + exp.amount, 0);
     return {
@@ -773,12 +787,12 @@ function Dashboard() {
         <div className="card">
           <h2 className="card-title">Recent Expenses</h2>
           <div className="expense-list">
-            {data.variableExpenses.length === 0 && (
+            {variableExpenses.length === 0 && (
               <div style={{ color: '#888', textAlign: 'center', padding: '24px 0' }}>
                 No expenses yet. Good job 👍
               </div>
             )}
-            {data.variableExpenses.slice(0, 5).map((exp) => (
+            {variableExpenses.slice(0, 5).map((exp) => (
               <div key={exp.id} className="expense-item">
                 <div>
                   <div className="expense-name">{exp.name}</div>

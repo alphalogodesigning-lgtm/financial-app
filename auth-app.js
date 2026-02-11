@@ -1,6 +1,6 @@
 const { useState, useEffect } = React;
 
-const { supabaseClient } = window.AppShared;
+const { supabaseClient, loadBudgetData } = window.AppShared;
 
         function AuthPage() {
             const [mode, setMode] = useState('login');
@@ -61,13 +61,22 @@ const { supabaseClient } = window.AppShared;
 
                 if (mode === 'login') {
                     setStatusMessage('Welcome back! Taking you to your dashboard...', 'success');
+                    const userData = await loadBudgetData({ redirect: false, localFallback: false });
+                    const hasCompletedOnboarding = Boolean(userData) && userData.onboarding_complete !== false;
                     setTimeout(() => {
-                        window.location.href = 'index.html';
+                        window.location.href = hasCompletedOnboarding ? 'index.html' : 'onboarding.html';
                     }, 650);
                 } else {
-                    setStatusMessage('Account created successfully! You can now sign in.', 'success');
-                    setMode('login');
-                    setIsSubmitting(false);
+                    if (data?.session) {
+                        setStatusMessage('Account created. Let’s set you up in 30 seconds 🚀', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'onboarding.html';
+                        }, 650);
+                    } else {
+                        setStatusMessage('Account created successfully! You can now sign in.', 'success');
+                        setMode('login');
+                        setIsSubmitting(false);
+                    }
                 }
             };
 
