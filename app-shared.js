@@ -4,6 +4,103 @@
   const supabaseClient = SUPABASE_CONFIG.supabaseClient || null;
   const STORAGE_TABLE = SUPABASE_CONFIG.STORAGE_TABLE || 'budget_tracker_state';
   const waitForAuthSession = SUPABASE_CONFIG.waitForAuthSession || (async () => null);
+  const DEFAULT_TIME_ZONE = 'Asia/Kuala_Lumpur';
+  const DATE_KEY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+    timeZone: DEFAULT_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const TIME_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+    timeZone: DEFAULT_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  const WEEKDAY_SHORT_FORMATTER = new Intl.DateTimeFormat('en-US', {
+    timeZone: DEFAULT_TIME_ZONE,
+    weekday: 'short'
+  });
+  const HOUR_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+    timeZone: DEFAULT_TIME_ZONE,
+    hour: '2-digit',
+    hour12: false
+  });
+  const parseDateKey = (dateKey) => {
+    const [year, month, day] = String(dateKey || '').split('-').map(Number);
+    if (!year || !month || !day) return null;
+    return { year, month, day };
+  };
+
+  const formatDateKeyFromUTCDate = (date) => {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const dateTime = {
+    DEFAULT_TIME_ZONE,
+    now: () => new Date(),
+    nowUtcISOString: () => new Date().toISOString(),
+    getTodayDateKey: () => DATE_KEY_FORMATTER.format(new Date()),
+    getCurrentTime: () => TIME_FORMATTER.format(new Date()),
+    getCurrentHour: () => Number(HOUR_FORMATTER.format(new Date())),
+    getDateKeyDaysAgo: (daysAgo) => {
+      const todayKey = DATE_KEY_FORMATTER.format(new Date());
+      const parsed = parseDateKey(todayKey);
+      if (!parsed) return todayKey;
+      const shifted = new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day - daysAgo));
+      return formatDateKeyFromUTCDate(shifted);
+    },
+    shiftDateKey: (dateKey, daysDelta) => {
+      const parsed = parseDateKey(dateKey);
+      if (!parsed) return dateKey;
+      const shifted = new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day + daysDelta));
+      return formatDateKeyFromUTCDate(shifted);
+    },
+    getWeekdayShortFromDateKey: (dateKey) => {
+      const parsed = parseDateKey(dateKey);
+      if (!parsed) return '';
+      const utcDate = new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day));
+      return new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' }).format(utcDate);
+    },
+    getDayOfWeekFromDateKey: (dateKey) => {
+      const parsed = parseDateKey(dateKey);
+      if (!parsed) return 0;
+      return new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day)).getUTCDay();
+    },
+    getDayOfMonth: (dateInput = new Date()) => {
+      const dateKey = DATE_KEY_FORMATTER.format(dateInput);
+      const parsed = parseDateKey(dateKey);
+      return parsed ? parsed.day : 1;
+    },
+    formatShortDateFromDateKey: (dateKey) => {
+      const parsed = parseDateKey(dateKey);
+      if (!parsed) return dateKey;
+      const utcDate = new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day));
+      return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(utcDate);
+    },
+    formatUiDateTimeFromUTC: (utcISOString) => {
+      if (!utcISOString) return null;
+      const parsed = new Date(utcISOString);
+      if (Number.isNaN(parsed.getTime())) return null;
+      return {
+        date: DATE_KEY_FORMATTER.format(parsed),
+        time: TIME_FORMATTER.format(parsed),
+        weekday: WEEKDAY_SHORT_FORMATTER.format(parsed)
+      };
+    },
+    getWeekStartDateKey: (dateKey = DATE_KEY_FORMATTER.format(new Date())) => {
+      const dayIndex = dateTime.getDayOfWeekFromDateKey(dateKey);
+      return dateTime.shiftDateKey(dateKey, -dayIndex);
+    },
+    compareDateTimeStringsDesc: (aDate, aTime, bDate, bTime) => {
+      const a = `${aDate || ''}T${aTime || '00:00'}`;
+      const b = `${bDate || ''}T${bTime || '00:00'}`;
+      return b.localeCompare(a);
+    }
+  };
 
   const redirectToAuth = (options = {}) => {
     const shouldReplace = options.replace === true;
@@ -76,7 +173,7 @@
         .upsert({
           user_id: user.id,
           data: nextData,
-          updated_at: new Date().toISOString()
+          updated_at: dateTime.nowUtcISOString()
         }, { onConflict: 'user_id' });
       if (error) throw error;
     } catch (err) {
@@ -189,7 +286,7 @@
   const calculateBurnMetrics = (data, options = {}) => {
     const { income, totalFixed, totalVariable, totalSpent, remaining } = calculateTotals(data);
     const daysInMonth = options.daysInMonth || 30;
-    const today = options.today || new Date().getDate();
+    const today = options.today || dateTime.getDayOfMonth();
     const baselineDailyBurn = totalFixed / daysInMonth;
     const activeDailyBurn = today > 0 ? totalVariable / today : 0;
     const dailyBurnRate = baselineDailyBurn + activeDailyBurn;
@@ -266,24 +363,24 @@
 
   const calculateGoalSummary = (savingsGoal, monthlySavings) => {
     const monthsToGoal = savingsGoal / monthlySavings;
-    const goalDate = new Date();
+    const goalDate = dateTime.now();
     goalDate.setMonth(goalDate.getMonth() + Math.ceil(monthsToGoal));
     const progressPercent = (monthlySavings / (savingsGoal / 12)) * 100;
     return { monthsToGoal, goalDate, progressPercent };
   };
 
   const buildProjectionTimeline = (fixedExpenses, income, days = 30) => {
-    const today = new Date();
+    const todayKey = dateTime.getTodayDateKey();
     const timelineData = [];
     for (let i = 0; i < days; i += 1) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      const day = date.getDate();
+      const dateKey = dateTime.shiftDateKey(todayKey, i);
+      const parsed = parseDateKey(dateKey);
+      const day = parsed ? parsed.day : 0;
       const dayExpenses = fixedExpenses.filter((exp) => exp.dueDate === day);
       if (dayExpenses.length > 0) {
         const total = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
         timelineData.push({
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          date: dateTime.formatShortDateFromDateKey(dateKey),
           expenses: dayExpenses,
           total,
           isCluster: dayExpenses.length >= 3 || total > income * 0.3
@@ -384,11 +481,11 @@
     const regretRatio = totalVariableSpent > 0 ? regretMoney / totalVariableSpent : 0;
 
     const weekendExpenses = data.variableExpenses.filter((exp) => {
-      const day = new Date(exp.date).getDay();
+      const day = dateTime.getDayOfWeekFromDateKey(exp.date);
       return day === 0 || day === 6;
     });
     const weekdayExpenses = data.variableExpenses.filter((exp) => {
-      const day = new Date(exp.date).getDay();
+      const day = dateTime.getDayOfWeekFromDateKey(exp.date);
       return day !== 0 && day !== 6;
     });
     const avgWeekendSpend = weekendExpenses.length > 0
@@ -400,7 +497,9 @@
     const weekendWeekdayRatio = avgWeekdaySpend > 0 ? avgWeekendSpend / avgWeekdaySpend : 0;
 
     const lateNightExpenses = data.variableExpenses.filter((exp) => {
-      const hour = new Date(exp.created_at).getHours();
+      const dateTimeInZone = dateTime.formatUiDateTimeFromUTC(exp.created_at);
+      const hour = dateTimeInZone ? Number(dateTimeInZone.time.split(':')[0]) : null;
+      if (hour === null || Number.isNaN(hour)) return false;
       return hour >= 22 || hour < 4;
     });
     const lateNightSpent = lateNightExpenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -615,6 +714,8 @@
     supabaseClient,
     STORAGE_TABLE,
     waitForAuthSession,
+    DEFAULT_TIME_ZONE,
+    dateTime,
     redirectToAuth,
     resolveAuthSession,
     getAuthenticatedUser,
