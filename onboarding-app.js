@@ -5,7 +5,8 @@ const {
   getAuthenticatedUser,
   loadBudgetData,
   saveBudgetData,
-  ROAST_LEVELS
+  ROAST_LEVELS,
+  CLEAN_STATE
 } = window.AppShared;
 
 function OnboardingPage() {
@@ -106,8 +107,17 @@ function OnboardingPage() {
 
     try {
       const currentData = await loadBudgetData({ redirect: false, localFallback: false }) || {};
-      await saveBudgetData({
+      const normalizedData = {
+        ...CLEAN_STATE,
         ...currentData,
+        fixedExpenses: Array.isArray(currentData.fixedExpenses) ? currentData.fixedExpenses : [],
+        variableExpenses: Array.isArray(currentData.variableExpenses) ? currentData.variableExpenses : [],
+        categoryBudgets: currentData.categoryBudgets && typeof currentData.categoryBudgets === "object" ? currentData.categoryBudgets : {},
+        incomeEntries: Array.isArray(currentData.incomeEntries) ? currentData.incomeEntries : []
+      };
+
+      await saveBudgetData({
+        ...normalizedData,
         income: amount,
         roast_level: roastLevel,
         user_name: name.trim(),
