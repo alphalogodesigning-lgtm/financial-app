@@ -224,7 +224,7 @@ const {
                             <div className="insight-icon">🏪</div>
                             <div className="insight-title">Merchant Loyalty</div>
                             <div className="insight-description">
-                                Your most visited merchant is <strong style={{ color: '#D4AF37' }}>{topMerchant}</strong> 
+                                Your most visited merchant is <strong style={{ color: '#D4AF37' }}>{topMerchant}</strong>{' '}
                                 with <strong>{topMerchantVisits}</strong> visits.
                             </div>
                             <div className="insight-stat" style={{ color: '#66BB6A' }}>

@@ -96,8 +96,7 @@ function Dashboard() {
   const [newExpense, setNewExpense] = useState({
     name: '',
     amount: '',
-    category: 'Food',
-    date: dateTime.getTodayDateKey()
+    category: 'Food'
   });
   const [newIncome, setNewIncome] = useState({
     title: '',
@@ -258,7 +257,7 @@ function Dashboard() {
       id: Date.now(),
       name: newExpense.name,
       amount: parseFloat(newExpense.amount),
-      date: newExpense.date,
+      date: dateTime.getTodayDateKey(),
       time: dateTime.getCurrentTime(),
       created_at: dateTime.nowUtcISOString(),
       category: newExpense.category,
@@ -277,7 +276,7 @@ function Dashboard() {
       };
     });
 
-    setNewExpense({ name: '', amount: '', category: 'Food', date: dateTime.getTodayDateKey() });
+    setNewExpense({ name: '', amount: '', category: 'Food' });
     setModalOpen(false);
   };
 
