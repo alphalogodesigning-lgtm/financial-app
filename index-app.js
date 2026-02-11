@@ -8,6 +8,7 @@ const {
   START_MESSAGE,
   calculateBurnMetrics,
   calculateCategorySpending,
+  calculateExpenseStreak,
   dateTime
 } = window.AppShared;
 
@@ -144,7 +145,10 @@ function Dashboard() {
     loadBudgetData({ replace: true }).then((saved) => {
       if (!isMounted) return;
       if (saved) {
-        setData(saved);
+        setData({
+          ...saved,
+          streak: calculateExpenseStreak(saved.variableExpenses || [])
+        });
       }
       setIsHydrated(true);
     });
@@ -250,11 +254,14 @@ function Dashboard() {
       photo: null
     };
 
-    setData((prev) => ({
-      ...prev,
-      variableExpenses: [expense, ...prev.variableExpenses],
-      streak: prev.streak + 1
-    }));
+    setData((prev) => {
+      const variableExpenses = [expense, ...prev.variableExpenses];
+      return {
+        ...prev,
+        variableExpenses,
+        streak: calculateExpenseStreak(variableExpenses)
+      };
+    });
 
     setNewExpense({ name: '', amount: '', category: 'Food', date: dateTime.getTodayDateKey() });
     setModalOpen(false);

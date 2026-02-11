@@ -331,6 +331,21 @@
     return { totalMonthly, totalAnnual, charged, pending };
   };
 
+  const calculateExpenseStreak = (expenses, options = {}) => {
+    const todayKey = options.todayKey || dateTime.getTodayDateKey();
+    const uniqueExpenseDates = new Set((expenses || []).map((exp) => exp.date).filter(Boolean));
+
+    let streak = 0;
+    let cursor = todayKey;
+
+    while (uniqueExpenseDates.has(cursor)) {
+      streak += 1;
+      cursor = dateTime.shiftDateKey(cursor, -1);
+    }
+
+    return streak;
+  };
+
   const calculateVariableSummary = (expenses) => {
     const totalSpent = expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const regretSpent = expenses.filter((exp) => exp.regret).reduce((sum, exp) => sum + exp.amount, 0);
@@ -732,6 +747,7 @@
     calculateCategorySpending,
     calculateFixedSummary,
     calculateVariableSummary,
+    calculateExpenseStreak,
     calculateProjectionSummary,
     calculateGoalSummary,
     buildProjectionTimeline,

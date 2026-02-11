@@ -6,6 +6,7 @@ const {
     getInitialData,
     CATEGORY_LIST,
     calculateVariableSummary,
+    calculateExpenseStreak,
     dateTime
 } = window.AppShared;
 
@@ -34,7 +35,10 @@ const {
                 loadBudgetData().then((saved) => {
                     if (!isMounted) return;
                     if (saved) {
-                        setData(saved);
+                        setData({
+                            ...saved,
+                            streak: calculateExpenseStreak(saved.variableExpenses || [])
+                        });
                     }
                     setIsHydrated(true);
                 });
@@ -118,14 +122,18 @@ const {
                 if (!newExpense.name || !newExpense.amount) return;
 
                 if (editingExpense) {
-                    setData(prev => ({
-                        ...prev,
-                        variableExpenses: prev.variableExpenses.map(exp =>
+                    setData(prev => {
+                        const variableExpenses = prev.variableExpenses.map(exp =>
                             exp.id === editingExpense.id
                                 ? { ...editingExpense, ...newExpense, amount: parseFloat(newExpense.amount) }
                                 : exp
-                        )
-                    }));
+                        );
+                        return {
+                            ...prev,
+                            variableExpenses,
+                            streak: calculateExpenseStreak(variableExpenses)
+                        };
+                    });
                     setEditingExpense(null);
                 } else {
                     const expense = {
@@ -134,11 +142,14 @@ const {
                         amount: parseFloat(newExpense.amount),
                         created_at: dateTime.nowUtcISOString()
                     };
-                    setData(prev => ({
-                        ...prev,
-                        variableExpenses: [expense, ...prev.variableExpenses],
-                        streak: prev.streak + 1
-                    }));
+                    setData(prev => {
+                        const variableExpenses = [expense, ...prev.variableExpenses];
+                        return {
+                            ...prev,
+                            variableExpenses,
+                            streak: calculateExpenseStreak(variableExpenses)
+                        };
+                    });
                 }
 
                 setNewExpense({
@@ -174,10 +185,14 @@ const {
 
             const handleDeleteExpense = (id) => {
                 if (confirm('Delete this expense?')) {
-                    setData(prev => ({
-                        ...prev,
-                        variableExpenses: prev.variableExpenses.filter(exp => exp.id !== id)
-                    }));
+                    setData(prev => {
+                        const variableExpenses = prev.variableExpenses.filter(exp => exp.id !== id);
+                        return {
+                            ...prev,
+                            variableExpenses,
+                            streak: calculateExpenseStreak(variableExpenses)
+                        };
+                    });
                 }
             };
 
