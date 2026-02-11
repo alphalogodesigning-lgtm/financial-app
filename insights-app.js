@@ -118,12 +118,39 @@ const {
 
                     {/* Financial Health Score */}
                     <div className="health-score-container">
-                        <div className="health-grade" style={{ color: gradeInfo.color }}>
-                            {gradeInfo.grade}
-                        </div>
-                        <div className="health-score-label">{gradeInfo.text}</div>
-                        <div style={{ fontSize: '1.25rem', color: '#888', marginTop: '12px' }}>
-                            Financial Health Score: <span style={{ color: gradeInfo.color, fontWeight: '700' }}>{healthScore}/100</span>
+                        <div className="health-score-wrapper">
+                            <div className="health-circle-container">
+                                <svg width="240" height="240" viewBox="0 0 240 240">
+                                    <circle
+                                        className="health-circle-bg"
+                                        cx="120"
+                                        cy="120"
+                                        r="108"
+                                    />
+                                    <circle
+                                        className="health-circle-progress"
+                                        cx="120"
+                                        cy="120"
+                                        r="108"
+                                        style={{
+                                            stroke: gradeInfo.color,
+                                            strokeDasharray: `${2 * Math.PI * 108}`,
+                                            strokeDashoffset: `${2 * Math.PI * 108 * (1 - healthScore / 100)}`
+                                        }}
+                                    />
+                                </svg>
+                                <div className="health-circle-content">
+                                    <div className="health-grade" style={{ color: gradeInfo.color }}>
+                                        {gradeInfo.grade}
+                                    </div>
+                                    <div className="health-score-number" style={{ color: gradeInfo.color }}>
+                                        {healthScore}/100
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="health-score-label" style={{ color: gradeInfo.color }}>
+                                {gradeInfo.text}
+                            </div>
                         </div>
                     </div>
 
