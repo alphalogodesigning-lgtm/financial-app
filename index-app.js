@@ -7,7 +7,9 @@ const {
   CLEAN_STATE,
   START_MESSAGE,
   calculateBurnMetrics,
-  calculateCategorySpending
+  calculateCategorySpending,
+  calculateExpenseStreak,
+  dateTime
 } = window.AppShared;
 
 function ProgressRing({ progress, size = 120, strokeWidth = 8, color = '#D4AF37' }) {
@@ -95,12 +97,12 @@ function Dashboard() {
     name: '',
     amount: '',
     category: 'Food',
-    date: new Date().toISOString().split('T')[0]
+    date: dateTime.getTodayDateKey()
   });
   const [newIncome, setNewIncome] = useState({
     title: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0]
+    date: dateTime.getTodayDateKey()
   });
   const [quickAddMode, setQuickAddMode] = useState('expense');
   const userName = profile.fullName || '';
@@ -143,7 +145,10 @@ function Dashboard() {
     loadBudgetData({ replace: true }).then((saved) => {
       if (!isMounted) return;
       if (saved) {
-        setData(saved);
+        setData({
+          ...saved,
+          streak: calculateExpenseStreak(saved.variableExpenses || [])
+        });
       }
       setIsHydrated(true);
     });
@@ -175,7 +180,7 @@ function Dashboard() {
   const categoryBudgets = data.categoryBudgets || {};
 
   const greetingText = (() => {
-    const hour = new Date().getHours();
+    const hour = dateTime.getCurrentHour();
     if (hour >= 0 && hour < 5) {
       return 'Get some sleep';
     }
@@ -209,14 +214,12 @@ function Dashboard() {
   };
 
   const spendingTrend = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = dateTime.getDateKeyDaysAgo(6 - i);
     const daySpending = (data.variableExpenses || [])
       .filter((exp) => exp.date === dateStr)
       .reduce((sum, exp) => sum + exp.amount, 0);
     return {
-      day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      day: dateTime.getWeekdayShortFromDateKey(dateStr),
       amount: daySpending
     };
   });
@@ -242,7 +245,8 @@ function Dashboard() {
       name: newExpense.name,
       amount: parseFloat(newExpense.amount),
       date: newExpense.date,
-      time: new Date().toTimeString().slice(0, 5),
+      time: dateTime.getCurrentTime(),
+      created_at: dateTime.nowUtcISOString(),
       category: newExpense.category,
       merchant: '',
       regret: false,
@@ -250,13 +254,16 @@ function Dashboard() {
       photo: null
     };
 
-    setData((prev) => ({
-      ...prev,
-      variableExpenses: [expense, ...prev.variableExpenses],
-      streak: prev.streak + 1
-    }));
+    setData((prev) => {
+      const variableExpenses = [expense, ...prev.variableExpenses];
+      return {
+        ...prev,
+        variableExpenses,
+        streak: calculateExpenseStreak(variableExpenses)
+      };
+    });
 
-    setNewExpense({ name: '', amount: '', category: 'Food', date: new Date().toISOString().split('T')[0] });
+    setNewExpense({ name: '', amount: '', category: 'Food', date: dateTime.getTodayDateKey() });
     setModalOpen(false);
   };
 
@@ -271,7 +278,8 @@ function Dashboard() {
       title: newIncome.title,
       amount,
       date: newIncome.date,
-      time: new Date().toTimeString().slice(0, 5)
+      time: dateTime.getCurrentTime(),
+      created_at: dateTime.nowUtcISOString()
     };
 
     setData((prev) => ({
@@ -280,7 +288,7 @@ function Dashboard() {
       incomeEntries: [incomeEntry, ...(prev.incomeEntries || [])]
     }));
 
-    setNewIncome({ title: '', amount: '', date: new Date().toISOString().split('T')[0] });
+    setNewIncome({ title: '', amount: '', date: dateTime.getTodayDateKey() });
     setModalOpen(false);
   };
 
