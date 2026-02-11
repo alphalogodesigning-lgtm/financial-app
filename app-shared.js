@@ -129,9 +129,11 @@
   };
 
   const loadBudgetData = async (options = {}) => {
+    const allowLocalFallback = options.localFallback !== false;
     const fallback = localStorage.getItem(STORAGE_KEY);
+    const parsedFallback = allowLocalFallback && fallback ? JSON.parse(fallback) : null;
     if (!supabaseClient) {
-      return fallback ? JSON.parse(fallback) : null;
+      return parsedFallback;
     }
     try {
       const user = await getAuthenticatedUser();
@@ -139,7 +141,7 @@
         if (options.redirect !== false) {
           redirectToAuth(options);
         }
-        return fallback ? JSON.parse(fallback) : null;
+        return parsedFallback;
       }
       const { data, error } = await supabaseClient
         .from(STORAGE_TABLE)
@@ -154,7 +156,7 @@
     } catch (err) {
       console.warn('Supabase load failed, using local data.', err);
     }
-    return fallback ? JSON.parse(fallback) : null;
+    return parsedFallback;
   };
 
   const saveBudgetData = async (nextData, options = {}) => {

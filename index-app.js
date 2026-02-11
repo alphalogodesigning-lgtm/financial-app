@@ -144,6 +144,10 @@ function Dashboard() {
     let isMounted = true;
     loadBudgetData({ replace: true }).then((saved) => {
       if (!isMounted) return;
+      if (!saved || saved.onboarding_complete === false) {
+        window.location.replace('onboarding.html');
+        return;
+      }
       if (saved) {
         setData({
           ...saved,
