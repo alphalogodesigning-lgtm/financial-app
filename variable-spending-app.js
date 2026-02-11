@@ -5,7 +5,8 @@ const {
     saveBudgetData,
     getInitialData,
     CATEGORY_LIST,
-    calculateVariableSummary
+    calculateVariableSummary,
+    dateTime
 } = window.AppShared;
 
         function VariableSpending() {
@@ -17,8 +18,8 @@ const {
             const [newExpense, setNewExpense] = useState({
                 name: '',
                 amount: '',
-                date: new Date().toISOString().split('T')[0],
-                time: new Date().toTimeString().slice(0, 5),
+                date: dateTime.getTodayDateKey(),
+                time: dateTime.getCurrentTime(),
                 category: 'Food',
                 merchant: '',
                 notes: '',
@@ -56,19 +57,15 @@ const {
 
             // Sort by date (newest first)
             const sortedExpenses = [...filteredExpenses].sort((a, b) => {
-                const dateA = new Date(`${a.date} ${a.time}`);
-                const dateB = new Date(`${b.date} ${b.time}`);
-                return dateB - dateA;
+                return dateTime.compareDateTimeStringsDesc(a.date, a.time, b.date, b.time);
             });
 
             // Heatmap data (last 30 days)
             const heatmapData = Array.from({ length: 30 }, (_, i) => {
-                const date = new Date();
-                date.setDate(date.getDate() - (29 - i));
-                const dateStr = date.toISOString().split('T')[0];
+                const dateStr = dateTime.getDateKeyDaysAgo(29 - i);
                 const dayExpenses = expenses.filter(e => e.date === dateStr);
                 const total = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
-                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayName = dateTime.getWeekdayShortFromDateKey(dateStr);
                 return { date: dateStr, day: dayName, total, count: dayExpenses.length };
             });
 
@@ -97,25 +94,25 @@ const {
                 .sort((a, b) => b.total - a.total);
 
             // Comparison data (This week vs Last week)
-            const today = new Date();
-            const thisWeekStart = new Date(today);
-            thisWeekStart.setDate(today.getDate() - today.getDay());
-            const lastWeekStart = new Date(thisWeekStart);
-            lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+            const todayKey = dateTime.getTodayDateKey();
+            const thisWeekStartKey = dateTime.getWeekStartDateKey(todayKey);
+            const lastWeekStartKey = dateTime.shiftDateKey(thisWeekStartKey, -7);
 
-            const thisWeekExpenses = expenses.filter(e => {
-                const expDate = new Date(e.date);
-                return expDate >= thisWeekStart;
-            });
-            const lastWeekExpenses = expenses.filter(e => {
-                const expDate = new Date(e.date);
-                return expDate >= lastWeekStart && expDate < thisWeekStart;
-            });
+            const thisWeekExpenses = expenses.filter(e => e.date >= thisWeekStartKey);
+            const lastWeekExpenses = expenses.filter(e => e.date >= lastWeekStartKey && e.date < thisWeekStartKey);
 
             const thisWeekTotal = thisWeekExpenses.reduce((sum, e) => sum + e.amount, 0);
             const lastWeekTotal = lastWeekExpenses.reduce((sum, e) => sum + e.amount, 0);
             const weekDiff = thisWeekTotal - lastWeekTotal;
             const weekDiffPercent = lastWeekTotal > 0 ? ((weekDiff / lastWeekTotal) * 100) : 0;
+
+            const getExpenseDateLabel = (expense) => {
+                if (expense.created_at) {
+                    const dateInfo = dateTime.formatUiDateTimeFromUTC(expense.created_at);
+                    if (dateInfo?.date) return dateInfo.date;
+                }
+                return expense.date;
+            };
 
             const handleAddExpense = () => {
                 if (!newExpense.name || !newExpense.amount) return;
@@ -134,7 +131,8 @@ const {
                     const expense = {
                         id: Date.now(),
                         ...newExpense,
-                        amount: parseFloat(newExpense.amount)
+                        amount: parseFloat(newExpense.amount),
+                        created_at: dateTime.nowUtcISOString()
                     };
                     setData(prev => ({
                         ...prev,
@@ -146,8 +144,8 @@ const {
                 setNewExpense({
                     name: '',
                     amount: '',
-                    date: new Date().toISOString().split('T')[0],
-                    time: new Date().toTimeString().slice(0, 5),
+                    date: dateTime.getTodayDateKey(),
+                    time: dateTime.getCurrentTime(),
                     category: 'Food',
                     merchant: '',
                     notes: '',
@@ -302,7 +300,7 @@ const {
                                                     <div className="expense-amount">RM{expense.amount.toFixed(2)}</div>
                                                 </div>
                                                 <div className="expense-meta">
-                                                    <span>📅 {expense.date}</span>
+                                                    <span>📅 {getExpenseDateLabel(expense)}</span>
                                                     <span>🕐 {expense.time}</span>
                                                     <span>📂 {expense.category}</span>
                                                     {expense.merchant && <span>🏪 {expense.merchant}</span>}
@@ -402,7 +400,7 @@ const {
                                                 <div className="expense-amount">RM{expense.amount.toFixed(2)}</div>
                                             </div>
                                             <div className="expense-meta">
-                                                <span>📅 {expense.date}</span>
+                                                <span>📅 {getExpenseDateLabel(expense)}</span>
                                                 <span>🏪 {expense.merchant}</span>
                                             </div>
                                             {expense.notes && (
@@ -489,8 +487,8 @@ const {
                         setNewExpense({
                             name: '',
                             amount: '',
-                            date: new Date().toISOString().split('T')[0],
-                            time: new Date().toTimeString().slice(0, 5),
+                            date: dateTime.getTodayDateKey(),
+                            time: dateTime.getCurrentTime(),
                             category: 'Food',
                             merchant: '',
                             notes: '',
