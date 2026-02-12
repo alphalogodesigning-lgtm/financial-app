@@ -1,6 +1,9 @@
-const CACHE_NAME = 'budget-tracker-v1';
+const CACHE_NAME = 'budget-tracker-v2';
 const STATIC_ASSETS = [
   '/',
+  '/landing.html',
+  '/privacy-policy.html',
+  '/terms-of-service.html',
   '/index.html',
   '/auth.html',
   '/onboarding.html',
