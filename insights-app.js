@@ -94,59 +94,32 @@ const {
             return (
                 <div className="container">
                     <nav className="main-nav">
-                        <div className="nav-links">
-                            <a href="index.html" className="nav-link">📊 Dashboard</a>
-                            <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
-                            <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
-                            <a href="projections.html" className="nav-link">🔮 Projections</a>
-                            <a href="insights.html" className="nav-link active">🧠 Insights</a>
-                        </div>
-                        <div className="current-roast-indicator">
+                        <a href="index.html" className="nav-link">📊 Dashboard</a>
+                        <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                        <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                        <a href="projections.html" className="nav-link">🔮 Projections</a>
+                        <a href="insights.html" className="nav-link active">🧠 Insights</a>
+                        <button className="settings-btn" onClick={() => setShowSettings(true)}>
                             <span>{ROAST_LEVELS[roastLevel].emoji}</span>
                             <span>{ROAST_LEVELS[roastLevel].name}</span>
-                        </div>
-                        <button className="settings-btn" onClick={() => setShowSettings(true)}>
-                            <span>⚙️</span>
-                            <span>Roast Level</span>
                         </button>
                     </nav>
 
                     <div className="header">
-                        <h1 className="header-title">The Therapy Session</h1>
-                        <p className="header-subtitle">Let's talk about your spending habits... honestly.</p>
+                        <div className="header-left">
+                            <h1 className="header-title">The Therapy Session</h1>
+                            <p className="header-subtitle">Let's talk about your spending habits... honestly.</p>
+                        </div>
                     </div>
 
                     {/* Financial Health Score */}
                     <div className="health-score-container">
                         <div className="health-score-wrapper">
-                            <div className="health-circle-container">
-                                <svg width="240" height="240" viewBox="0 0 240 240">
-                                    <circle
-                                        className="health-circle-bg"
-                                        cx="120"
-                                        cy="120"
-                                        r="108"
-                                    />
-                                    <circle
-                                        className="health-circle-progress"
-                                        cx="120"
-                                        cy="120"
-                                        r="108"
-                                        style={{
-                                            stroke: gradeInfo.color,
-                                            strokeDasharray: `${2 * Math.PI * 108}`,
-                                            strokeDashoffset: `${2 * Math.PI * 108 * (1 - healthScore / 100)}`
-                                        }}
-                                    />
-                                </svg>
-                                <div className="health-circle-content">
-                                    <div className="health-grade" style={{ color: gradeInfo.color }}>
-                                        {gradeInfo.grade}
-                                    </div>
-                                    <div className="health-score-number" style={{ color: gradeInfo.color }}>
-                                        {healthScore}/100
-                                    </div>
-                                </div>
+                            <div className="health-grade" style={{ color: gradeInfo.color }}>
+                                {gradeInfo.grade}
+                            </div>
+                            <div className="health-score-number" style={{ color: gradeInfo.color }}>
+                                {healthScore}/100
                             </div>
                             <div className="health-score-label" style={{ color: gradeInfo.color }}>
                                 {gradeInfo.text}
