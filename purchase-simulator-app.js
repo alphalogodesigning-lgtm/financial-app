@@ -1,5 +1,7 @@
 const { useState, useEffect, useMemo } = React;
 
+const { calculateBurnMetrics } = window.AppShared || {};
+
 // ─── ROAST DATABASE ─────────────────────────────────────────────────
 const ROAST_DATABASE = {
     safe: [
@@ -172,22 +174,27 @@ function PurchaseSimulator() {
     const financialState = useMemo(() => {
         if (!data) {
             return {
-                currentBalance: 0, // TODO: Pull from centralized calculation
-                dailyBurnRate: 0,  // TODO: Pull from centralized calculation
+                currentBalance: 0,
+                dailyBurnRate: 0,
                 daysRunway: 0
             };
         }
 
-        // TODO: Replace these with actual calculations from your centralized model
-        // For now, using placeholder logic based on your data structure
+        if (calculateBurnMetrics) {
+            const { remaining, dailyBurnRate, runway } = calculateBurnMetrics(data);
+            return {
+                currentBalance: remaining,
+                dailyBurnRate,
+                daysRunway: runway === null ? 0 : Math.floor(runway)
+            };
+        }
+
+        // Fallback when centralized helpers are unavailable.
         const income = data.income || 0;
         const fixedExpenses = (data.fixedExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         const variableExpenses = (data.variableExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
-        
         const monthlySpend = fixedExpenses + variableExpenses;
         const dailyBurnRate = monthlySpend / 30;
-        
-        // This is a placeholder - replace with actual balance calculation
         const currentBalance = income - monthlySpend;
         const daysRunway = dailyBurnRate > 0 ? Math.floor(currentBalance / dailyBurnRate) : 0;
 
