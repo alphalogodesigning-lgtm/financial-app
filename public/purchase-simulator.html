@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Simulator - Reality Check</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js"></script>
+    <script src="./app-shared.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+        /* ─── RESET ─────────────────────────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ─── TOKENS ────────────────────────────────────────── */
+        :root {
+            --gold:       #D4AF37;
+            --gold-light: #FFD700;
+            --gold-dim:   rgba(212, 175, 55, 0.15);
+            --red:        #FF6B6B;
+            --orange:     #FF9F40;
+            --green:      #66BB6A;
+            --blue:       #89ABE3;
+            --bg:         #080808;
+            --surface:    #111111;
+            --surface2:   #171717;
+            --border:     rgba(255,255,255,0.07);
+            --border-mid: rgba(255,255,255,0.11);
+            --text:       #E8E8E8;
+            --muted:      #666;
+            --subtle:     #333;
+            --r-lg:       20px;
+            --r-md:       14px;
+            --r-sm:       10px;
+        }
+
+        /* ─── BASE ──────────────────────────────────────────── */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── DESKTOP AMBIENT BG ────────────────────────────── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 600px;
+            background: radial-gradient(ellipse at center,
+                rgba(212,175,55,0.055) 0%,
+                rgba(137,171,227,0.03) 50%,
+                transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes ambientPulse {
+            0%,100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+            50%      { opacity: 1;   transform: translateX(-50%) scale(1.08); }
+        }
+
+        /* ─── LAYOUT ────────────────────────────────────────── */
+        .container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 28px 24px 80px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* ─── NAVIGATION ────────────────────────────────────── */
+        .main-nav {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 36px;
+            padding: 7px;
+            background: rgba(17,17,17,0.9);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            flex-wrap: wrap;
+            backdrop-filter: blur(20px);
+        }
+
+        .nav-link {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            border-radius: 11px;
+            color: var(--muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13.5px;
+            letter-spacing: 0.01em;
+            transition: color 0.18s ease, background 0.18s ease;
+            white-space: nowrap;
+        }
+        .nav-link:hover { color: var(--gold); background: var(--gold-dim); }
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: #080808;
+            font-weight: 700;
+            box-shadow: 0 4px 18px rgba(212,175,55,0.28);
+        }
+
+        /* ─── HEADER ────────────────────────────────────────── */
+        .header {
+            margin-bottom: 36px;
+        }
+        .header-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-eyebrow::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 2px;
+            background: var(--gold);
+            border-radius: 1px;
+        }
+        .header-title {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            margin-bottom: 10px;
+        }
+        .header-title span { color: var(--gold); }
+        .header-subtitle {
+            color: var(--muted);
+            font-size: 1rem;
+            font-weight: 400;
+            max-width: 600px;
+        }
+
+        /* ─── CARDS ─────────────────────────────────────────── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 28px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.25s ease;
+        }
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(212,175,55,0.4) 40%, rgba(137,171,227,0.25) 70%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .card:hover { border-color: var(--border-mid); }
+        .card:hover::after { opacity: 1; }
+
+        .card-title {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        /* ─── CURRENT STATE GRID ────────────────────────────── */
+        .state-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .state-box {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .state-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .state-value {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--gold);
+            margin-bottom: 4px;
+        }
+
+        .state-hint {
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        /* ─── INPUT SECTION ──────────────────────────────────── */
+        .input-section {
+            margin-bottom: 32px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .currency-symbol {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            pointer-events: none;
+        }
+
+        .purchase-input {
+            width: 100%;
+            padding: 20px 24px 20px 60px;
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: var(--r-md);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+        .purchase-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+        }
+
+        .purchase-input::placeholder {
+            color: var(--subtle);
+            font-weight: 500;
+        }
+
+        .input-hint {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin-top: 12px;
+        }
+
+        /* ─── COMPARISON SECTION ─────────────────────────────── */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .comparison-card {
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 24px;
+            position: relative;
+        }
+
+        .comparison-card.before {
+            border-color: rgba(102, 187, 106, 0.3);
+        }
+
+        .comparison-card.after {
+            border-color: rgba(255, 159, 64, 0.3);
+        }
+
+        .comparison-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+        }
+
+        .comparison-badge.before {
+            background: rgba(102, 187, 106, 0.15);
+            color: var(--green);
+        }
+
+        .comparison-badge.after {
+            background: rgba(255, 159, 64, 0.15);
+            color: var(--orange);
+        }
+
+        .comparison-stat {
+            margin-bottom: 20px;
+        }
+
+        .comparison-stat:last-child {
+            margin-bottom: 0;
+        }
+
+        .comparison-stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .comparison-stat-value {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .comparison-stat-value.big {
+            font-size: 2rem;
+        }
+
+        /* ─── ROAST SECTION ──────────────────────────────────── */
+        .roast-card {
+            background: var(--surface2);
+            border: 3px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .roast-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gold);
+            transition: background 0.3s ease;
+        }
+
+        .roast-card.safe::before {
+            background: var(--green);
+        }
+
+        .roast-card.tight::before {
+            background: var(--orange);
+        }
+
+        .roast-card.fucked::before {
+            background: var(--red);
+        }
+
+        .roast-emoji {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .roast-status {
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 12px;
+        }
+
+        .roast-status.safe { color: var(--green); }
+        .roast-status.tight { color: var(--orange); }
+        .roast-status.fucked { color: var(--red); }
+
+        .roast-text {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.5;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .roast-days {
+            font-size: 0.875rem;
+            color: var(--muted);
+        }
+
+        .roast-days strong {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        /* ─── EMPTY STATE ───────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+        }
+
+        .empty-emoji {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+
+        .empty-text {
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        /* ─── ANIMATIONS ─────────────────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .card { animation: fadeUp 0.45s ease-out backwards; }
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.12s; }
+        .card:nth-child(3) { animation-delay: 0.19s; }
+
+        .roast-emoji {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* ─── MOBILE ≤640px ─────────────────────────────────── */
+        @media (max-width: 640px) {
+            body::before { display: none; }
+            .container { padding: 16px 16px 60px; }
+            
+            .main-nav {
+                margin-bottom: 20px;
+                padding: 6px;
+                gap: 5px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-radius: 14px;
+                backdrop-filter: none;
+                background: #111;
+            }
+            .main-nav::-webkit-scrollbar { display: none; }
+            
+            .nav-link {
+                flex: 0 0 auto;
+                font-size: 12.5px;
+                padding: 9px 14px;
+                border-radius: 10px;
+            }
+            .nav-link.active { box-shadow: none; }
+            
+            .header { margin-bottom: 20px; }
+            .header-title { font-size: 1.75rem; }
+            
+            .card { padding: 20px; margin-bottom: 16px; border-radius: 16px; animation: none; }
+            .card::after { display: none; }
+            .card:hover { transform: none; }
+            
+            .state-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            
+            .state-box { padding: 16px; }
+            .state-value { font-size: 1.5rem; }
+            
+            .purchase-input {
+                font-size: 1.5rem;
+                padding: 16px 20px 16px 50px;
+            }
+            
+            .currency-symbol {
+                font-size: 1.25rem;
+                left: 16px;
+            }
+            
+            .comparison {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .comparison-card { padding: 20px; }
+            .comparison-stat-value.big { font-size: 1.75rem; }
+            
+            .roast-card { padding: 24px; }
+            .roast-emoji { font-size: 3rem; animation: none; }
+            .roast-text { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel" src="./purchase-simulator-app.js"></script>
+</body>
+</html>
