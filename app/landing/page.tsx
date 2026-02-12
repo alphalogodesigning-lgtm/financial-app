@@ -202,7 +202,7 @@ p{color:var(--muted);}
       <h3>Log fast → Get roasted → Move on</h3>
       <p>No spreadsheets. No categories hell. Just type the amount and let Roastly handle the brutal honesty.</p>
     </div>
-    <img src="https://dummyimage.com/600x400/15171a/ffd400&text=Expense+Log+UI" alt="">
+    <img src="https://github.com/alphalogodesigning-lgtm/financial-app/blob/022f8db1542a1801792e099d385a7d927bc5b791/public/Screenshot%202026-02-12%20175314.png" alt="">
   </div>
 
   <div class="feature">
@@ -210,7 +210,7 @@ p{color:var(--muted);}
       <h3>Reality Check before you buy</h3>
       <p>See the real yearly impact before tapping “Buy Now”. Future-you will thank you.</p>
     </div>
-    <img src="https://dummyimage.com/600x400/15171a/ffd400&text=Reality+Simulator" alt="">
+    <img src="https://github.com/alphalogodesigning-lgtm/financial-app/blob/022f8db1542a1801792e099d385a7d927bc5b791/public/Screenshot%202026-02-12%20175217.png" alt="">
   </div>
 
   <div class="feature">
@@ -218,7 +218,7 @@ p{color:var(--muted);}
       <h3>Brutal insights, zero fluff</h3>
       <p>We don’t sugarcoat. You overspent? We tell you. With numbers.</p>
     </div>
-    <img src="https://dummyimage.com/600x400/15171a/ffd400&text=Savage+Analytics" alt="">
+    <img src="https://github.com/alphalogodesigning-lgtm/financial-app/blob/022f8db1542a1801792e099d385a7d927bc5b791/public/Screenshot%202026-02-12%20175242.png" alt="">
   </div>
 
   <div class="feature">
@@ -226,7 +226,7 @@ p{color:var(--muted);}
       <h3>Minimal. Fast. Add to Home Screen.</h3>
       <p>Feels like an app. Opens instantly. No bloat. Just you and your financial reality.</p>
     </div>
-    <img src="https://dummyimage.com/600x400/15171a/ffd400&text=Mobile+PWA+View" alt="">
+    <img src="https://github.com/alphalogodesigning-lgtm/financial-app/blob/022f8db1542a1801792e099d385a7d927bc5b791/public/Screenshot%202026-02-12%20174802.png" alt="">
   </div>
 </section>
 
