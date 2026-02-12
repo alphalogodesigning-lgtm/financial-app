@@ -94,26 +94,28 @@ const {
             return (
                 <div className="container">
                     <nav className="main-nav">
-                        <div className="nav-links">
-                            <a href="index.html" className="nav-link">📊 Dashboard</a>
-                            <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
-                            <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
-                            <a href="projections.html" className="nav-link">🔮 Projections</a>
-                            <a href="insights.html" className="nav-link active">🧠 Insights</a>
-                        </div>
-                        <div className="current-roast-indicator">
-                            <span>{ROAST_LEVELS[roastLevel].emoji}</span>
-                            <span>{ROAST_LEVELS[roastLevel].name}</span>
-                        </div>
-                        <button className="settings-btn" onClick={() => setShowSettings(true)}>
-                            <span>⚙️</span>
-                            <span>Roast Level</span>
-                        </button>
+                        <a href="index.html" className="nav-link">📊 Dashboard</a>
+                        <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                        <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                        <a href="projections.html" className="nav-link">🔮 Projections</a>
+                        <a href="insights.html" className="nav-link active">🧠 Insights</a>
                     </nav>
 
                     <div className="header">
-                        <h1 className="header-title">The Therapy Session</h1>
-                        <p className="header-subtitle">Let's talk about your spending habits... honestly.</p>
+                        <div className="header-left">
+                            <h1 className="header-title">The Therapy Session</h1>
+                            <p className="header-subtitle">Let's talk about your spending habits... honestly.</p>
+                        </div>
+                        <div className="header-actions">
+                            <div className="current-roast-indicator">
+                                <span>{ROAST_LEVELS[roastLevel].emoji}</span>
+                                <span>{ROAST_LEVELS[roastLevel].name}</span>
+                            </div>
+                            <button className="settings-btn" onClick={() => setShowSettings(true)}>
+                                <span>⚙️</span>
+                                <span>Roast Level</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Financial Health Score */}
