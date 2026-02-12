@@ -28,89 +28,100 @@
 
         .container {
             min-height: 100vh;
-            padding: 24px;
+            padding: 32px 24px;
             max-width: 1400px;
             margin: 0 auto;
         }
 
         .main-nav {
             display: flex;
-            gap: 12px;
-            margin-bottom: 32px;
-            padding: 16px;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 12px;
+            gap: 8px;
+            margin-bottom: 40px;
+            padding: 8px;
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
             flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
         }
 
         .nav-link {
             padding: 10px 20px;
             background: transparent;
-            border: 1px solid #2a2a2a;
-            border-radius: 8px;
+            border: none;
+            border-radius: 12px;
             color: #888;
             text-decoration: none;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 600;
             font-size: 14px;
         }
 
         .nav-link:hover {
-            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.08);
             color: #D4AF37;
         }
 
         .nav-link.active {
             background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
             color: #0a0a0a;
-            border-color: #D4AF37;
+            box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
         }
 
         .settings-btn {
             padding: 10px 20px;
             background: transparent;
-            border: 1px solid #2a2a2a;
-            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            border-radius: 12px;
             color: #888;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 600;
             font-size: 14px;
             display: flex;
             align-items: center;
             gap: 8px;
+            margin-left: auto;
         }
 
         .settings-btn:hover {
-            border-color: #9C27B0;
-            color: #9C27B0;
+            background: rgba(212, 175, 55, 0.08);
+            border-color: #D4AF37;
+            color: #D4AF37;
         }
 
         .header {
-            margin-bottom: 32px;
-            text-align: center;
+            margin-bottom: 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .header-left {
+            flex: 1;
         }
 
         .header-title {
             font-size: 2.5rem;
-            font-weight: 800;
+            font-weight: 900;
             color: #fff;
             margin-bottom: 8px;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 0%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .header-subtitle {
             color: #888;
             font-size: 1.125rem;
+            font-weight: 400;
         }
 
         .gold-text { color: #D4AF37; }
@@ -257,43 +268,33 @@
             box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
         }
 
-        /* Current roast level indicator */
-        .current-roast-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid #D4AF37;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            color: #D4AF37;
-            margin-left: auto;
-        }
-
         /* Health Score */
         .health-score-container {
             text-align: center;
             margin-bottom: 48px;
         }
 
-        .health-score-ring {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 24px;
+        .health-score-wrapper {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
         }
 
         .health-grade {
             font-size: 5rem;
             font-weight: 900;
             text-align: center;
-            margin-bottom: 12px;
+            line-height: 1;
+        }
+
+        .health-score-number {
+            font-size: 1.75rem;
+            font-weight: 700;
         }
 
         .health-score-label {
             font-size: 1.125rem;
-            color: #888;
             font-weight: 600;
         }
 
@@ -702,26 +703,66 @@
             letter-spacing: 0.5px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .main-nav {
+                padding: 6px;
+                margin-bottom: 24px;
+                gap: 6px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x mandatory;
+            }
+
+            .main-nav::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-link,
+            .settings-btn {
+                flex: 0 0 auto;
+                white-space: nowrap;
+                padding: 10px 16px;
+                border-radius: 12px;
+                font-size: 13px;
+                scroll-snap-align: start;
+            }
+
+            .settings-btn {
+                margin-left: 0;
+            }
+
             .insights-grid {
                 grid-template-columns: 1fr;
             }
 
+            .header {
+                margin-bottom: 32px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
             .header-title {
-                font-size: 2rem;
+                font-size: 1.875rem;
+                line-height: 1.15;
+            }
+
+            .header-subtitle {
+                font-size: 0.95rem;
             }
 
             .modal-content {
                 padding: 24px;
             }
 
-            .nav-links {
-                width: 100%;
-            }
-
-            .current-roast-indicator {
-                width: 100%;
-                justify-content: center;
+            .health-grade {
+                font-size: 4rem;
             }
         }
     </style>
