@@ -35,58 +35,92 @@
 
         .main-nav {
             display: flex;
-            gap: 12px;
-            margin-bottom: 32px;
-            padding: 16px;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 12px;
+            gap: 8px;
+            margin-bottom: 40px;
+            padding: 8px;
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
             flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
         }
 
         .nav-link {
-            padding: 10px 20px;
+            padding: 12px 20px;
             background: transparent;
-            border: 1px solid #2a2a2a;
-            border-radius: 8px;
+            border: none;
+            border-radius: 12px;
             color: #888;
             text-decoration: none;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 600;
             font-size: 14px;
         }
 
         .nav-link:hover {
-            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.08);
             color: #D4AF37;
         }
 
         .nav-link.active {
             background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
             color: #0a0a0a;
-            border-color: #D4AF37;
+            box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+        }
+
+        .header {
+            margin-bottom: 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 8px;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 0%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-subtitle {
+            color: #888;
+            font-size: 1.125rem;
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .settings-btn {
-            padding: 10px 20px;
+            padding: 10px 16px;
             background: transparent;
-            border: 1px solid #2a2a2a;
-            border-radius: 8px;
-            color: #888;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 10px;
+            color: #bbb;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             font-weight: 600;
             font-size: 14px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
         }
@@ -94,23 +128,7 @@
         .settings-btn:hover {
             border-color: #9C27B0;
             color: #9C27B0;
-        }
-
-        .header {
-            margin-bottom: 32px;
-            text-align: center;
-        }
-
-        .header-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-
-        .header-subtitle {
-            color: #888;
-            font-size: 1.125rem;
+            background: rgba(156, 39, 176, 0.08);
         }
 
         .gold-text { color: #D4AF37; }
@@ -268,7 +286,28 @@
             border-radius: 6px;
             font-size: 0.85rem;
             color: #D4AF37;
-            margin-left: auto;
+            margin-left: 0;
+        }
+
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px 16px;
+            }
+
+            .header {
+                margin-bottom: 36px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .settings-btn,
+            .current-roast-indicator {
+                flex: 0 0 auto;
+            }
         }
 
         /* Health Score */
