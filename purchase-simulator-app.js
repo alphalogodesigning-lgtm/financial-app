@@ -1,7 +1,5 @@
 const { useState, useEffect, useMemo } = React;
 
-const { calculateBurnMetrics } = window.AppShared || {};
-
 // ─── ROAST DATABASE ─────────────────────────────────────────────────
 const ROAST_DATABASE = {
     safe: [
@@ -101,12 +99,14 @@ function getRandomRoast(category) {
 }
 
 function calculateSimulation(currentBalance, dailyBurn, purchaseAmount) {
+    const safeDailyBurn = Number.isFinite(dailyBurn) ? dailyBurn : 0;
+
     // Current state
-    const currentRunway = dailyBurn > 0 ? Math.floor(currentBalance / dailyBurn) : 999;
-    
+    const currentRunway = safeDailyBurn > 0 ? Math.floor(currentBalance / safeDailyBurn) : 999;
+
     // After purchase state
     const newBalance = currentBalance - purchaseAmount;
-    const newRunway = dailyBurn > 0 ? Math.floor(newBalance / dailyBurn) : 999;
+    const newRunway = safeDailyBurn > 0 ? Math.floor(newBalance / safeDailyBurn) : (newBalance < 0 ? -1 : 999);
     
     // Determine status
     let status, roastCategory, emoji;
@@ -180,12 +180,14 @@ function PurchaseSimulator() {
             };
         }
 
-        if (calculateBurnMetrics) {
-            const { remaining, dailyBurnRate, runway } = calculateBurnMetrics(data);
+        const sharedCalculateBurnMetrics = window.AppShared?.calculateBurnMetrics;
+
+        if (sharedCalculateBurnMetrics) {
+            const { remaining, dailyBurnRate, runway } = sharedCalculateBurnMetrics(data);
             return {
                 currentBalance: remaining,
                 dailyBurnRate,
-                daysRunway: runway === null ? 0 : Math.floor(runway)
+                daysRunway: runway === null ? null : Math.floor(runway)
             };
         }
 
@@ -301,7 +303,7 @@ function PurchaseSimulator() {
                     
                     <div className="state-box">
                         <div className="state-label">Days Runway</div>
-                        <div className="state-value">{financialState.daysRunway}</div>
+                        <div className="state-value">{financialState.daysRunway === null ? "∞" : financialState.daysRunway}</div>
                         <div className="state-hint">Days till broke</div>
                     </div>
                 </div>
