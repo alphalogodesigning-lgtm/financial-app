@@ -1,0 +1,425 @@
+const { useState, useEffect, useMemo } = React;
+
+// ─── ROAST DATABASE ─────────────────────────────────────────────────
+const ROAST_DATABASE = {
+    safe: [
+        "✅ You're good bro, this won't even scratch your runway.",
+        "Smart move! This purchase keeps you comfortable.",
+        "Clean decision, your wallet will thank you.",
+        "Respect. You've got plenty of breathing room after this.",
+        "This is financially responsible AF. Nice.",
+        "Go ahead king, you can afford this easily.",
+        "Your future self approves this purchase 👑",
+        "Solid choice, won't put a dent in your safety net.",
+        "This fits perfectly in your budget, no stress.",
+        "Financial discipline on point, buy with confidence.",
+        "Your runway stays healthy, proceed without worry.",
+        "This won't hurt at all, you're in the clear.",
+        "Perfectly safe purchase, your finances stay solid.",
+        "Good call, this won't mess with your stability.",
+        "You've earned this without compromising anything.",
+        "This purchase makes sense, go for it.",
+        "Your budget can handle this like a champ.",
+        "Zero risk here, your finances are locked in.",
+        "This is what financial freedom looks like.",
+        "Buy it. Your runway won't even notice.",
+    ],
+    tight: [
+        "⚠️ Possible, but you'll be eating instant noodles for a bit.",
+        "You CAN buy this, but it's gonna be tight till payday.",
+        "Doable, but your runway just got significantly shorter.",
+        "This will work, but you better not have any surprises.",
+        "Manageable, if you can survive on rice and eggs.",
+        "You can do this, but say goodbye to flexibility.",
+        "It's possible, but one emergency and you're cooked.",
+        "Technically affordable, but you'll feel it hard.",
+        "You have the money, but is it really worth the squeeze?",
+        "This cuts it close. Hope nothing unexpected pops up.",
+        "You'll survive, but comfort? Not really.",
+        "Affordable... barely. Better not go out for the next week.",
+        "You can pull this off, but it'll be a struggle.",
+        "Tight fit. Your runway is gonna feel cramped.",
+        "Possible if you're okay with cutting every corner.",
+        "You've got just enough, but no buffer at all.",
+        "This works if you can live on instant ramen exclusively.",
+        "Doable, but you're walking a financial tightrope now.",
+        "You can afford it, but one wrong move and it's over.",
+        "Technically yes, but practically? It's gonna hurt.",
+    ],
+    fucked: [
+        "🚨 STOP. You're fucked if you buy this now.",
+        "Are you serious? This will drain you in days.",
+        "Absolutely NOT. You'll be broke before the week ends.",
+        "Hell no. This purchase is financial suicide right now.",
+        "Don't even think about it. You can't afford this.",
+        "This is how you end up borrowing money from friends.",
+        "NOPE. You'll regret this within 48 hours.",
+        "You're already on thin ice, this will break you.",
+        "This is a terrible idea, you'll run dry immediately.",
+        "ABORT MISSION. Your runway can't take this hit.",
+        "This is how people end up in debt, don't do it.",
+        "You literally cannot afford this, full stop.",
+        "Buy this and you're eating air for the rest of the month.",
+        "This is financial recklessness, plain and simple.",
+        "You'll be negative before your next paycheck, guaranteed.",
+        "Absolutely reckless. Your future self will hate you.",
+        "This purchase will destroy your runway, stay away.",
+        "Don't do this to yourself, you can't recover from this.",
+        "This is a one-way ticket to being broke AF.",
+        "You're playing with fire, and you WILL get burned.",
+    ],
+    negative: [
+        "💀 You're already fucked. This would make it worse.",
+        "Bro, you're in the negative. Why are you even here?",
+        "Your balance is already toast, this changes nothing.",
+        "You can't afford anything right now, full stop.",
+        "Negative runway = you need money IN, not OUT.",
+        "This is beyond repair, focus on earning not spending.",
+        "You're underwater financially, this won't help.",
+        "Stop shopping and start surviving, my guy.",
+        "Your finances are on life support, don't pull the plug.",
+        "Negative days means you're already late on bills.",
+        "You need an income boost, not another purchase.",
+        "Your wallet is crying, please don't make it worse.",
+        "This is rock bottom territory, avoid all purchases.",
+        "You're financially drowning, this is not the move.",
+        "Negative balance = emergency mode, not shopping mode.",
+        "This would be the final nail in the coffin.",
+        "Your runway crashed already, this is just salt in the wound.",
+        "You're past the point of no return, focus on recovery.",
+        "This purchase is irrelevant, you need cash flow ASAP.",
+        "You're already in survival mode, act accordingly.",
+    ]
+};
+
+// ─── HELPER FUNCTIONS ───────────────────────────────────────────────
+function getRandomRoast(category) {
+    const roasts = ROAST_DATABASE[category];
+    return roasts[Math.floor(Math.random() * roasts.length)];
+}
+
+function calculateSimulation(currentBalance, dailyBurn, purchaseAmount) {
+    const safeDailyBurn = Number.isFinite(dailyBurn) ? dailyBurn : 0;
+
+    // Current state
+    const currentRunway = safeDailyBurn > 0 ? Math.floor(currentBalance / safeDailyBurn) : 999;
+
+    // After purchase state
+    const newBalance = currentBalance - purchaseAmount;
+    const newRunway = safeDailyBurn > 0 ? Math.floor(newBalance / safeDailyBurn) : (newBalance < 0 ? -1 : 999);
+    
+    // Determine status
+    let status, roastCategory, emoji;
+    
+    if (newRunway < 0) {
+        status = "YOU'RE FUCKED";
+        roastCategory = "negative";
+        emoji = "💀";
+    } else if (newRunway < 5) {
+        status = "YOU'RE FUCKED";
+        roastCategory = "fucked";
+        emoji = "🚨";
+    } else if (newRunway >= 5 && newRunway < 15) {
+        status = "IT'S TIGHT";
+        roastCategory = "tight";
+        emoji = "⚠️";
+    } else {
+        status = "SAFE";
+        roastCategory = "safe";
+        emoji = "✅";
+    }
+    
+    const roastText = getRandomRoast(roastCategory);
+    
+    return {
+        currentBalance,
+        currentRunway,
+        newBalance,
+        newRunway,
+        status,
+        roastCategory,
+        emoji,
+        roastText
+    };
+}
+
+// ─── MAIN COMPONENT ─────────────────────────────────────────────────
+function PurchaseSimulator() {
+    const [data, setData] = useState(null);
+    const [isHydrated, setIsHydrated] = useState(false);
+    const [purchaseAmount, setPurchaseAmount] = useState('');
+
+    // Load data from shared functions
+    useEffect(() => {
+        let isMounted = true;
+        
+        // Try to get data from app-shared if it exists
+        if (window.AppShared && window.AppShared.loadBudgetData) {
+            window.AppShared.loadBudgetData().then((saved) => {
+                if (!isMounted) return;
+                if (saved) {
+                    setData(saved);
+                }
+                setIsHydrated(true);
+            });
+        } else {
+            // Fallback if app-shared doesn't exist
+            setIsHydrated(true);
+        }
+        
+        return () => { isMounted = false; };
+    }, []);
+
+    // Calculate current financial state
+    const financialState = useMemo(() => {
+        if (!data) {
+            return {
+                currentBalance: 0,
+                dailyBurnRate: 0,
+                daysRunway: 0
+            };
+        }
+
+        const sharedCalculateBurnMetrics = window.AppShared?.calculateBurnMetrics;
+
+        if (sharedCalculateBurnMetrics) {
+            const { remaining, dailyBurnRate, runway } = sharedCalculateBurnMetrics(data);
+            return {
+                currentBalance: remaining,
+                dailyBurnRate,
+                daysRunway: runway === null ? null : Math.floor(runway)
+            };
+        }
+
+        // Fallback when centralized helpers are unavailable.
+        const income = data.income || 0;
+        const fixedExpenses = (data.fixedExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+        const variableExpenses = (data.variableExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+        const monthlySpend = fixedExpenses + variableExpenses;
+        const dailyBurnRate = monthlySpend / 30;
+        const currentBalance = income - monthlySpend;
+        const daysRunway = dailyBurnRate > 0 ? Math.floor(currentBalance / dailyBurnRate) : 0;
+
+        return {
+            currentBalance,
+            dailyBurnRate,
+            daysRunway
+        };
+    }, [data]);
+
+    // Calculate simulation when purchase amount changes
+    const simulation = useMemo(() => {
+        const amount = parseFloat(purchaseAmount) || 0;
+        if (amount <= 0) return null;
+
+        return calculateSimulation(
+            financialState.currentBalance,
+            financialState.dailyBurnRate,
+            amount
+        );
+    }, [purchaseAmount, financialState]);
+
+    // Empty state if no data
+    if (!isHydrated) {
+        return (
+            <div className="container">
+                <div className="empty-state">
+                    <div className="empty-emoji">⏳</div>
+                    <div className="empty-title">Loading...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!data || !data.income) {
+        return (
+            <div className="container">
+                <nav className="main-nav">
+                    <a href="index.html" className="nav-link">📊 Dashboard</a>
+                    <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                    <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                    <a href="projections.html" className="nav-link">🔮 Projections</a>
+                    <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
+                    <a href="insights.html" className="nav-link">🧠 Insights</a>
+                </nav>
+                
+                <div className="header">
+                    <p className="header-eyebrow">Purchase Simulator</p>
+                    <h1 className="header-title">Reality <span>Check</span></h1>
+                    <p className="header-subtitle">Think before you buy</p>
+                </div>
+                
+                <div className="card">
+                    <div className="empty-state">
+                        <div className="empty-emoji">💰</div>
+                        <div className="empty-title">Set Up Your Finances First</div>
+                        <p className="empty-text">
+                            Go to the Dashboard and set your income to start simulating purchases.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="container">
+            {/* Navigation */}
+            <nav className="main-nav">
+                <a href="index.html" className="nav-link">📊 Dashboard</a>
+                <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                <a href="projections.html" className="nav-link">🔮 Projections</a>
+                <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
+                <a href="insights.html" className="nav-link">🧠 Insights</a>
+            </nav>
+
+            {/* Header */}
+            <div className="header">
+                <p className="header-eyebrow">Purchase Simulator</p>
+                <h1 className="header-title">Reality <span>Check</span></h1>
+                <p className="header-subtitle">
+                    Simulate the real impact of a purchase before you sign that receipt
+                </p>
+            </div>
+
+            {/* Current Financial State */}
+            <div className="card">
+                <h2 className="card-title">Your Current Financial State</h2>
+                <p className="card-subtitle">This is where you stand right now</p>
+                
+                <div className="state-grid">
+                    <div className="state-box">
+                        <div className="state-label">Available Balance</div>
+                        <div className="state-value">RM{financialState.currentBalance.toFixed(0)}</div>
+                        <div className="state-hint">What you have now</div>
+                    </div>
+                    
+                    <div className="state-box">
+                        <div className="state-label">Daily Burn Rate</div>
+                        <div className="state-value">RM{financialState.dailyBurnRate.toFixed(0)}</div>
+                        <div className="state-hint">Per day spending</div>
+                    </div>
+                    
+                    <div className="state-box">
+                        <div className="state-label">Days Runway</div>
+                        <div className="state-value">{financialState.daysRunway === null ? "∞" : financialState.daysRunway}</div>
+                        <div className="state-hint">Days till broke</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Purchase Input */}
+            <div className="card">
+                <h2 className="card-title">What If I Spend...</h2>
+                <p className="card-subtitle">
+                    Enter the amount and see what happens to your runway
+                </p>
+                
+                <div className="input-section">
+                    <div className="input-wrapper">
+                        <span className="currency-symbol">RM</span>
+                        <input
+                            type="number"
+                            className="purchase-input"
+                            placeholder="250"
+                            value={purchaseAmount}
+                            onChange={(e) => setPurchaseAmount(e.target.value)}
+                            min="0"
+                            step="1"
+                        />
+                    </div>
+                    <div className="input-hint">
+                        How much are those sneakers? That new gadget?
+                    </div>
+                </div>
+            </div>
+
+            {/* Comparison & Roast */}
+            {simulation && (
+                <>
+                    <div className="card">
+                        <h2 className="card-title">Before vs After</h2>
+                        <p className="card-subtitle">
+                            See the impact on your financial runway
+                        </p>
+                        
+                        <div className="comparison">
+                            {/* BEFORE */}
+                            <div className="comparison-card before">
+                                <span className="comparison-badge before">NOW</span>
+                                
+                                <div className="comparison-stat">
+                                    <div className="comparison-stat-label">Balance</div>
+                                    <div className="comparison-stat-value big">
+                                        RM{simulation.currentBalance.toFixed(0)}
+                                    </div>
+                                </div>
+                                
+                                <div className="comparison-stat">
+                                    <div className="comparison-stat-label">Days Runway</div>
+                                    <div className="comparison-stat-value">
+                                        {simulation.currentRunway} days
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* AFTER */}
+                            <div className="comparison-card after">
+                                <span className="comparison-badge after">IF YOU BUY</span>
+                                
+                                <div className="comparison-stat">
+                                    <div className="comparison-stat-label">New Balance</div>
+                                    <div className="comparison-stat-value big">
+                                        RM{simulation.newBalance.toFixed(0)}
+                                    </div>
+                                </div>
+                                
+                                <div className="comparison-stat">
+                                    <div className="comparison-stat-label">New Runway</div>
+                                    <div className="comparison-stat-value">
+                                        {simulation.newRunway < 0 ? '0' : simulation.newRunway} days
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Roast Card */}
+                    <div className="card">
+                        <div className={`roast-card ${simulation.roastCategory}`}>
+                            <span className="roast-emoji">{simulation.emoji}</span>
+                            <div className={`roast-status ${simulation.roastCategory}`}>
+                                {simulation.status}
+                            </div>
+                            <div className="roast-text">
+                                {simulation.roastText}
+                            </div>
+                            <div className="roast-days">
+                                You'll have <strong>{simulation.newRunway < 0 ? 0 : simulation.newRunway} days</strong> of runway left
+                                {simulation.newRunway < simulation.currentRunway && (
+                                    <> (down from <strong>{simulation.currentRunway} days</strong>)</>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Empty state when no amount entered */}
+            {!simulation && (
+                <div className="card">
+                    <div className="empty-state">
+                        <div className="empty-emoji">👆</div>
+                        <div className="empty-title">Enter an Amount Above</div>
+                        <p className="empty-text">
+                            Type in how much you want to spend and see if you can actually afford it
+                        </p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+ReactDOM.render(<PurchaseSimulator />, document.getElementById('root'));
