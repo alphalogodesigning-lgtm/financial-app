@@ -99,12 +99,14 @@ function getRandomRoast(category) {
 }
 
 function calculateSimulation(currentBalance, dailyBurn, purchaseAmount) {
+    const safeDailyBurn = Number.isFinite(dailyBurn) ? dailyBurn : 0;
+
     // Current state
-    const currentRunway = dailyBurn > 0 ? Math.floor(currentBalance / dailyBurn) : 999;
-    
+    const currentRunway = safeDailyBurn > 0 ? Math.floor(currentBalance / safeDailyBurn) : 999;
+
     // After purchase state
     const newBalance = currentBalance - purchaseAmount;
-    const newRunway = dailyBurn > 0 ? Math.floor(newBalance / dailyBurn) : 999;
+    const newRunway = safeDailyBurn > 0 ? Math.floor(newBalance / safeDailyBurn) : (newBalance < 0 ? -1 : 999);
     
     // Determine status
     let status, roastCategory, emoji;
@@ -172,22 +174,29 @@ function PurchaseSimulator() {
     const financialState = useMemo(() => {
         if (!data) {
             return {
-                currentBalance: 0, // TODO: Pull from centralized calculation
-                dailyBurnRate: 0,  // TODO: Pull from centralized calculation
+                currentBalance: 0,
+                dailyBurnRate: 0,
                 daysRunway: 0
             };
         }
 
-        // TODO: Replace these with actual calculations from your centralized model
-        // For now, using placeholder logic based on your data structure
+        const sharedCalculateBurnMetrics = window.AppShared?.calculateBurnMetrics;
+
+        if (sharedCalculateBurnMetrics) {
+            const { remaining, dailyBurnRate, runway } = sharedCalculateBurnMetrics(data);
+            return {
+                currentBalance: remaining,
+                dailyBurnRate,
+                daysRunway: runway === null ? null : Math.floor(runway)
+            };
+        }
+
+        // Fallback when centralized helpers are unavailable.
         const income = data.income || 0;
         const fixedExpenses = (data.fixedExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         const variableExpenses = (data.variableExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
-        
         const monthlySpend = fixedExpenses + variableExpenses;
         const dailyBurnRate = monthlySpend / 30;
-        
-        // This is a placeholder - replace with actual balance calculation
         const currentBalance = income - monthlySpend;
         const daysRunway = dailyBurnRate > 0 ? Math.floor(currentBalance / dailyBurnRate) : 0;
 
@@ -230,7 +239,7 @@ function PurchaseSimulator() {
                     <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
                     <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
                     <a href="projections.html" className="nav-link">🔮 Projections</a>
-                    <a href="purchase-simulator.html" className="nav-link active">💰 Simulator</a>
+                    <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
                     <a href="insights.html" className="nav-link">🧠 Insights</a>
                 </nav>
                 
@@ -261,7 +270,7 @@ function PurchaseSimulator() {
                 <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
                 <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
                 <a href="projections.html" className="nav-link">🔮 Projections</a>
-                <a href="purchase-simulator.html" className="nav-link active">💰 Simulator</a>
+                <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
                 <a href="insights.html" className="nav-link">🧠 Insights</a>
             </nav>
 
@@ -294,7 +303,7 @@ function PurchaseSimulator() {
                     
                     <div className="state-box">
                         <div className="state-label">Days Runway</div>
-                        <div className="state-value">{financialState.daysRunway}</div>
+                        <div className="state-value">{financialState.daysRunway === null ? "∞" : financialState.daysRunway}</div>
                         <div className="state-hint">Days till broke</div>
                     </div>
                 </div>

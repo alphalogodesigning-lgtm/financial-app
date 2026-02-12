@@ -186,6 +186,7 @@ const formatCurrency = (value) => {
                         <a href="fixed-expenses.html" className="nav-link active">⚓ Fixed Expenses</a>
                         <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
                         <a href="projections.html" className="nav-link">🔮 Projections</a>
+                        <a href="purchase-simulator.html" className="nav-link">🧪 Simulator</a>
                         <a href="insights.html" className="nav-link">🧠 Insights</a>
                     </nav>
 

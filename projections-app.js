@@ -50,6 +50,7 @@ function Projections() {
                     <a href="fixed-expenses.html"   className="nav-link">⚓ Fixed Expenses</a>
                     <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
                     <a href="projections.html"      className="nav-link active">🔮 Projections</a>
+                    <a href="purchase-simulator.html" className="nav-link">🧪 Simulator</a>
                     <a href="insights.html"         className="nav-link">🧠 Insights</a>
                 </nav>
                 <div className="header">
@@ -114,6 +115,7 @@ function Projections() {
                 <a href="fixed-expenses.html"   className="nav-link">⚓ Fixed Expenses</a>
                 <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
                 <a href="projections.html"      className="nav-link active">🔮 Projections</a>
+                <a href="purchase-simulator.html" className="nav-link">🧪 Simulator</a>
                 <a href="insights.html"         className="nav-link">🧠 Insights</a>
             </nav>
 

@@ -98,6 +98,7 @@ const {
                         <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
                         <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
                         <a href="projections.html" className="nav-link">🔮 Projections</a>
+                        <a href="purchase-simulator.html" className="nav-link">🧪 Simulator</a>
                         <a href="insights.html" className="nav-link active">🧠 Insights</a>
                         <button className="settings-btn" onClick={() => setShowSettings(true)}>
                             <span>{ROAST_LEVELS[roastLevel].emoji}</span>
