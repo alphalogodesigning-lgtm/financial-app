@@ -2,6 +2,7 @@ const { useState, useEffect } = React;
 
 const {
     loadBudgetData,
+    getCurrentUserEntitlements,
     getInitialData,
     START_MESSAGE,
     calculateProjectionSummary,
@@ -13,6 +14,8 @@ const {
 function Projections() {
     const [data, setData] = useState(getInitialData('projections'));
     const [isHydrated, setIsHydrated] = useState(false);
+    const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
+    const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
 
     const income = Number.isFinite(data.income) ? data.income : 0;
     const incomeSet = income > 0;
@@ -24,12 +27,54 @@ function Projections() {
     const [savingsGoal, setSavingsGoal] = useState(10000);
     const [monthlySavings, setMonthlySavings] = useState(500);
 
+    const premiumBlurStyle = entitlements.isFree
+        ? { filter: 'blur(10px)', opacity: 0.35, pointerEvents: 'none', userSelect: 'none' }
+        : undefined;
+    const premiumOverlayBackdropStyle = {
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        padding: '12px 24px 24px',
+        background: 'rgba(8, 8, 8, 0.35)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderRadius: '16px',
+        zIndex: 3
+    };
+    const premiumOverlayCardStyle = {
+        width: 'min(560px, 100%)',
+        background: 'rgba(17, 17, 17, 0.88)',
+        border: '1px solid rgba(212, 175, 55, 0.35)',
+        borderRadius: '16px',
+        padding: '30px 24px',
+        textAlign: 'center',
+        boxShadow: '0 20px 48px rgba(0, 0, 0, 0.45)'
+    }
+    const premiumUpgradeButtonStyle = {
+        border: 'none',
+        borderRadius: '999px',
+        padding: '12px 28px',
+        fontSize: '0.95rem',
+        fontWeight: 700,
+        letterSpacing: '0.01em',
+        color: '#0A0A0A',
+        background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
+        boxShadow: '0 8px 22px rgba(212, 175, 55, 0.35)',
+        cursor: 'pointer',
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease'
+    };
+;
+
     useEffect(() => {
         let isMounted = true;
-        loadBudgetData().then((saved) => {
+        Promise.all([loadBudgetData(), getCurrentUserEntitlements()]).then(([saved, access]) => {
             if (!isMounted) return;
             if (saved) setData(saved);
+            if (access) setEntitlements(access);
             setIsHydrated(true);
+            setIsEntitlementsReady(true);
         });
         return () => { isMounted = false; };
     }, []);
@@ -41,8 +86,19 @@ function Projections() {
         setScenarioVariableSpend(currentVariableTotal > 0 ? 100 : 100);
     }, [data, isHydrated]);
 
+    if (!isHydrated || !isEntitlementsReady) {
+        return (
+            <div className="container">
+                <div className="empty-state">
+                    <div className="empty-emoji">⏳</div>
+                    <div className="empty-title">Loading...</div>
+                </div>
+            </div>
+        );
+    }
+
     /* ── Empty state ─────────────────────────────────────── */
-    if (!incomeSet) {
+    if (!incomeSet && !entitlements.isFree) {
         return (
             <div className="container">
                 <nav className="main-nav">
@@ -119,6 +175,8 @@ function Projections() {
                 <a href="insights.html"         className="nav-link">🧠 Insights</a>
             </nav>
 
+            <div style={{ position: 'relative' }}>
+            <div style={premiumBlurStyle}>
             {/* Header */}
             <div className="header">
                 <p className="header-eyebrow">Projections</p>
@@ -336,6 +394,24 @@ function Projections() {
                         ))}
                     </div>
                 )}
+            </div>
+            </div>
+            {entitlements.isFree && (
+                <div style={premiumOverlayBackdropStyle}>
+                    <div style={premiumOverlayCardStyle}>
+                        <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔒</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D4AF37', lineHeight: 1.15, marginBottom: '12px' }}>
+                            Locked behind Premium.
+                        </div>
+                        <p style={{ color: '#CFCFCF', fontSize: '1.1rem', marginBottom: '20px' }}>
+                            Want the full access? Upgrade now. Cancel Anytime.
+                        </p>
+                        <button style={premiumUpgradeButtonStyle} onClick={() => { window.location.href = 'auth.html'; }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 12px 26px rgba(212, 175, 55, 0.45)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(212, 175, 55, 0.35)'; }}>
+                            7-day Trial
+                        </button>
+                    </div>
+                </div>
+            )}
             </div>
         </div>
     );
