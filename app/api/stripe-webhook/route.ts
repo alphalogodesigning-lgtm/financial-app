@@ -15,92 +15,83 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY! // IMPORTANT: service role key, not anon key
 );
 
-const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing"]);
+const resolveCustomerId = (customer: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null => {
+  if (!customer) return null;
+  if (typeof customer === "string") return customer;
+  return customer.id || null;
+};
 
-type CanonicalSubscriptionStatus =
-  | "inactive"
-  | "trialing"
-  | "active"
-  | "canceled"
-  | "past_due"
-  | "unpaid"
-  | "incomplete"
-  | "incomplete_expired"
-  | "paused";
+const resolveSupabaseUserIdFromMetadata = (
+  metadata: Stripe.Metadata | undefined
+): string | null => {
+  const candidate = metadata?.supabase_user_id || metadata?.user_id || metadata?.auth_user_id;
+  return candidate && candidate.trim() ? candidate.trim() : null;
+};
 
-function normalizeSubscriptionStatus(
-  stripeStatus: Stripe.Subscription.Status,
-  eventType: Stripe.Event.Type
-): CanonicalSubscriptionStatus {
-  if (eventType === "customer.subscription.deleted") {
-    return "canceled";
-  }
-
-  if (stripeStatus === "active" || stripeStatus === "trialing") {
-    return stripeStatus;
-  }
-
-  if (
-    stripeStatus === "canceled" ||
-    stripeStatus === "past_due" ||
-    stripeStatus === "unpaid" ||
-    stripeStatus === "incomplete" ||
-    stripeStatus === "incomplete_expired" ||
-    stripeStatus === "paused"
-  ) {
-    return stripeStatus;
-  }
-
-  return "inactive";
-}
-
-async function updateProfileFromSubscriptionEvent(
-  subscription: Stripe.Subscription,
-  eventType: Stripe.Event.Type
-) {
-  const customerId =
-    typeof subscription.customer === "string"
-      ? subscription.customer
-      : subscription.customer?.id;
-
-  if (!customerId) {
-    throw new Error("Subscription event missing customer id");
-  }
-
-  const nextStatus = normalizeSubscriptionStatus(subscription.status, eventType);
+const upsertProfileSubscription = async ({
+  customerId,
+  subscriptionId,
+  status,
+  supabaseUserId,
+}: {
+  customerId: string | null;
+  subscriptionId: string;
+  status: Stripe.Subscription.Status | "canceled";
+  supabaseUserId: string | null;
+}) => {
   const updatePayload = {
-    subscription_status: nextStatus,
-    stripe_subscription_id: subscription.id,
-    stripe_customer_id: customerId,
+    subscription_status: status,
+    stripe_subscription_id: subscriptionId,
+    ...(customerId ? { stripe_customer_id: customerId } : {}),
   };
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .update(updatePayload)
-    .eq("stripe_customer_id", customerId)
-    .select("id");
+  if (customerId) {
+    const byCustomer = await supabase
+      .from("profiles")
+      .update(updatePayload)
+      .eq("stripe_customer_id", customerId)
+      .select("id");
 
-  if (error) {
-    throw error;
+    if (byCustomer.error) {
+      throw byCustomer.error;
+    }
+
+    if ((byCustomer.data || []).length > 0) {
+      return;
+    }
   }
 
-  if (!data || data.length === 0) {
-    const premiumHint = ACTIVE_PREMIUM_STATUSES.has(nextStatus)
-      ? " (premium access remains blocked until profile linkage exists)"
-      : "";
+  if (supabaseUserId) {
+    const byUserId = await supabase
+      .from("profiles")
+      .update(updatePayload)
+      .eq("id", supabaseUserId)
+      .select("id")
+      .maybeSingle();
 
-    console.error(
-      `No profile found for stripe_customer_id=${customerId} while processing ${eventType}.${premiumHint}`
-    );
+    if (byUserId.error) {
+      throw byUserId.error;
+    }
+
+    if (byUserId.data) {
+      return;
+    }
   }
-}
+
+  console.warn("Stripe webhook could not map subscription event to a profile row", {
+    customerId,
+    subscriptionId,
+    status,
+    supabaseUserId,
+  });
+};
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
   if (!signature) {
-    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+    return NextResponse.json({ error: "Missing Stripe signature" }, { status: 400 });
   }
 
   let event: Stripe.Event;
@@ -119,19 +110,28 @@ export async function POST(req: NextRequest) {
   try {
     if (
       event.type === "customer.subscription.created" ||
-      event.type === "customer.subscription.updated" ||
-      event.type === "customer.subscription.deleted"
+      event.type === "customer.subscription.updated"
     ) {
       const subscription = event.data.object as Stripe.Subscription;
-      await updateProfileFromSubscriptionEvent(subscription, event.type);
+      await upsertProfileSubscription({
+        customerId: resolveCustomerId(subscription.customer),
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        supabaseUserId: resolveSupabaseUserIdFromMetadata(subscription.metadata),
+      });
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      await upsertProfileSubscription({
+        customerId: resolveCustomerId(subscription.customer),
+        subscriptionId: subscription.id,
+        status: "canceled",
+        supabaseUserId: resolveSupabaseUserIdFromMetadata(subscription.metadata),
+      });
     }
   } catch (err) {
-    console.error("Failed to process Stripe webhook event.", {
-      eventId: event.id,
-      eventType: event.type,
-      err,
-    });
-
+    console.error("Failed to persist Stripe subscription event", err);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 
