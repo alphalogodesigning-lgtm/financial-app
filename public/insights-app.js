@@ -31,9 +31,9 @@ const {
                 position: 'absolute',
                 inset: 0,
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
-                padding: '24px',
+                padding: '12px 24px 24px',
                 background: 'rgba(10, 10, 10, 0.35)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
@@ -48,7 +48,21 @@ const {
                 padding: '30px 24px',
                 textAlign: 'center',
                 boxShadow: '0 20px 48px rgba(0, 0, 0, 0.45)'
+            }
+            const premiumUpgradeButtonStyle = {
+                border: 'none',
+                borderRadius: '999px',
+                padding: '12px 28px',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                letterSpacing: '0.01em',
+                color: '#0A0A0A',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
+                boxShadow: '0 8px 22px rgba(212, 175, 55, 0.35)',
+                cursor: 'pointer',
+                transition: 'transform 0.18s ease, box-shadow 0.18s ease'
             };
+;
 
             useEffect(() => {
                 let isMounted = true;
@@ -404,7 +418,7 @@ const {
                                 <p style={{ color: '#CFCFCF', fontSize: '1.1rem', marginBottom: '20px' }}>
                                     Start your 7-day trial today. Cancel anytime.
                                 </p>
-                                <button className="btn-primary" onClick={() => { window.location.href = 'auth.html'; }}>
+                                <button style={premiumUpgradeButtonStyle} onClick={() => { window.location.href = 'auth.html'; }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 12px 26px rgba(212, 175, 55, 0.45)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(212, 175, 55, 0.35)'; }}>
                                     Upgrade
                                 </button>
                             </div>
