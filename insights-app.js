@@ -24,6 +24,32 @@ const {
             const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
             const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
 
+            const premiumBlurStyle = entitlements.isFree
+                ? { filter: 'blur(10px)', opacity: 0.35, pointerEvents: 'none', userSelect: 'none' }
+                : undefined;
+            const premiumOverlayBackdropStyle = {
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px',
+                background: 'rgba(10, 10, 10, 0.35)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                borderRadius: '16px',
+                zIndex: 3
+            };
+            const premiumOverlayCardStyle = {
+                width: 'min(560px, 100%)',
+                background: 'rgba(17, 17, 17, 0.88)',
+                border: '1px solid rgba(212, 175, 55, 0.35)',
+                borderRadius: '16px',
+                padding: '30px 24px',
+                textAlign: 'center',
+                boxShadow: '0 20px 48px rgba(0, 0, 0, 0.45)'
+            };
+
             useEffect(() => {
                 let isMounted = true;
                 Promise.all([loadBudgetData(), getCurrentUserEntitlements()]).then(([saved, access]) => {
@@ -62,38 +88,6 @@ const {
                         <div className="empty-state">
                             <div className="empty-emoji">⏳</div>
                             <div className="empty-title">Loading...</div>
-                        </div>
-                    </div>
-                );
-            }
-
-            if (entitlements.isFree) {
-                return (
-                    <div className="container">
-                        <nav className="main-nav">
-                            <a href="index.html" className="nav-link">📊 Dashboard</a>
-                            <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
-                            <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
-                            <a href="projections.html" className="nav-link">🔮 Projections</a>
-                            <a href="purchase-simulator.html" className="nav-link">🧪 Simulator</a>
-                            <a href="insights.html" className="nav-link active">🧠 Insights</a>
-                        </nav>
-
-                        <div className="header">
-                            <div className="header-left">
-                                <h1 className="header-title">The Therapy Session</h1>
-                                <p className="header-subtitle">Let's talk about your spending habits... honestly.</p>
-                            </div>
-                        </div>
-
-                        <div className="card">
-                            <div className="empty-state">
-                                <div className="empty-title">Upgrade to Premium to unlock this feature</div>
-                                <p className="empty-text">Start your 7-day trial today. Cancel anytime.</p>
-                                <button className="btn-primary" onClick={() => { window.location.href = 'auth.html'; }}>
-                                    Upgrade
-                                </button>
-                            </div>
                         </div>
                     </div>
                 );
@@ -156,6 +150,8 @@ const {
                         </button>
                     </nav>
 
+                    <div style={{ position: 'relative' }}>
+                    <div style={premiumBlurStyle}>
                     <div className="header">
                         <div className="header-left">
                             <h1 className="header-title">The Therapy Session</h1>
@@ -397,6 +393,24 @@ const {
                             </div>
                         </div>
                     )}
+                    </div>
+                    {entitlements.isFree && (
+                        <div style={premiumOverlayBackdropStyle}>
+                            <div style={premiumOverlayCardStyle}>
+                                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔒</div>
+                                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D4AF37', lineHeight: 1.15, marginBottom: '12px' }}>
+                                    Upgrade to Premium to unlock this feature
+                                </div>
+                                <p style={{ color: '#CFCFCF', fontSize: '1.1rem', marginBottom: '20px' }}>
+                                    Start your 7-day trial today. Cancel anytime.
+                                </p>
+                                <button className="btn-primary" onClick={() => { window.location.href = 'auth.html'; }}>
+                                    Upgrade
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    </div>
                 </div>
             );
         }
