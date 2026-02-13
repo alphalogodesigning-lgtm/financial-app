@@ -3,6 +3,8 @@
   const SUPABASE_CONFIG = window.SUPABASE_CONFIG || {};
   const supabaseClient = SUPABASE_CONFIG.supabaseClient || null;
   const STORAGE_TABLE = SUPABASE_CONFIG.STORAGE_TABLE || 'budget_tracker_state';
+  const PROFILE_TABLE = SUPABASE_CONFIG.PROFILE_TABLE || 'profiles';
+  const PROFILE_USER_COLUMN = SUPABASE_CONFIG.PROFILE_USER_COLUMN || 'id';
   const waitForAuthSession = SUPABASE_CONFIG.waitForAuthSession || (async () => null);
   const DEFAULT_TIME_ZONE = 'Asia/Kuala_Lumpur';
   const DATE_KEY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
@@ -126,6 +128,41 @@
     if (!supabaseClient) return null;
     const session = await resolveAuthSession();
     return session?.user || null;
+  };
+
+  const getCurrentUserEntitlements = async () => {
+    const fallback = {
+      subscriptionStatus: null,
+      isPremium: false,
+      isFree: true
+    };
+
+    if (!supabaseClient) return fallback;
+
+    try {
+      const user = await getAuthenticatedUser();
+      if (!user) return fallback;
+
+      const { data, error } = await supabaseClient
+        .from(PROFILE_TABLE)
+        .select('subscription_status')
+        .eq(PROFILE_USER_COLUMN, user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const subscriptionStatus = data?.subscription_status || null;
+      const isPremium = subscriptionStatus === 'active' || subscriptionStatus === 'trialing';
+
+      return {
+        subscriptionStatus,
+        isPremium,
+        isFree: !isPremium
+      };
+    } catch (err) {
+      console.warn('Failed to resolve user entitlements.', err);
+      return fallback;
+    }
   };
 
   const loadBudgetData = async (options = {}) => {
@@ -736,6 +773,7 @@
     redirectToAuth,
     resolveAuthSession,
     getAuthenticatedUser,
+    getCurrentUserEntitlements,
     loadBudgetData,
     saveBudgetData,
     CATEGORIES,
