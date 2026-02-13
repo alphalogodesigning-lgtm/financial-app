@@ -148,25 +148,56 @@ function PurchaseSimulator() {
     const [data, setData] = useState(null);
     const [isHydrated, setIsHydrated] = useState(false);
     const [purchaseAmount, setPurchaseAmount] = useState('');
+    const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
+    const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
+
+    const premiumBlurStyle = entitlements.isFree
+        ? { filter: 'blur(10px)', opacity: 0.35, pointerEvents: 'none', userSelect: 'none' }
+        : undefined;
+    const premiumOverlayBackdropStyle = {
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        background: 'rgba(8, 8, 8, 0.35)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderRadius: '16px',
+        zIndex: 3
+    };
+    const premiumOverlayCardStyle = {
+        width: 'min(560px, 100%)',
+        background: 'rgba(17, 17, 17, 0.88)',
+        border: '1px solid rgba(212, 175, 55, 0.35)',
+        borderRadius: '16px',
+        padding: '30px 24px',
+        textAlign: 'center',
+        boxShadow: '0 20px 48px rgba(0, 0, 0, 0.45)'
+    };
 
     // Load data from shared functions
     useEffect(() => {
         let isMounted = true;
-        
-        // Try to get data from app-shared if it exists
-        if (window.AppShared && window.AppShared.loadBudgetData) {
-            window.AppShared.loadBudgetData().then((saved) => {
-                if (!isMounted) return;
-                if (saved) {
-                    setData(saved);
-                }
-                setIsHydrated(true);
-            });
-        } else {
-            // Fallback if app-shared doesn't exist
+        const loadFn = window.AppShared?.loadBudgetData;
+        const entitlementFn = window.AppShared?.getCurrentUserEntitlements;
+
+        Promise.all([
+            loadFn ? loadFn() : Promise.resolve(null),
+            entitlementFn ? entitlementFn() : Promise.resolve({ isPremium: false, isFree: true })
+        ]).then(([saved, access]) => {
+            if (!isMounted) return;
+            if (saved) {
+                setData(saved);
+            }
+            if (access) {
+                setEntitlements(access);
+            }
             setIsHydrated(true);
-        }
-        
+            setIsEntitlementsReady(true);
+        });
+
         return () => { isMounted = false; };
     }, []);
 
@@ -220,7 +251,7 @@ function PurchaseSimulator() {
     }, [purchaseAmount, financialState]);
 
     // Empty state if no data
-    if (!isHydrated) {
+    if (!isHydrated || !isEntitlementsReady) {
         return (
             <div className="container">
                 <div className="empty-state">
@@ -231,7 +262,7 @@ function PurchaseSimulator() {
         );
     }
 
-    if (!data || !data.income) {
+    if ((!data || !data.income) && !entitlements.isFree) {
         return (
             <div className="container">
                 <nav className="main-nav">
@@ -274,6 +305,8 @@ function PurchaseSimulator() {
                 <a href="insights.html" className="nav-link">🧠 Insights</a>
             </nav>
 
+            <div style={{ position: 'relative' }}>
+            <div style={premiumBlurStyle}>
             {/* Header */}
             <div className="header">
                 <p className="header-eyebrow">Purchase Simulator</p>
@@ -418,6 +451,24 @@ function PurchaseSimulator() {
                     </div>
                 </div>
             )}
+            </div>
+            {entitlements.isFree && (
+                <div style={premiumOverlayBackdropStyle}>
+                    <div style={premiumOverlayCardStyle}>
+                        <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔒</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D4AF37', lineHeight: 1.15, marginBottom: '12px' }}>
+                            Upgrade to Premium to unlock this feature
+                        </div>
+                        <p style={{ color: '#CFCFCF', fontSize: '1.1rem', marginBottom: '20px' }}>
+                            Start your 7-day trial today. Cancel anytime.
+                        </p>
+                        <button className="btn-primary" onClick={() => { window.location.href = 'auth.html'; }}>
+                            Upgrade
+                        </button>
+                    </div>
+                </div>
+            )}
+            </div>
         </div>
     );
 }
