@@ -143,16 +143,20 @@
       const user = await getAuthenticatedUser();
       if (!user) return fallback;
 
-      const { data, error } = await supabaseClient
+      const [{ data: premiumCheck, error: premiumError }, { data, error }] = await Promise.all([
+        supabaseClient.rpc('current_user_is_premium'),
+        supabaseClient
         .from(PROFILE_TABLE)
         .select('subscription_status')
         .eq(PROFILE_USER_COLUMN, user.id)
-        .maybeSingle();
+        .maybeSingle()
+      ]);
 
+      if (premiumError) throw premiumError;
       if (error) throw error;
 
       const subscriptionStatus = data?.subscription_status || null;
-      const isPremium = subscriptionStatus === 'active' || subscriptionStatus === 'trialing';
+      const isPremium = Boolean(premiumCheck);
 
       return {
         subscriptionStatus,
