@@ -413,13 +413,13 @@ const {
                             <div style={premiumOverlayCardStyle}>
                                 <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔒</div>
                                 <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D4AF37', lineHeight: 1.15, marginBottom: '12px' }}>
-                                    Upgrade to Premium to unlock this feature
+                                    Locked behind Premium.
                                 </div>
                                 <p style={{ color: '#CFCFCF', fontSize: '1.1rem', marginBottom: '20px' }}>
-                                    Start your 7-day trial today. Cancel anytime.
+                                    Want the full access? Upgrade now. Cancel Anytime.
                                 </p>
                                 <button style={premiumUpgradeButtonStyle} onClick={() => { window.location.href = 'auth.html'; }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 12px 26px rgba(212, 175, 55, 0.45)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(212, 175, 55, 0.35)'; }}>
-                                    Upgrade
+                                    7-day Trial
                                 </button>
                             </div>
                         </div>
