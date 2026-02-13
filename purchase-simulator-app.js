@@ -148,25 +148,30 @@ function PurchaseSimulator() {
     const [data, setData] = useState(null);
     const [isHydrated, setIsHydrated] = useState(false);
     const [purchaseAmount, setPurchaseAmount] = useState('');
+    const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
+    const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
 
     // Load data from shared functions
     useEffect(() => {
         let isMounted = true;
-        
-        // Try to get data from app-shared if it exists
-        if (window.AppShared && window.AppShared.loadBudgetData) {
-            window.AppShared.loadBudgetData().then((saved) => {
-                if (!isMounted) return;
-                if (saved) {
-                    setData(saved);
-                }
-                setIsHydrated(true);
-            });
-        } else {
-            // Fallback if app-shared doesn't exist
+        const loadFn = window.AppShared?.loadBudgetData;
+        const entitlementFn = window.AppShared?.getCurrentUserEntitlements;
+
+        Promise.all([
+            loadFn ? loadFn() : Promise.resolve(null),
+            entitlementFn ? entitlementFn() : Promise.resolve({ isPremium: false, isFree: true })
+        ]).then(([saved, access]) => {
+            if (!isMounted) return;
+            if (saved) {
+                setData(saved);
+            }
+            if (access) {
+                setEntitlements(access);
+            }
             setIsHydrated(true);
-        }
-        
+            setIsEntitlementsReady(true);
+        });
+
         return () => { isMounted = false; };
     }, []);
 
@@ -220,12 +225,43 @@ function PurchaseSimulator() {
     }, [purchaseAmount, financialState]);
 
     // Empty state if no data
-    if (!isHydrated) {
+    if (!isHydrated || !isEntitlementsReady) {
         return (
             <div className="container">
                 <div className="empty-state">
                     <div className="empty-emoji">⏳</div>
                     <div className="empty-title">Loading...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (entitlements.isFree) {
+        return (
+            <div className="container">
+                <nav className="main-nav">
+                    <a href="index.html" className="nav-link">📊 Dashboard</a>
+                    <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                    <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                    <a href="projections.html" className="nav-link">🔮 Projections</a>
+                    <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
+                    <a href="insights.html" className="nav-link">🧠 Insights</a>
+                </nav>
+
+                <div className="header">
+                    <p className="header-eyebrow">Purchase Simulator</p>
+                    <h1 className="header-title">Reality <span>Check</span></h1>
+                    <p className="header-subtitle">Think before you buy</p>
+                </div>
+
+                <div className="card">
+                    <div className="empty-state">
+                        <div className="empty-title">Upgrade to Premium to unlock this feature</div>
+                        <p className="empty-text">Start your 7-day trial today. Cancel anytime.</p>
+                        <button className="btn-primary" onClick={() => { window.location.href = 'auth.html'; }}>
+                            Upgrade
+                        </button>
+                    </div>
                 </div>
             </div>
         );

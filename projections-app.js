@@ -2,6 +2,7 @@ const { useState, useEffect } = React;
 
 const {
     loadBudgetData,
+    getCurrentUserEntitlements,
     getInitialData,
     START_MESSAGE,
     calculateProjectionSummary,
@@ -13,6 +14,8 @@ const {
 function Projections() {
     const [data, setData] = useState(getInitialData('projections'));
     const [isHydrated, setIsHydrated] = useState(false);
+    const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
+    const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
 
     const income = Number.isFinite(data.income) ? data.income : 0;
     const incomeSet = income > 0;
@@ -26,10 +29,12 @@ function Projections() {
 
     useEffect(() => {
         let isMounted = true;
-        loadBudgetData().then((saved) => {
+        Promise.all([loadBudgetData(), getCurrentUserEntitlements()]).then(([saved, access]) => {
             if (!isMounted) return;
             if (saved) setData(saved);
+            if (access) setEntitlements(access);
             setIsHydrated(true);
+            setIsEntitlementsReady(true);
         });
         return () => { isMounted = false; };
     }, []);
@@ -40,6 +45,46 @@ function Projections() {
         const currentVariableTotal = (data.variableExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         setScenarioVariableSpend(currentVariableTotal > 0 ? 100 : 100);
     }, [data, isHydrated]);
+
+    if (!isHydrated || !isEntitlementsReady) {
+        return (
+            <div className="container">
+                <div className="empty-state">
+                    <div className="empty-emoji">⏳</div>
+                    <div className="empty-title">Loading...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (entitlements.isFree) {
+        return (
+            <div className="container">
+                <nav className="main-nav">
+                    <a href="index.html"            className="nav-link">📊 Dashboard</a>
+                    <a href="fixed-expenses.html"   className="nav-link">⚓ Fixed Expenses</a>
+                    <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                    <a href="projections.html"      className="nav-link active">🔮 Projections</a>
+                    <a href="purchase-simulator.html" className="nav-link">🧪 Simulator</a>
+                    <a href="insights.html"         className="nav-link">🧠 Insights</a>
+                </nav>
+                <div className="header">
+                    <p className="header-eyebrow">Projections</p>
+                    <h1 className="header-title">The Crystal <span>Ball</span></h1>
+                    <p className="header-subtitle">Play with scenarios and see your financial future</p>
+                </div>
+                <div className="card">
+                    <div className="empty-state">
+                        <div className="empty-title">Upgrade to Premium to unlock this feature</div>
+                        <p className="empty-text">Start your 7-day trial today. Cancel anytime.</p>
+                        <button className="btn-primary" onClick={() => { window.location.href = 'auth.html'; }}>
+                            Upgrade
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     /* ── Empty state ─────────────────────────────────────── */
     if (!incomeSet) {

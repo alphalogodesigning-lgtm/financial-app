@@ -11,7 +11,8 @@ const {
     getBrutalTruth,
     getPersonality,
     buildAchievements,
-    calculateTransactionStats
+    calculateTransactionStats,
+    getCurrentUserEntitlements
 } = window.AppShared;
 
         function App() {
@@ -20,10 +21,12 @@ const {
             const [showSettings, setShowSettings] = useState(false);
             const [roastLevel, setRoastLevel] = useState('honest');
             const [tempRoastLevel, setTempRoastLevel] = useState('honest');
+            const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
+            const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
 
             useEffect(() => {
                 let isMounted = true;
-                loadBudgetData().then((saved) => {
+                Promise.all([loadBudgetData(), getCurrentUserEntitlements()]).then(([saved, access]) => {
                     if (!isMounted) return;
                     if (saved) {
                         setData(saved);
@@ -31,7 +34,11 @@ const {
                         setRoastLevel(savedRoastLevel);
                         setTempRoastLevel(savedRoastLevel);
                     }
+                    if (access) {
+                        setEntitlements(access);
+                    }
                     setIsHydrated(true);
+                    setIsEntitlementsReady(true);
                 });
                 return () => {
                     isMounted = false;
@@ -48,6 +55,49 @@ const {
                 setShowSettings(false);
                 await saveBudgetData(updatedData, { redirect: false });
             };
+
+            if (!isHydrated || !isEntitlementsReady) {
+                return (
+                    <div className="container">
+                        <div className="empty-state">
+                            <div className="empty-emoji">⏳</div>
+                            <div className="empty-title">Loading...</div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (entitlements.isFree) {
+                return (
+                    <div className="container">
+                        <nav className="main-nav">
+                            <a href="index.html" className="nav-link">📊 Dashboard</a>
+                            <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
+                            <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+                            <a href="projections.html" className="nav-link">🔮 Projections</a>
+                            <a href="purchase-simulator.html" className="nav-link">🧪 Simulator</a>
+                            <a href="insights.html" className="nav-link active">🧠 Insights</a>
+                        </nav>
+
+                        <div className="header">
+                            <div className="header-left">
+                                <h1 className="header-title">The Therapy Session</h1>
+                                <p className="header-subtitle">Let's talk about your spending habits... honestly.</p>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <div className="empty-state">
+                                <div className="empty-title">Upgrade to Premium to unlock this feature</div>
+                                <p className="empty-text">Start your 7-day trial today. Cancel anytime.</p>
+                                <button className="btn-primary" onClick={() => { window.location.href = 'auth.html'; }}>
+                                    Upgrade
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
 
             const metrics = calculateInsightsMetrics(data);
             const {
