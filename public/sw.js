@@ -1,4 +1,4 @@
-const CACHE_NAME = 'budget-tracker-v2';
+const CACHE_NAME = 'budget-tracker-v3';
 const STATIC_ASSETS = [
   '/',
   '/landing.html',
@@ -10,6 +10,15 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/register-sw.js'
 ];
+
+const isHttpRequest = (request) => {
+  try {
+    const url = new URL(request.url);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (_err) {
+    return false;
+  }
+};
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -26,7 +35,31 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  if (event.request.method !== 'GET' || !isHttpRequest(event.request)) return;
+
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) return;
+
+  const isAppShellRequest =
+    event.request.mode === 'navigate' ||
+    requestUrl.pathname.endsWith('.html') ||
+    requestUrl.pathname.endsWith('.js');
+
+  if (isAppShellRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          return cached || caches.match('/index.html');
+        })
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
