@@ -1,23 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // IMPORTANT: service role key, not anon key
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // IMPORTANT: service role key, not anon key
 );
 
-const resolveCustomerId = (customer: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null => {
+const resolveCustomerId = (customer) => {
   if (!customer) return null;
   if (typeof customer === "string") return customer;
   return customer.id || null;
 };
 
-const resolveSupabaseUserIdFromMetadata = (
-  metadata: Stripe.Metadata | undefined
-): string | null => {
+const resolveSupabaseUserIdFromMetadata = (metadata) => {
   const candidate = metadata?.supabase_user_id || metadata?.user_id || metadata?.auth_user_id;
   return candidate && candidate.trim() ? candidate.trim() : null;
 };
@@ -27,11 +25,6 @@ const upsertProfileSubscription = async ({
   subscriptionId,
   status,
   supabaseUserId,
-}: {
-  customerId: string | null;
-  subscriptionId: string;
-  status: Stripe.Subscription.Status | "canceled";
-  supabaseUserId: string | null;
 }) => {
   const updatePayload = {
     subscription_status: status,
@@ -84,7 +77,7 @@ export async function GET() {
   return new Response("Webhook route alive");
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req) {
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   if (!stripeSecret) {
     console.error("STRIPE_SECRET_KEY not configured");
@@ -106,14 +99,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing Stripe signature" }, { status: 400 });
   }
 
-  let event: Stripe.Event;
+  let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      webhookSecret
-    );
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     console.error("Webhook signature verification failed.", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -124,7 +113,7 @@ export async function POST(req: NextRequest) {
       event.type === "customer.subscription.created" ||
       event.type === "customer.subscription.updated"
     ) {
-      const subscription = event.data.object as Stripe.Subscription;
+      const subscription = event.data.object;
       await upsertProfileSubscription({
         customerId: resolveCustomerId(subscription.customer),
         subscriptionId: subscription.id,
@@ -134,7 +123,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (event.type === "customer.subscription.deleted") {
-      const subscription = event.data.object as Stripe.Subscription;
+      const subscription = event.data.object;
       await upsertProfileSubscription({
         customerId: resolveCustomerId(subscription.customer),
         subscriptionId: subscription.id,
