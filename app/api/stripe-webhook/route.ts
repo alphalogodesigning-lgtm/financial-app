@@ -87,7 +87,7 @@ const upsertProfileSubscription = async ({
 };
 
 export async function GET() {
-  return new RESPONSE("Webhook route alive");
+  return new Response("Webhook route alive");
 }
 
 export async function POST(req: NextRequest) {
