@@ -8,8 +8,6 @@ export const config = {
   },
 };
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY! // IMPORTANT: service role key, not anon key
@@ -91,6 +89,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+
+  const stripe = new Stripe(stripeSecret);
+
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
