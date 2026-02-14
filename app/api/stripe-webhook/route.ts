@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+export const runtime = "nodejs";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -91,6 +85,20 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    console.error("STRIPE_SECRET_KEY not configured");
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  }
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error("STRIPE_WEBHOOK_SECRET not configured");
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  }
+
+  const stripe = new Stripe(stripeSecret);
+
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
@@ -104,7 +112,7 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
   } catch (err) {
     console.error("Webhook signature verification failed.", err);
