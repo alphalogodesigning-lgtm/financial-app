@@ -406,7 +406,7 @@ function Projections() {
                         <p style={{ color: '#CFCFCF', fontSize: '1.1rem', marginBottom: '20px' }}>
                             Want the full access? Upgrade now. Cancel Anytime 😏
                         </p>
-                        <button style={premiumUpgradeButtonStyle} onClick={() => { window.location.href = 'auth.html'; }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 12px 26px rgba(212, 175, 55, 0.45)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(212, 175, 55, 0.35)'; }}>
+                        <button style={premiumUpgradeButtonStyle} onClick={() => { window.location.href = 'https://buy.stripe.com/3cI14ggg3dxa1Xe7tm8g000'; }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 12px 26px rgba(212, 175, 55, 0.45)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(212, 175, 55, 0.35)'; }}>
                             7-day Trial
                         </button>
                     </div>
