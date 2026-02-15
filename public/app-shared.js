@@ -135,7 +135,7 @@
     return data?.user || null;
   };
 
-  const syncEntitlementsFromServer = async () => {
+  async function syncEntitlementsFromServer() {
     if (!supabaseClient || typeof fetch !== 'function') return;
 
     try {
@@ -152,26 +152,7 @@
     } catch (err) {
       console.warn('Stripe entitlement sync skipped.', err);
     }
-  };
-
-  const syncEntitlementsFromServer = async () => {
-    if (!supabaseClient || typeof fetch !== 'function') return;
-
-    try {
-      const session = await resolveAuthSession();
-      const accessToken = session?.access_token;
-      if (!accessToken) return;
-
-      await fetch('/api/stripe-sync', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
-    } catch (err) {
-      console.warn('Stripe entitlement sync skipped.', err);
-    }
-  };
+  }
 
   const getCurrentUserEntitlements = async () => {
     const fallback = {
