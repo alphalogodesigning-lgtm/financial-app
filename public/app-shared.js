@@ -131,21 +131,44 @@
   };
 
   const syncEntitlementsFromServer = async () => {
-    if (!supabaseClient || typeof fetch !== 'function') return;
+    if (!supabaseClient || typeof fetch !== 'function') return { ok: false, reason: 'unavailable' };
 
     try {
       const session = await resolveAuthSession();
       const accessToken = session?.access_token;
-      if (!accessToken) return;
+      if (!accessToken) return { ok: false, reason: 'missing_token' };
 
-      await fetch('/api/stripe-sync', {
+      const response = await fetch('/api/stripe-sync', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
       });
+
+      if (!response.ok) {
+        let responseBody = null;
+        try {
+          responseBody = await response.json();
+        } catch (_) {
+          responseBody = null;
+        }
+
+        console.warn('Stripe entitlement sync failed.', {
+          status: response.status,
+          body: responseBody
+        });
+
+        return {
+          ok: false,
+          status: response.status,
+          body: responseBody
+        };
+      }
+
+      return { ok: true };
     } catch (err) {
       console.warn('Stripe entitlement sync skipped.', err);
+      return { ok: false, error: err };
     }
   };
 
@@ -162,7 +185,10 @@
       const user = await getAuthenticatedUser();
       if (!user) return fallback;
 
-      await syncEntitlementsFromServer();
+      const syncResult = await syncEntitlementsFromServer();
+      if (syncResult?.ok === false) {
+        console.warn('Stripe entitlement sync failed, using DB as-is.', syncResult);
+      }
 
       const { data, error } = await supabaseClient
         .from(PROFILE_TABLE)
