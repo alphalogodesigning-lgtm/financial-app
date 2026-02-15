@@ -126,8 +126,13 @@
 
   const getAuthenticatedUser = async () => {
     if (!supabaseClient) return null;
+
     const session = await resolveAuthSession();
-    return session?.user || null;
+    if (session?.user) return session.user;
+
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error) throw error;
+    return data?.user || null;
   };
 
   const getCurrentUserEntitlements = async () => {
@@ -142,6 +147,22 @@
     try {
       const user = await getAuthenticatedUser();
       if (!user) return fallback;
+
+      if (typeof fetch === 'function') {
+        try {
+          const sessionForSync = await resolveAuthSession();
+          const accessToken = sessionForSync?.access_token;
+
+          if (accessToken) {
+            await fetch('/api/stripe-sync', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+          }
+        } catch (err) {
+          console.warn('Stripe entitlement sync skipped.', err);
+        }
+      }
 
       const { data, error } = await supabaseClient
         .from(PROFILE_TABLE)
@@ -175,7 +196,8 @@
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
-        if (options.redirect !== false) {
+        const hasLocalData = Boolean(parsedFallback);
+        if (options.redirect !== false && !hasLocalData) {
           redirectToAuth(options);
         }
         return parsedFallback;
@@ -202,9 +224,6 @@
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
-        if (options.redirect !== false) {
-          redirectToAuth(options);
-        }
         return;
       }
       const { error } = await supabaseClient

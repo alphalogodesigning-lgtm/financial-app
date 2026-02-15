@@ -13,14 +13,33 @@ const { supabaseClient, loadBudgetData } = window.AppShared;
 
             useEffect(() => {
                 if (!supabaseClient) return;
-                supabaseClient.auth.getUser().then(({ data }) => {
-                    setCurrentUser(data.user || null);
+
+                let active = true;
+                supabaseClient.auth.getUser().then(async ({ data }) => {
+                    if (!active) return;
+
+                    const user = data.user || null;
+                    setCurrentUser(user);
+
+                    if (user) {
+                        await redirectSignedInUser();
+                    }
                 });
+
+                return () => {
+                    active = false;
+                };
             }, []);
 
             const setStatusMessage = (message, type = '') => {
                 setStatus(message);
                 setStatusType(type);
+            };
+
+            const redirectSignedInUser = async () => {
+                const userData = await loadBudgetData({ redirect: false, localFallback: false });
+                const hasCompletedOnboarding = Boolean(userData) && userData.onboarding_complete !== false;
+                window.location.replace(hasCompletedOnboarding ? 'index.html' : 'onboarding.html');
             };
 
             const handleSubmit = async (e) => {
