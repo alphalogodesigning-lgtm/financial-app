@@ -126,8 +126,32 @@
 
   const getAuthenticatedUser = async () => {
     if (!supabaseClient) return null;
+
     const session = await resolveAuthSession();
-    return session?.user || null;
+    if (session?.user) return session.user;
+
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error) throw error;
+    return data?.user || null;
+  };
+
+  const syncEntitlementsFromServer = async () => {
+    if (!supabaseClient || typeof fetch !== 'function') return;
+
+    try {
+      const session = await resolveAuthSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      await fetch('/api/stripe-sync', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    } catch (err) {
+      console.warn('Stripe entitlement sync skipped.', err);
+    }
   };
 
   const syncEntitlementsFromServer = async () => {
