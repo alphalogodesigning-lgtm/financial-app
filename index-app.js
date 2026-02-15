@@ -69,6 +69,57 @@ function BarChart({ data }) {
   );
 }
 
+const STATUS_LABELS = {
+  inactive: 'Free',
+  trialing: 'Trial',
+  active: 'Pro',
+  past_due: 'Past due',
+  canceled: 'Canceled',
+  unpaid: 'Unpaid',
+  incomplete: 'Incomplete',
+  incomplete_expired: 'Incomplete expired',
+  paused: 'Paused'
+};
+
+const resolvePlanLabel = (status) => {
+  if (status === 'trialing') return 'Trial';
+  if (status === 'active') return 'Pro';
+  return 'Free';
+};
+
+const formatStatusLabel = (status) => STATUS_LABELS[status] || 'Free';
+
+const formatDateLabel = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+const getTrialCountdownLabel = (trialEnd) => {
+  if (!trialEnd) return null;
+  const trialDate = new Date(trialEnd);
+  if (Number.isNaN(trialDate.getTime())) return null;
+  const now = new Date();
+  const msRemaining = trialDate.getTime() - now.getTime();
+  const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
+  if (daysRemaining <= 0) return 'Trial ends today';
+  if (daysRemaining === 1) return '1 day left in trial';
+  return `${daysRemaining} days left in trial`;
+};
+
+const getStatusTone = (status) => {
+  if (status === 'active') return 'success';
+  if (status === 'trialing') return 'info';
+  if (status === 'past_due' || status === 'unpaid' || status === 'incomplete' || status === 'incomplete_expired') return 'warning';
+  if (status === 'canceled' || status === 'paused') return 'neutral';
+  return 'neutral';
+};
+
 function Dashboard() {
   const [data, setData] = useState(CLEAN_STATE);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -93,6 +144,16 @@ function Dashboard() {
   });
   const [isSavingName, setIsSavingName] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [subscriptionData, setSubscriptionData] = useState({
+    status: 'inactive',
+    trialEnd: null,
+    renewalDate: null,
+    endDate: null,
+    stripeCustomerId: ''
+  });
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState('');
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [newExpense, setNewExpense] = useState({
     name: '',
     amount: '',
@@ -316,6 +377,95 @@ function Dashboard() {
       confirmPassword: ''
     }));
     setSettingsOpen(true);
+  };
+
+  const fetchSubscriptionData = async () => {
+    if (isSubscriptionLoading) return;
+
+    const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
+    if (!supabaseClient) {
+      setSubscriptionError('Subscription service is unavailable right now.');
+      return;
+    }
+
+    setIsSubscriptionLoading(true);
+    setSubscriptionError('');
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError || !sessionData?.session?.access_token) {
+        throw new Error('Please sign in again to view subscription details.');
+      }
+
+      const response = await fetch('/api/create-portal-session', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`
+        }
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to load subscription details.');
+      }
+
+      setSubscriptionData({
+        status: payload.subscription_status || 'inactive',
+        trialEnd: payload.trial_end || null,
+        renewalDate: payload.renewal_date || null,
+        endDate: payload.end_date || null,
+        stripeCustomerId: payload.stripe_customer_id || ''
+      });
+    } catch (error) {
+      setSubscriptionError(error?.message || 'Unable to load subscription details.');
+    } finally {
+      setIsSubscriptionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!settingsOpen || activeSettingsTab !== 'subscription') return;
+    fetchSubscriptionData();
+  }, [settingsOpen, activeSettingsTab]);
+
+  const openBillingPortal = async (flow = 'manage') => {
+    if (isPortalLoading) return;
+
+    const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
+    if (!supabaseClient) {
+      setSubscriptionError('Subscription service is unavailable right now.');
+      return;
+    }
+
+    setIsPortalLoading(true);
+    setSubscriptionError('');
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError || !sessionData?.session?.access_token) {
+        throw new Error('Please sign in again to manage your subscription.');
+      }
+
+      const response = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData.session.access_token}`
+        },
+        body: JSON.stringify({ flow })
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload.url) {
+        throw new Error(payload.error || 'Unable to open billing portal.');
+      }
+
+      setIsPortalLoading(false);
+      window.location.href = payload.url;
+    } catch (error) {
+      setSubscriptionError(error?.message || 'Unable to open billing portal.');
+      setIsPortalLoading(false);
+    }
   };
 
   const handleAccountFieldChange = (field, value) => {
@@ -716,9 +866,94 @@ function Dashboard() {
               )}
 
               {activeSettingsTab === 'subscription' && (
-                <div className="settings-placeholder">
-                  <h3>Subscription plans (coming soon)</h3>
-                  <p>This tab is ready. Stripe + plan controls will go here once plans are live.</p>
+                <div className="settings-panel subscription-panel">
+                  <div className="subscription-card">
+                    <div className="subscription-card-header">
+                      <div>
+                        <p className="subscription-label">Current plan</p>
+                        <h3>{resolvePlanLabel(subscriptionData.status)}</h3>
+                      </div>
+                      <span className={`subscription-status-badge ${getStatusTone(subscriptionData.status)}`}>
+                        {formatStatusLabel(subscriptionData.status)}
+                      </span>
+                    </div>
+
+                    <div className="subscription-details-grid">
+                      <div>
+                        <p className="subscription-detail-label">subscription_status</p>
+                        <p className="subscription-detail-value">{subscriptionData.status || 'inactive'}</p>
+                      </div>
+                      {subscriptionData.status === 'trialing' && formatDateLabel(subscriptionData.trialEnd) && (
+                        <div>
+                          <p className="subscription-detail-label">Trial end date</p>
+                          <p className="subscription-detail-value">{formatDateLabel(subscriptionData.trialEnd)}</p>
+                        </div>
+                      )}
+                      {subscriptionData.status === 'active' && formatDateLabel(subscriptionData.renewalDate) && (
+                        <div>
+                          <p className="subscription-detail-label">Renewal date</p>
+                          <p className="subscription-detail-value">{formatDateLabel(subscriptionData.renewalDate)}</p>
+                        </div>
+                      )}
+                      {subscriptionData.status === 'canceled' && formatDateLabel(subscriptionData.endDate) && (
+                        <div>
+                          <p className="subscription-detail-label">End date</p>
+                          <p className="subscription-detail-value">{formatDateLabel(subscriptionData.endDate)}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {subscriptionData.status === 'trialing' && getTrialCountdownLabel(subscriptionData.trialEnd) && (
+                      <p className="subscription-note">{getTrialCountdownLabel(subscriptionData.trialEnd)}</p>
+                    )}
+
+                    {subscriptionData.status === 'active' && formatDateLabel(subscriptionData.renewalDate) && (
+                      <p className="subscription-note">Renews on {formatDateLabel(subscriptionData.renewalDate)}.</p>
+                    )}
+
+                    {subscriptionData.status === 'past_due' && (
+                      <p className="subscription-note warning">Payment issue detected. Please update your payment method.</p>
+                    )}
+
+                    {subscriptionData.status === 'canceled' && formatDateLabel(subscriptionData.endDate) && (
+                      <p className="subscription-note">Your plan will end on {formatDateLabel(subscriptionData.endDate)}.</p>
+                    )}
+
+                    <div className="subscription-actions">
+                      {subscriptionData.status === 'inactive' && (
+                        <button className="btn-primary" onClick={() => openBillingPortal('upgrade')} disabled={isPortalLoading}>
+                          Upgrade to Pro
+                        </button>
+                      )}
+
+                      {subscriptionData.status === 'trialing' && (
+                        <>
+                          <button className="btn-primary" onClick={() => openBillingPortal('upgrade')} disabled={isPortalLoading}>Upgrade</button>
+                          <button className="btn-secondary" onClick={() => openBillingPortal('cancel')} disabled={isPortalLoading}>Cancel Trial</button>
+                        </>
+                      )}
+
+                      {subscriptionData.status === 'active' && (
+                        <>
+                          <button className="btn-primary" onClick={() => openBillingPortal('manage')} disabled={isPortalLoading}>Manage Subscription</button>
+                          <button className="btn-secondary" onClick={() => openBillingPortal('cancel')} disabled={isPortalLoading}>Cancel</button>
+                        </>
+                      )}
+
+                      {subscriptionData.status === 'past_due' && (
+                        <button className="btn-primary" onClick={() => openBillingPortal('update_payment')} disabled={isPortalLoading}>
+                          Update Payment Method
+                        </button>
+                      )}
+
+                      {subscriptionData.status === 'canceled' && (
+                        <button className="btn-primary" onClick={() => openBillingPortal('reactivate')} disabled={isPortalLoading}>Reactivate</button>
+                      )}
+                    </div>
+
+                    {isSubscriptionLoading && <p className="subscription-feedback">Loading subscription details...</p>}
+                    {subscriptionError && <p className="subscription-feedback error">{subscriptionError}</p>}
+                  </div>
                 </div>
               )}
 
