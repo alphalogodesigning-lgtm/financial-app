@@ -78,28 +78,15 @@ export async function POST(req: Request) {
 
   const { error: updateError } = await supabase
     .from("profiles")
-    .upsert(
-      {
-        id: userData.user.id,
-        ...payload,
-      },
-      { onConflict: "id" }
-    );
+    .upsert({
+      id: userData.user.id,
+      email,
+      ...payload,
+    }, { onConflict: "id" });
 
   if (updateError) {
     console.error("Stripe sync upsert failed", updateError);
-    return NextResponse.json(
-      {
-        error: "Sync update failed",
-        dbError: {
-          code: updateError.code,
-          message: updateError.message,
-          details: updateError.details,
-          hint: updateError.hint,
-        },
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Sync update failed" }, { status: 500 });
   }
 
   return NextResponse.json({ synced: true, status });

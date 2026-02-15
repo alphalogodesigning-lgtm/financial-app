@@ -131,44 +131,21 @@
   };
 
   const syncEntitlementsFromServer = async () => {
-    if (!supabaseClient || typeof fetch !== 'function') return { ok: false, reason: 'unavailable' };
+    if (!supabaseClient || typeof fetch !== 'function') return;
 
     try {
       const session = await resolveAuthSession();
       const accessToken = session?.access_token;
-      if (!accessToken) return { ok: false, reason: 'missing_token' };
+      if (!accessToken) return;
 
-      const response = await fetch('/api/stripe-sync', {
+      await fetch('/api/stripe-sync', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
       });
-
-      if (!response.ok) {
-        let responseBody = null;
-        try {
-          responseBody = await response.json();
-        } catch (_) {
-          responseBody = null;
-        }
-
-        console.warn('Stripe entitlement sync failed.', {
-          status: response.status,
-          body: responseBody
-        });
-
-        return {
-          ok: false,
-          status: response.status,
-          body: responseBody
-        };
-      }
-
-      return { ok: true };
     } catch (err) {
       console.warn('Stripe entitlement sync skipped.', err);
-      return { ok: false, error: err };
     }
   };
 
@@ -185,10 +162,7 @@
       const user = await getAuthenticatedUser();
       if (!user) return fallback;
 
-      const syncResult = await syncEntitlementsFromServer();
-      if (syncResult?.ok === false) {
-        console.warn('Stripe entitlement sync failed, using DB as-is.', syncResult);
-      }
+      await syncEntitlementsFromServer();
 
       const { data, error } = await supabaseClient
         .from(PROFILE_TABLE)
@@ -222,7 +196,8 @@
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
-        if (options.redirect !== false) {
+        const hasLocalData = Boolean(parsedFallback);
+        if (options.redirect !== false && !hasLocalData) {
           redirectToAuth(options);
         }
         return parsedFallback;
@@ -249,9 +224,6 @@
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
-        if (options.redirect !== false) {
-          redirectToAuth(options);
-        }
         return;
       }
       const { error } = await supabaseClient
