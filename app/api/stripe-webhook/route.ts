@@ -104,7 +104,6 @@ const upsertProfileSubscription = async (
       .from("profiles")
       .upsert({
         id: supabaseUserId,
-        ...(customerEmail ? { email: customerEmail } : {}),
         ...updatePayload,
       }, { onConflict: "id" })
       .select("id")
