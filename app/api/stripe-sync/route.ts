@@ -78,11 +78,14 @@ export async function POST(req: Request) {
 
   const { error: updateError } = await supabase
     .from("profiles")
-    .update(payload)
-    .eq("id", userData.user.id);
+    .upsert({
+      id: userData.user.id,
+      email,
+      ...payload,
+    }, { onConflict: "id" });
 
   if (updateError) {
-    console.error("Stripe sync update failed", updateError);
+    console.error("Stripe sync upsert failed", updateError);
     return NextResponse.json({ error: "Sync update failed" }, { status: 500 });
   }
 

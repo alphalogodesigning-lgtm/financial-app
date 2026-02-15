@@ -102,8 +102,11 @@ const upsertProfileSubscription = async (
   if (supabaseUserId) {
     const byUserId = await supabase
       .from("profiles")
-      .update(updatePayload)
-      .eq("id", supabaseUserId)
+      .upsert({
+        id: supabaseUserId,
+        ...(customerEmail ? { email: customerEmail } : {}),
+        ...updatePayload,
+      }, { onConflict: "id" })
       .select("id")
       .maybeSingle();
 
