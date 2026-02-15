@@ -20,7 +20,7 @@
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
-  const waitForAuthSession = (timeoutMs = 3000) => new Promise((resolve) => {
+  const waitForAuthSession = (timeoutMs = 6000) => new Promise((resolve) => {
     if (!supabaseClient) {
       resolve(null);
       return;
