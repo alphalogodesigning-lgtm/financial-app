@@ -130,6 +130,25 @@
     return session?.user || null;
   };
 
+  const syncEntitlementsFromServer = async () => {
+    if (!supabaseClient || typeof fetch !== 'function') return;
+
+    try {
+      const session = await resolveAuthSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      await fetch('/api/stripe-sync', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    } catch (err) {
+      console.warn('Stripe entitlement sync skipped.', err);
+    }
+  };
+
   const getCurrentUserEntitlements = async () => {
     const fallback = {
       subscriptionStatus: null,
@@ -142,6 +161,8 @@
     try {
       const user = await getAuthenticatedUser();
       if (!user) return fallback;
+
+      await syncEntitlementsFromServer();
 
       const { data, error } = await supabaseClient
         .from(PROFILE_TABLE)
@@ -175,7 +196,8 @@
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
-        if (options.redirect !== false) {
+        const hasLocalData = Boolean(parsedFallback);
+        if (options.redirect !== false && !hasLocalData) {
           redirectToAuth(options);
         }
         return parsedFallback;
@@ -202,9 +224,6 @@
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
-        if (options.redirect !== false) {
-          redirectToAuth(options);
-        }
         return;
       }
       const { error } = await supabaseClient
