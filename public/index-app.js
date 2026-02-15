@@ -880,7 +880,7 @@ function Dashboard() {
 
                     <div className="subscription-details-grid">
                       <div>
-                        <p className="subscription-detail-label">subscription_status</p>
+                        <p className="subscription-detail-label">Subscription Status</p>
                         <p className="subscription-detail-value">{subscriptionData.status || 'inactive'}</p>
                       </div>
                       {subscriptionData.status === 'trialing' && formatDateLabel(subscriptionData.trialEnd) && (
@@ -927,10 +927,7 @@ function Dashboard() {
                       )}
 
                       {subscriptionData.status === 'trialing' && (
-                        <>
-                          <button className="btn-primary" onClick={() => openBillingPortal('upgrade')} disabled={isPortalLoading}>Upgrade</button>
-                          <button className="btn-secondary" onClick={() => openBillingPortal('cancel')} disabled={isPortalLoading}>Cancel Trial</button>
-                        </>
+                        <button className="btn-secondary" onClick={() => openBillingPortal('cancel')} disabled={isPortalLoading}>Cancel Trial</button>
                       )}
 
                       {subscriptionData.status === 'active' && (
