@@ -167,7 +167,21 @@
       const user = await getAuthenticatedUser();
       if (!user) return fallback;
 
-      await syncEntitlementsFromServer();
+      if (typeof fetch === 'function') {
+        try {
+          const sessionForSync = await resolveAuthSession();
+          const accessToken = sessionForSync?.access_token;
+
+          if (accessToken) {
+            await fetch('/api/stripe-sync', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+          }
+        } catch (err) {
+          console.warn('Stripe entitlement sync skipped.', err);
+        }
+      }
 
       const { data, error } = await supabaseClient
         .from(PROFILE_TABLE)
