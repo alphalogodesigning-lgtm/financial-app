@@ -594,6 +594,156 @@
             box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
         }
 
+
+        .streak-hub {
+            margin-bottom: 28px;
+            border: 1px solid rgba(255, 130, 70, 0.28);
+            background: radial-gradient(circle at 15% 10%, rgba(255, 134, 31, 0.24), transparent 40%), linear-gradient(135deg, rgba(33, 20, 10, 0.95), rgba(24, 16, 11, 0.95));
+            display: grid;
+            gap: 20px;
+        }
+
+        .streak-hub-main {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .streak-fire-wrap {
+            width: 68px;
+            height: 68px;
+            border-radius: 20px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 195, 110, 0.45), rgba(255, 106, 38, 0.15));
+            border: 1px solid rgba(255, 165, 92, 0.4);
+            display: grid;
+            place-items: center;
+            box-shadow: 0 10px 24px rgba(255, 111, 46, 0.25);
+        }
+
+        .streak-flame-emoji {
+            font-size: 2rem;
+            display: inline-block;
+            animation: flameFlicker 1.25s ease-in-out infinite;
+            transform-origin: bottom center;
+        }
+
+        .streak-kicker {
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #ffb06f;
+            font-weight: 700;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+        }
+
+        .streak-value-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .streak-value {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: #fff;
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+        }
+
+        .streak-days {
+            color: #ffcc8b;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .streak-description {
+            margin-top: 10px;
+            color: #e0c3a7;
+            font-size: 0.92rem;
+        }
+
+        .streak-progress-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #cba37a;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .streak-progress-track {
+            width: 100%;
+            height: 11px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .streak-progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #ff7d36, #ffd15e);
+            box-shadow: 0 0 12px rgba(255, 155, 79, 0.5);
+            transition: width 0.4s ease;
+        }
+
+        .streak-badges {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+            gap: 10px;
+        }
+
+        .streak-milestone {
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.06);
+            color: #aaa;
+            border-radius: 12px;
+            min-height: 58px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        .streak-milestone-icon {
+            font-size: 1rem;
+        }
+
+        .streak-milestone.unlocked {
+            border-color: rgba(255, 200, 120, 0.6);
+            color: #ffe0b7;
+            background: linear-gradient(135deg, rgba(255, 150, 53, 0.28), rgba(255, 201, 120, 0.14));
+            box-shadow: 0 6px 14px rgba(255, 120, 50, 0.25);
+        }
+
+        @keyframes flameFlicker {
+            0%, 100% { transform: rotate(-3deg) scale(1); filter: drop-shadow(0 0 4px rgba(255, 135, 74, 0.5)); }
+            50% { transform: rotate(4deg) scale(1.08); filter: drop-shadow(0 0 9px rgba(255, 174, 96, 0.65)); }
+        }
+
+
+        @media (max-width: 640px) {
+            .streak-hub {
+                padding: 20px;
+            }
+
+            .streak-hub-main {
+                align-items: flex-start;
+            }
+
+            .streak-value {
+                font-size: 2.2rem;
+            }
+
+            .streak-badges {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
         /* Metrics styling */
         .metric-value {
             font-size: 2.75rem;
