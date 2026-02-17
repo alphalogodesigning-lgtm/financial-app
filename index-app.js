@@ -120,6 +120,26 @@ const getStatusTone = (status) => {
   return 'neutral';
 };
 
+const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
+
+const getStreakMilestones = (streak) => {
+  const safeStreak = Number.isFinite(streak) ? Math.max(0, streak) : 0;
+  return STREAK_MILESTONES.map((days) => {
+    const unlocked = safeStreak >= days;
+    return {
+      days,
+      unlocked,
+      label: `${days}d`,
+      name: `${days}-day streak`
+    };
+  });
+};
+
+const getNextMilestone = (streak) => {
+  const safeStreak = Number.isFinite(streak) ? Math.max(0, streak) : 0;
+  return STREAK_MILESTONES.find((days) => safeStreak < days) || null;
+};
+
 function Dashboard() {
   const [data, setData] = useState(CLEAN_STATE);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -166,6 +186,15 @@ function Dashboard() {
   });
   const [quickAddMode, setQuickAddMode] = useState('expense');
   const userName = profile.fullName || '';
+  const safeStreak = Number.isFinite(data.streak) ? Math.max(0, data.streak) : 0;
+  const streakMilestones = getStreakMilestones(safeStreak);
+  const unlockedMilestones = streakMilestones.filter((milestone) => milestone.unlocked).length;
+  const nextMilestone = getNextMilestone(safeStreak);
+  const nextMilestoneIndex = nextMilestone ? STREAK_MILESTONES.indexOf(nextMilestone) : -1;
+  const previousMilestone = nextMilestoneIndex > 0 ? STREAK_MILESTONES[nextMilestoneIndex - 1] : 0;
+  const streakProgress = nextMilestone
+    ? ((safeStreak - previousMilestone) / (nextMilestone - previousMilestone)) * 100
+    : 100;
 
   useEffect(() => {
     let active = true;
@@ -674,14 +703,11 @@ function Dashboard() {
 
       {/* Header */}
       <div className="header">
-        <div>
+        <div className="header-copy">
           <h1 className="header-title">Command Center</h1>
           <p className="header-subtitle">Your financial overview at a glance</p>
         </div>
         <div className="header-actions">
-          <div className="streak-badge">
-            🔥 {data.streak} day streak
-          </div>
           <div className="profile-menu-wrapper">
             <button
               className="profile-button"
@@ -703,6 +729,48 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      <section className="streak-hub card" aria-label="Streak and milestone progress">
+        <div className="streak-hub-main">
+          <div className="streak-fire-wrap" aria-hidden="true">
+            <span className="streak-flame-emoji">🔥</span>
+          </div>
+          <div>
+            <p className="streak-kicker">Focus streak</p>
+            <div className="streak-value-row">
+              <span className="streak-value">{safeStreak}</span>
+              <span className="streak-days">days</span>
+            </div>
+            <p className="streak-description">
+              {nextMilestone
+                ? `${Math.max(0, nextMilestone - safeStreak)} days to unlock your ${nextMilestone}-day badge`
+                : 'Legend status unlocked. Keep the fire alive.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="streak-progress">
+          <div className="streak-progress-meta">
+            <span>Badge progress</span>
+            <span>{unlockedMilestones}/{STREAK_MILESTONES.length} unlocked</span>
+          </div>
+          <div className="streak-progress-track" role="progressbar" aria-valuenow={Math.min(100, Math.max(0, streakProgress))} aria-valuemin="0" aria-valuemax="100">
+            <div className="streak-progress-fill" style={{ width: `${Math.min(100, Math.max(0, streakProgress))}%` }} />
+          </div>
+          <div className="streak-badges">
+            {streakMilestones.map((milestone) => (
+              <div
+                key={milestone.days}
+                className={`streak-milestone ${milestone.unlocked ? 'unlocked' : ''}`}
+                title={milestone.name}
+              >
+                <span className="streak-milestone-icon">{milestone.unlocked ? '🏆' : '🔒'}</span>
+                <span>{milestone.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Top Stats */}
       <div className="stats-grid">
