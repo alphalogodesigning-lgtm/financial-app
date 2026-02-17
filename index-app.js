@@ -792,6 +792,13 @@ function Dashboard() {
             {profileMenuOpen && (
               <div className="profile-menu-dropdown">
                 <button className="profile-menu-item" onClick={openSettings}>⚙️ Settings & profile</button>
+                <button className="profile-menu-item help-center-item" onClick={() => {
+                  setProfileMenuOpen(false);
+                  window.location.href = 'help-center.html';
+                }}>
+                  <span className="menu-icon help-center-icon" aria-hidden="true">🛟</span>
+                  Help Center
+                </button>
                 <button className="profile-menu-item" onClick={handleLogout}>↩ Log out</button>
               </div>
             )}
