@@ -272,6 +272,26 @@ function PurchaseSimulator() {
         );
     }, [purchaseAmount, financialState]);
 
+
+    const linkedGoalImpact = useMemo(() => {
+        if (!simulation || !data) return null;
+        const linkedGoalId = data.linkedSimulatorGoalId || null;
+        if (!linkedGoalId) return null;
+        const linkedGoal = (data.savingsGoals || []).find((goal) => goal.id === linkedGoalId);
+        if (!linkedGoal) return null;
+
+        const targetAmount = Number(linkedGoal.targetAmount) || 0;
+        const currentAmount = Number(linkedGoal.currentAmount) || 0;
+        const purchaseValue = parseFloat(purchaseAmount) || 0;
+        const currentGap = Math.max(0, targetAmount - currentAmount);
+        const newGapAfterPurchase = Math.max(0, currentGap + purchaseValue);
+
+        return {
+            goalName: linkedGoal.name,
+            gapAfterPurchase: newGapAfterPurchase
+        };
+    }, [simulation, data, purchaseAmount]);
+
     useEffect(() => {
         if (!shareImageBlob) {
             if (shareObjectUrlRef.current) {
@@ -421,6 +441,7 @@ function PurchaseSimulator() {
                     <a href="index.html" className="nav-link">📊 Dashboard</a>
                     <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
                     <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+        <a href="savings-goal.html" className="nav-link">🎯 Savings Goal</a>
                     <a href="projections.html" className="nav-link">🔮 Projections</a>
                     <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
                     <a href="insights.html" className="nav-link">🧠 Insights</a>
@@ -452,6 +473,7 @@ function PurchaseSimulator() {
                 <a href="index.html" className="nav-link">📊 Dashboard</a>
                 <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
                 <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+        <a href="savings-goal.html" className="nav-link">🎯 Savings Goal</a>
                 <a href="projections.html" className="nav-link">🔮 Projections</a>
                 <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
                 <a href="insights.html" className="nav-link">🧠 Insights</a>
@@ -586,6 +608,20 @@ function PurchaseSimulator() {
                                     <> (down from <strong>{simulation.currentRunway} days</strong>)</>
                                 )}
                             </div>
+                            {linkedGoalImpact && (
+                                <>
+                                    <div style={{
+                                        marginTop: '14px',
+                                        borderTop: '1px solid rgba(255,255,255,0.16)',
+                                        paddingTop: '12px',
+                                        color: '#E8E8E8',
+                                        fontSize: '0.95rem',
+                                        lineHeight: 1.45
+                                    }}>
+                                        If you buy this, you will also be <strong>RM{linkedGoalImpact.gapAfterPurchase.toFixed(0)}</strong> away from your goal: <strong>{linkedGoalImpact.goalName}</strong>.
+                                    </div>
+                                </>
+                            )}
                             <button
                                 style={shareButtonStyle}
                                 onClick={handleGenerateShareCard}
