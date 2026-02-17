@@ -121,6 +121,52 @@ const getStatusTone = (status) => {
 };
 
 const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
+const CRITICAL_BANNER_DISMISS_KEY = 'criticalBannerDismissed';
+
+const getCriticalAlert = ({ runway, categorySpending, categoryBudgets }) => {
+  const categoryEntries = Object.entries(categorySpending || {}).reduce((acc, [category, spent]) => {
+    const budget = categoryBudgets?.[category] || 0;
+    if (budget <= 0) return acc;
+    const usagePct = budget > 0 ? (spent / budget) * 100 : 0;
+    acc.push({
+      category,
+      spent,
+      budget,
+      usagePct
+    });
+    return acc;
+  }, []);
+
+  const overLimitCategory = categoryEntries
+    .filter((item) => item.usagePct >= 90)
+    .sort((a, b) => b.usagePct - a.usagePct)[0] || null;
+
+  const lowRunway = Number.isFinite(runway) && runway < 10;
+
+  if (!lowRunway && !overLimitCategory) return null;
+
+  if (lowRunway && overLimitCategory) {
+    return {
+      severity: 'double',
+      headline: `Runway low, ${Math.max(0, Math.floor(runway))} days left.`,
+      subline: `${overLimitCategory.category} is at ${Math.round(overLimitCategory.usagePct)}%. One more move and you are bleeding.`
+    };
+  }
+
+  if (lowRunway) {
+    return {
+      severity: 'runway',
+      headline: `Runway low, ${Math.max(0, Math.floor(runway))} days left.`,
+      subline: 'Your margin is thin. Lock in discipline before this spirals.'
+    };
+  }
+
+  return {
+    severity: 'category',
+    headline: `${overLimitCategory.category} spending at ${Math.round(overLimitCategory.usagePct)}%.`,
+    subline: 'You are crossing your line. Review your latest expenses now.'
+  };
+};
 
 const getStreakMilestones = (streak) => {
   const safeStreak = Number.isFinite(streak) ? Math.max(0, streak) : 0;
@@ -185,6 +231,8 @@ function Dashboard() {
     date: dateTime.getTodayDateKey()
   });
   const [quickAddMode, setQuickAddMode] = useState('expense');
+  const [isCriticalBannerCollapsed, setIsCriticalBannerCollapsed] = useState(false);
+  const [isCriticalBannerDismissed, setIsCriticalBannerDismissed] = useState(false);
   const userName = profile.fullName || '';
   const safeStreak = Number.isFinite(data.streak) ? Math.max(0, data.streak) : 0;
   const streakMilestones = getStreakMilestones(safeStreak);
@@ -281,6 +329,27 @@ function Dashboard() {
   const variableExpenses = data.variableExpenses || [];
   const categorySpending = calculateCategorySpending(variableExpenses);
   const categoryBudgets = data.categoryBudgets || {};
+  const criticalAlert = getCriticalAlert({ runway, categorySpending, categoryBudgets });
+  const shouldShowCriticalBanner = Boolean(criticalAlert) && !isCriticalBannerDismissed;
+
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem(CRITICAL_BANNER_DISMISS_KEY) === '1';
+    setIsCriticalBannerDismissed(dismissed);
+  }, []);
+
+  useEffect(() => {
+    if (criticalAlert) {
+      setIsCriticalBannerCollapsed(false);
+      return;
+    }
+    setIsCriticalBannerDismissed(false);
+    sessionStorage.removeItem(CRITICAL_BANNER_DISMISS_KEY);
+  }, [criticalAlert]);
+
+  const handleDismissCriticalBanner = () => {
+    setIsCriticalBannerDismissed(true);
+    sessionStorage.setItem(CRITICAL_BANNER_DISMISS_KEY, '1');
+  };
 
   const greetingText = (() => {
     const hour = dateTime.getCurrentHour();
@@ -729,6 +798,41 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      {shouldShowCriticalBanner && (
+        <section className={`critical-banner ${isCriticalBannerCollapsed ? 'collapsed' : ''}`} role="alert" aria-live="assertive">
+          <div className="critical-banner-header">
+            <div>
+              <p className="critical-banner-kicker">Critical signal</p>
+              <h2 className="critical-banner-title">{criticalAlert.headline}</h2>
+              {!isCriticalBannerCollapsed && <p className="critical-banner-subline">{criticalAlert.subline}</p>}
+            </div>
+            <div className="critical-banner-controls">
+              <button
+                className="critical-banner-control"
+                onClick={() => setIsCriticalBannerCollapsed((prev) => !prev)}
+                aria-label={isCriticalBannerCollapsed ? 'Expand critical warning' : 'Collapse critical warning'}
+              >
+                {isCriticalBannerCollapsed ? 'Expand' : 'Collapse'}
+              </button>
+              <button
+                className="critical-banner-control"
+                onClick={handleDismissCriticalBanner}
+                aria-label="Dismiss critical warning for this session"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+
+          {!isCriticalBannerCollapsed && (
+            <div className="critical-banner-actions">
+              <a href="variable-spending.html" className="critical-banner-btn primary">Review expense</a>
+              <a href="purchase-simulator.html" className="critical-banner-btn secondary">Simulate purchase</a>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="streak-hub card" aria-label="Streak and milestone progress">
         <div className="streak-hub-main">
