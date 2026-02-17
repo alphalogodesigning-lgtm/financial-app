@@ -288,7 +288,8 @@
     ],
     streak: 12,
     categoryBudgets: {},
-    incomeEntries: []
+    incomeEntries: [],
+    savingsGoals: []
   };
 
   const CLEAN_STATE = {
@@ -297,7 +298,8 @@
     variableExpenses: [],
     streak: 0,
     categoryBudgets: {},
-    incomeEntries: []
+    incomeEntries: [],
+    savingsGoals: []
   };
 
   const PAGE_DEFAULTS = {
@@ -307,21 +309,32 @@
       fixedExpenses: [],
       variableExpenses: [],
       streak: 0,
-      incomeEntries: []
+      incomeEntries: [],
+      savingsGoals: []
     },
     'variable-spending': {
       income: 5000,
       fixedExpenses: [],
       variableExpenses: [],
       streak: 0,
-      incomeEntries: []
+      incomeEntries: [],
+      savingsGoals: []
+    },
+    'savings-goal': {
+      income: 5000,
+      fixedExpenses: [],
+      variableExpenses: [],
+      streak: 0,
+      incomeEntries: [],
+      savingsGoals: []
     },
     projections: {
       income: 5000,
       fixedExpenses: [],
       variableExpenses: [],
       streak: 0,
-      incomeEntries: []
+      incomeEntries: [],
+      savingsGoals: []
     },
     insights: {
       income: 0,
@@ -329,6 +342,7 @@
       variableExpenses: [],
       streak: 0,
       incomeEntries: [],
+      savingsGoals: [],
       roast_level: 'honest'
     }
   };
