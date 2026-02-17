@@ -84,6 +84,11 @@
             gap: 24px;
         }
 
+        .header-copy {
+            flex: 1;
+            min-width: 0;
+        }
+
         .header-actions {
             display: flex;
             align-items: center;
@@ -494,9 +499,18 @@
                 gap: 16px;
             }
 
+            .header {
+                position: relative;
+                padding-right: 56px;
+                min-height: 48px;
+            }
+
             .header-actions {
-                width: 100%;
+                width: auto;
                 justify-content: flex-end;
+                position: absolute;
+                right: 0;
+                top: 0;
             }
 
             .greeting {
