@@ -388,15 +388,17 @@ function PurchaseSimulator() {
     };
 
     const shareButtonStyle = {
-        border: '1px solid rgba(212, 175, 55, 0.42)',
+        border: '2px solid rgba(212, 175, 55, 0.58)',
         borderRadius: '999px',
-        background: 'rgba(17, 17, 17, 0.7)',
-        color: '#D4AF37',
-        padding: '10px 16px',
-        fontWeight: 700,
+        background: 'linear-gradient(135deg, rgba(212,175,55,0.26) 0%, rgba(212,175,55,0.12) 100%)',
+        color: '#F5D87A',
+        padding: '13px 22px',
+        fontSize: '1rem',
+        fontWeight: 800,
         letterSpacing: '0.01em',
+        boxShadow: '0 8px 20px rgba(212, 175, 55, 0.24)',
         cursor: 'pointer',
-        transition: 'transform 0.16s ease, background 0.16s ease, border-color 0.16s ease',
+        transition: 'transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease',
         marginTop: '18px'
     };
 
@@ -589,13 +591,15 @@ function PurchaseSimulator() {
                                 onClick={handleGenerateShareCard}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.transform = 'translateY(-1px)';
-                                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.12)';
-                                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.72)';
+                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.34) 0%, rgba(212,175,55,0.16) 100%)';
+                                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.8)';
+                                    e.currentTarget.style.boxShadow = '0 12px 24px rgba(212, 175, 55, 0.28)';
                                 }}
                                 onMouseLeave={(e) => {
                                     e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.background = 'rgba(17, 17, 17, 0.7)';
-                                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.42)';
+                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.26) 0%, rgba(212,175,55,0.12) 100%)';
+                                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.58)';
+                                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(212, 175, 55, 0.24)';
                                 }}
                             >
                                 🔥 Share
@@ -640,7 +644,7 @@ function PurchaseSimulator() {
                     id="purchase-share-card-capture"
                     style={{
                         width: '1080px',
-                        height: '1920px',
+                        height: '1080px',
                         background: '#0A0A0A',
                         color: '#F2F2F2',
                         padding: '150px 92px 120px',
@@ -692,11 +696,11 @@ function PurchaseSimulator() {
 
                         {shareStatusMessage && <p style={{ color: '#D4AF37', marginBottom: '10px', fontSize: '0.9rem' }}>{shareStatusMessage}</p>}
 
-                        <button className="btn btn-primary" style={{ width: '100%', marginBottom: '10px' }} onClick={handleNativeShare} disabled={!shareImageBlob || isGeneratingShare}>🔥 Share</button>
+                        <button className="btn btn-primary" style={{ width: '100%', marginBottom: '12px', minHeight: '52px', fontSize: '1.02rem', fontWeight: 800, borderRadius: '14px', background: 'linear-gradient(135deg, #D4AF37 0%, #E8C75A 100%)', color: '#111', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 10px 26px rgba(212,175,55,0.28)' }} onClick={handleNativeShare} disabled={!shareImageBlob || isGeneratingShare}>🔥 Share</button>
 
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: showManualShareOptions ? '10px' : 0 }}>
-                            <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.84rem' }} onClick={handleDownloadShare} disabled={!shareImageBlob}>Download</button>
-                            <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.84rem' }} onClick={handleCopyCaption}>Copy caption</button>
+                            <button className="btn btn-secondary" style={{ padding: '10px 14px', minHeight: '42px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', color: '#E8D7A2', border: '1px solid rgba(212,175,55,0.34)', background: 'rgba(212,175,55,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} onClick={handleDownloadShare} disabled={!shareImageBlob}>Download</button>
+                            <button className="btn btn-secondary" style={{ padding: '10px 14px', minHeight: '42px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', color: '#E8D7A2', border: '1px solid rgba(212,175,55,0.34)', background: 'rgba(212,175,55,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} onClick={handleCopyCaption}>Copy caption</button>
                         </div>
 
                         {showManualShareOptions && (

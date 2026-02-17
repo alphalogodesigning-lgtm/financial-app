@@ -21,7 +21,7 @@ export function ShareCard({ title, bodyText, stats = {}, severityLevel, appWater
     <div
       style={{
         width: 1080,
-        height: 1920,
+        height: 1080,
         background: '#0A0A0A',
         color: '#F2F2F2',
         border: '1px solid rgba(255,255,255,0.08)',
