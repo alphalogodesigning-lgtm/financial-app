@@ -76,7 +76,7 @@
             z-index: 1;
             min-height: 100vh;
             padding: 28px 24px 80px;
-            max-width: 1000px;
+            max-width: 1320px;
             margin: 0 auto;
         }
 
@@ -450,6 +450,30 @@
         .empty-text {
             color: var(--muted);
             font-size: 1rem;
+        }
+
+
+
+        @media (min-width: 1024px) {
+            .main-nav {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 4px;
+            }
+
+            .main-nav::-webkit-scrollbar {
+                height: 6px;
+            }
+
+            .main-nav::-webkit-scrollbar-thumb {
+                background: rgba(212, 175, 55, 0.3);
+                border-radius: 999px;
+            }
+
+            .nav-link {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
         }
 
         /* ─── ANIMATIONS ─────────────────────────────────────── */
