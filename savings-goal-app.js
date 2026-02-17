@@ -3,11 +3,33 @@ const { useEffect, useMemo, useState } = React;
 const { loadBudgetData, saveBudgetData, getInitialData, dateTime } = window.AppShared;
 
 const EXAMPLE_GOAL = { name: 'Dream Phone', targetAmount: 5999 };
+const DOPAMINE_LINES = [
+  'Momentum check: {pct}% closer than yesterday-you.',
+  'You are {pct}% closer to this goal.',
+  'Tiny steps, big flex — {pct}% complete.',
+  'Progress hit: {pct}% done, keep stacking.',
+  'Every ringgit counts. You are {pct}% in.',
+  '{pct}% conquered. Stay locked in.',
+  'Goal energy is real: {pct}% complete.',
+  'Discipline meter: {pct}% and climbing.',
+  '{pct}% closer to the version of you that planned this.',
+  'You built {pct}% of this win already.',
+  'Savings streak vibe: {pct}% complete.',
+  '{pct}% down. Keep the pressure on.',
+  'You are {pct}% into this mission.',
+  'This goal is now {pct}% yours.',
+  'You pushed this goal to {pct}% complete.'
+];
 
 const formatCurrency = (value) => `RM${Number(value || 0).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const toAmount = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
+
+const getDopamineLine = (goal, progress) => {
+  const index = Math.abs(Number(goal.id) || 0) % DOPAMINE_LINES.length;
+  return DOPAMINE_LINES[index].replace('{pct}', progress.toFixed(1));
 };
 
 function SavingsGoalPage() {
@@ -20,13 +42,21 @@ function SavingsGoalPage() {
     let active = true;
     loadBudgetData().then((saved) => {
       if (!active) return;
-      if (saved) setData((prev) => ({ ...prev, ...saved, savingsGoals: saved.savingsGoals || [] }));
+      if (saved) {
+        setData((prev) => ({
+          ...prev,
+          ...saved,
+          savingsGoals: saved.savingsGoals || [],
+          linkedSimulatorGoalId: saved.linkedSimulatorGoalId || null
+        }));
+      }
       setIsHydrated(true);
     });
     return () => { active = false; };
   }, []);
 
   const goals = data.savingsGoals || [];
+  const linkedSimulatorGoalId = data.linkedSimulatorGoalId || null;
 
   const totals = useMemo(() => {
     const target = goals.reduce((sum, goal) => sum + (Number(goal.targetAmount) || 0), 0);
@@ -36,8 +66,13 @@ function SavingsGoalPage() {
     return { target, saved, remaining, progress };
   }, [goals]);
 
-  const persist = (nextGoals) => {
-    const next = { ...data, savingsGoals: nextGoals };
+  const persist = (nextGoals, nextLinkedSimulatorGoalId = linkedSimulatorGoalId) => {
+    const linkedStillValid = nextGoals.some((goal) => goal.id === nextLinkedSimulatorGoalId);
+    const next = {
+      ...data,
+      savingsGoals: nextGoals,
+      linkedSimulatorGoalId: linkedStillValid ? nextLinkedSimulatorGoalId : null
+    };
     setData(next);
     saveBudgetData(next);
   };
@@ -83,13 +118,17 @@ function SavingsGoalPage() {
     ]);
   };
 
-
-  const deleteGoal = (goalId) => {
-    const goalToDelete = goals.find((goal) => goal.id === goalId);
-    if (!goalToDelete) return;
-    const confirmed = window.confirm(`Delete "${goalToDelete.name}"? This cannot be undone.`);
+  const delayGoal = (goalId) => {
+    const goalToDelay = goals.find((goal) => goal.id === goalId);
+    if (!goalToDelay) return;
+    const confirmed = window.confirm(`Are you sure you want to delay "${goalToDelay.name}"?`);
     if (!confirmed) return;
     persist(goals.filter((goal) => goal.id !== goalId));
+  };
+
+  const linkGoalToSimulator = (goalId) => {
+    persist(goals, goalId);
+    window.alert('Goal linked to Purchase Simulator.');
   };
 
   const updateGoalBalance = (goalId, type) => {
@@ -194,6 +233,7 @@ function SavingsGoalPage() {
             const currentAmount = Number(goal.currentAmount) || 0;
             const remaining = Math.max(0, targetAmount - currentAmount);
             const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
+            const isLinkedToSimulator = linkedSimulatorGoalId === goal.id;
 
             return (
               <article key={goal.id} className="card">
@@ -201,6 +241,7 @@ function SavingsGoalPage() {
                   <h3>{goal.name}</h3>
                   <p className="goal-target">Target: {formatCurrency(targetAmount)}</p>
                 </div>
+                <p className="goal-dopamine-line">{getDopamineLine(goal, progress)}</p>
 
                 <div className="progress-wrap">
                   <div className="progress-track">
@@ -217,8 +258,12 @@ function SavingsGoalPage() {
                 <div className="btn-row" style={{ marginTop: '12px' }}>
                   <button type="button" className="btn" onClick={() => updateGoalBalance(goal.id, 'add')}>＋ Add Money</button>
                   <button type="button" className="btn ghost" onClick={() => updateGoalBalance(goal.id, 'deduct')}>－ Deduct</button>
-                  <button type="button" className="btn ghost" onClick={() => deleteGoal(goal.id)}>🗑 Delete Goal</button>
+                  <button type="button" className={`btn ghost ${isLinkedToSimulator ? 'linked-goal-btn' : ''}`} onClick={() => linkGoalToSimulator(goal.id)}>
+                    {isLinkedToSimulator ? '✅ Linked to Simulator' : '🔗 Link to Simulator'}
+                  </button>
                 </div>
+
+                <button type="button" className="delay-goal-text" onClick={() => delayGoal(goal.id)}>Delay this goal</button>
 
                 {(goal.transactions || []).length > 0 && (
                   <div className="mini-history">
