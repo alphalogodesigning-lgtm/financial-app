@@ -1,4 +1,4 @@
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useRef } = React;
 
 // ─── ROAST DATABASE ─────────────────────────────────────────────────
 const ROAST_DATABASE = {
@@ -150,6 +150,14 @@ function PurchaseSimulator() {
     const [purchaseAmount, setPurchaseAmount] = useState('');
     const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
     const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+    const [shareImageBlob, setShareImageBlob] = useState(null);
+    const [shareCaption, setShareCaption] = useState('');
+    const [shareStatusMessage, setShareStatusMessage] = useState('');
+    const [sharePreviewUrl, setSharePreviewUrl] = useState('');
+    const [showManualShareOptions, setShowManualShareOptions] = useState(false);
+    const shareObjectUrlRef = useRef(null);
 
     const premiumBlurStyle = entitlements.isFree
         ? { filter: 'blur(10px)', opacity: 0.35, pointerEvents: 'none', userSelect: 'none' }
@@ -263,6 +271,136 @@ function PurchaseSimulator() {
             amount
         );
     }, [purchaseAmount, financialState]);
+
+    useEffect(() => {
+        if (!shareImageBlob) {
+            if (shareObjectUrlRef.current) {
+                URL.revokeObjectURL(shareObjectUrlRef.current);
+                shareObjectUrlRef.current = null;
+            }
+            setSharePreviewUrl('');
+            return;
+        }
+
+        if (shareObjectUrlRef.current) {
+            URL.revokeObjectURL(shareObjectUrlRef.current);
+        }
+        const nextUrl = URL.createObjectURL(shareImageBlob);
+        shareObjectUrlRef.current = nextUrl;
+        setSharePreviewUrl(nextUrl);
+    }, [shareImageBlob]);
+
+    useEffect(() => () => {
+        if (shareObjectUrlRef.current) {
+            URL.revokeObjectURL(shareObjectUrlRef.current);
+        }
+    }, []);
+
+    const severityLevel = simulation?.roastCategory === 'safe'
+        ? 'light'
+        : simulation?.roastCategory === 'tight'
+            ? 'medium'
+            : 'brutal';
+
+    const handleGenerateShareCard = async () => {
+        if (!simulation) return;
+        setShareStatusMessage('');
+        setShowManualShareOptions(false);
+        setIsShareModalOpen(true);
+        setIsGeneratingShare(true);
+        try {
+            const caption = window.RoastlyShareUtils.generateCaption({
+                severityLevel,
+                amount: parseFloat(purchaseAmount || '0'),
+                bodyText: simulation.roastText,
+                runwayDays: simulation.newRunway < 0 ? 0 : simulation.newRunway
+            });
+            setShareCaption(caption);
+            const blob = await window.RoastlyShareUtils.generateShareImage('purchase-share-card-capture');
+            setShareImageBlob(blob);
+        } catch (error) {
+            setShareStatusMessage('Could not generate image. Please try again.');
+        } finally {
+            setIsGeneratingShare(false);
+        }
+    };
+
+    const handleNativeShare = async () => {
+        if (!shareImageBlob) return;
+
+        const file = window.RoastlyShareUtils.blobToFile(shareImageBlob, 'roastly-purchase-roast.png');
+        const hasNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+        const supportsFiles = hasNativeShare && (!navigator.canShare || navigator.canShare({ files: [file] }));
+
+        if (!supportsFiles) {
+            setShowManualShareOptions(true);
+            setShareStatusMessage('Direct sharing is unavailable on this device.');
+            return;
+        }
+
+        try {
+            await navigator.share({
+                files: [file],
+                text: shareCaption,
+                title: 'Roastly Reality Check'
+            });
+        } catch (error) {
+            if (error?.name !== 'AbortError') {
+                setShareStatusMessage('Share failed. Use download instead.');
+            }
+        }
+    };
+
+    const handleDownloadShare = () => {
+        if (!sharePreviewUrl) return;
+        const link = document.createElement('a');
+        link.href = sharePreviewUrl;
+        link.download = 'roastly-purchase-roast.png';
+        link.click();
+    };
+
+    const handleCopyCaption = async () => {
+        try {
+            await navigator.clipboard.writeText(shareCaption);
+            setShareStatusMessage('Caption copied.');
+        } catch (error) {
+            setShareStatusMessage('Copy failed.');
+        }
+    };
+
+    const openShareLink = (platform) => {
+        const encodedCaption = encodeURIComponent(shareCaption || 'Roastly just saved my wallet.');
+        if (platform === 'whatsapp') {
+            window.open(`https://wa.me/?text=${encodedCaption}`, '_blank', 'noopener,noreferrer');
+            return;
+        }
+        if (platform === 'x') {
+            window.open(`https://twitter.com/intent/tweet?text=${encodedCaption}`, '_blank', 'noopener,noreferrer');
+            return;
+        }
+        if (platform === 'instagram') {
+            setShareStatusMessage('Instagram Stories: upload from camera roll.');
+            return;
+        }
+        if (platform === 'tiktok') {
+            setShareStatusMessage('TikTok: upload from camera roll.');
+        }
+    };
+
+    const shareButtonStyle = {
+        border: '2px solid rgba(212, 175, 55, 0.58)',
+        borderRadius: '999px',
+        background: 'linear-gradient(135deg, rgba(212,175,55,0.26) 0%, rgba(212,175,55,0.12) 100%)',
+        color: '#F5D87A',
+        padding: '13px 22px',
+        fontSize: '1rem',
+        fontWeight: 800,
+        letterSpacing: '0.01em',
+        boxShadow: '0 8px 20px rgba(212, 175, 55, 0.24)',
+        cursor: 'pointer',
+        transition: 'transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease',
+        marginTop: '18px'
+    };
 
     // Empty state if no data
     if (!isHydrated || !isEntitlementsReady) {
@@ -448,6 +586,24 @@ function PurchaseSimulator() {
                                     <> (down from <strong>{simulation.currentRunway} days</strong>)</>
                                 )}
                             </div>
+                            <button
+                                style={shareButtonStyle}
+                                onClick={handleGenerateShareCard}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.34) 0%, rgba(212,175,55,0.16) 100%)';
+                                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.8)';
+                                    e.currentTarget.style.boxShadow = '0 12px 24px rgba(212, 175, 55, 0.28)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.26) 0%, rgba(212,175,55,0.12) 100%)';
+                                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.58)';
+                                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(212, 175, 55, 0.24)';
+                                }}
+                            >
+                                🔥 Share
+                            </button>
                         </div>
                     </div>
                 </>
@@ -479,6 +635,82 @@ function PurchaseSimulator() {
                         <button style={premiumUpgradeButtonStyle} onClick={() => { window.location.href = 'https://buy.stripe.com/3cI14ggg3dxa1Xe7tm8g000'; }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 12px 26px rgba(212, 175, 55, 0.45)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(212, 175, 55, 0.35)'; }}>
                             7-day Trial
                         </button>
+                    </div>
+                </div>
+            )}
+
+            <div style={{ position: 'fixed', left: '-99999px', top: 0, pointerEvents: 'none' }}>
+                <div
+                    id="purchase-share-card-capture"
+                    style={{
+                        width: '1080px',
+                        height: '1080px',
+                        background: '#0A0A0A',
+                        color: '#F2F2F2',
+                        padding: '150px 92px 120px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+                        border: '1px solid rgba(255,255,255,0.08)'
+                    }}
+                >
+                    <div>
+                        <p style={{ color: '#D4AF37', fontSize: '32px', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '38px' }}>
+                            Reality Check
+                        </p>
+                        <h2 style={{ fontSize: '128px', lineHeight: 0.98, letterSpacing: '-0.05em', marginBottom: '56px' }}>
+                            {simulation?.status || 'ROAST READY'}
+                        </h2>
+                        <p style={{ fontSize: '54px', lineHeight: 1.22, fontWeight: 600, color: '#FFFFFF', maxWidth: '840px' }}>
+                            {simulation?.roastText || 'Roastly called out this purchase before I made the mistake.'}
+                        </p>
+                    </div>
+                    <div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '26px', marginBottom: '56px' }}>
+                            <div>
+                                <p style={{ color: '#8A8A8A', fontSize: '24px', marginBottom: '8px' }}>Purchase</p>
+                                <p style={{ fontSize: '72px', lineHeight: 1, fontWeight: 800 }}>RM{(parseFloat(purchaseAmount || '0') || 0).toFixed(0)}</p>
+                            </div>
+                            <div>
+                                <p style={{ color: '#8A8A8A', fontSize: '24px', marginBottom: '8px' }}>Runway Left</p>
+                                <p style={{ fontSize: '52px', lineHeight: 1, fontWeight: 760 }}>{simulation ? (simulation.newRunway < 0 ? 0 : simulation.newRunway) : 0} days</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', opacity: entitlements.isPremium ? 0 : 0.62 }}>
+                            <span style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '0.02em' }}>Roastly</span>
+                            <span style={{ width: '30px', height: '30px', borderRadius: '8px', border: '2px solid rgba(212,175,55,0.8)', display: 'inline-block' }} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {isShareModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsShareModalOpen(false)}>
+                    <div className="modal-content" style={{ maxWidth: '720px', width: 'calc(100% - 24px)' }} onClick={(e) => e.stopPropagation()}>
+                        {isGeneratingShare && <p style={{ color: '#A8A8A8', marginBottom: '14px' }}>Generating image…</p>}
+
+                        {sharePreviewUrl && (
+                            <img src={sharePreviewUrl} alt="Share preview" style={{ width: '100%', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.12)', marginBottom: '14px' }} />
+                        )}
+
+                        {shareStatusMessage && <p style={{ color: '#D4AF37', marginBottom: '10px', fontSize: '0.9rem' }}>{shareStatusMessage}</p>}
+
+                        <button className="btn btn-primary" style={{ width: '100%', marginBottom: '12px', minHeight: '52px', fontSize: '1.02rem', fontWeight: 800, borderRadius: '14px', background: 'linear-gradient(135deg, #D4AF37 0%, #E8C75A 100%)', color: '#111', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 10px 26px rgba(212,175,55,0.28)' }} onClick={handleNativeShare} disabled={!shareImageBlob || isGeneratingShare}>🔥 Share</button>
+
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: showManualShareOptions ? '10px' : 0 }}>
+                            <button className="btn btn-secondary" style={{ padding: '10px 14px', minHeight: '42px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', color: '#E8D7A2', border: '1px solid rgba(212,175,55,0.34)', background: 'rgba(212,175,55,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} onClick={handleDownloadShare} disabled={!shareImageBlob}>Download</button>
+                            <button className="btn btn-secondary" style={{ padding: '10px 14px', minHeight: '42px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', color: '#E8D7A2', border: '1px solid rgba(212,175,55,0.34)', background: 'rgba(212,175,55,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} onClick={handleCopyCaption}>Copy caption</button>
+                        </div>
+
+                        {showManualShareOptions && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('whatsapp')}>WhatsApp</button>
+                                <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('instagram')}>Instagram</button>
+                                <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('x')}>X</button>
+                                <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('tiktok')}>TikTok</button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
