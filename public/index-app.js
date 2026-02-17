@@ -703,7 +703,7 @@ function Dashboard() {
 
       {/* Header */}
       <div className="header">
-        <div>
+        <div className="header-copy">
           <h1 className="header-title">Command Center</h1>
           <p className="header-subtitle">Your financial overview at a glance</p>
         </div>
