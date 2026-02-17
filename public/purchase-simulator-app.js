@@ -421,6 +421,7 @@ function PurchaseSimulator() {
                     <a href="index.html" className="nav-link">📊 Dashboard</a>
                     <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
                     <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+        <a href="savings-goal.html" className="nav-link">🎯 Savings Goal</a>
                     <a href="projections.html" className="nav-link">🔮 Projections</a>
                     <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
                     <a href="insights.html" className="nav-link">🧠 Insights</a>
@@ -452,6 +453,7 @@ function PurchaseSimulator() {
                 <a href="index.html" className="nav-link">📊 Dashboard</a>
                 <a href="fixed-expenses.html" className="nav-link">⚓ Fixed Expenses</a>
                 <a href="variable-spending.html" className="nav-link">💸 Variable Spending</a>
+        <a href="savings-goal.html" className="nav-link">🎯 Savings Goal</a>
                 <a href="projections.html" className="nav-link">🔮 Projections</a>
                 <a href="purchase-simulator.html" className="nav-link active">🧪 Simulator</a>
                 <a href="insights.html" className="nav-link">🧠 Insights</a>
