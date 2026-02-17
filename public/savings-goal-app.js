@@ -83,6 +83,15 @@ function SavingsGoalPage() {
     ]);
   };
 
+
+  const deleteGoal = (goalId) => {
+    const goalToDelete = goals.find((goal) => goal.id === goalId);
+    if (!goalToDelete) return;
+    const confirmed = window.confirm(`Delete "${goalToDelete.name}"? This cannot be undone.`);
+    if (!confirmed) return;
+    persist(goals.filter((goal) => goal.id !== goalId));
+  };
+
   const updateGoalBalance = (goalId, type) => {
     const amountRaw = window.prompt(type === 'add' ? 'How much do you want to add? (RM)' : 'How much do you need to deduct? (RM)');
     if (amountRaw === null) return;
@@ -208,6 +217,7 @@ function SavingsGoalPage() {
                 <div className="btn-row" style={{ marginTop: '12px' }}>
                   <button type="button" className="btn" onClick={() => updateGoalBalance(goal.id, 'add')}>＋ Add Money</button>
                   <button type="button" className="btn ghost" onClick={() => updateGoalBalance(goal.id, 'deduct')}>－ Deduct</button>
+                  <button type="button" className="btn ghost" onClick={() => deleteGoal(goal.id)}>🗑 Delete Goal</button>
                 </div>
 
                 {(goal.transactions || []).length > 0 && (
