@@ -28,38 +28,42 @@
         return window.__roastlyHtml2CanvasPromise;
     }
 
+    function stripToPunchyLine(line) {
+        if (!line) return 'Reality check delivered';
+        const clean = String(line).split(/[.!?]/)[0].trim();
+        return clean || 'Reality check delivered';
+    }
+
     function generateCaption(payload) {
         const severity = payload?.severityLevel || 'medium';
         const amount = Number(payload?.amount || 0);
-        const amountText = amount > 0 ? `RM${amount.toFixed(0)}` : 'that';
-        const rootLine = payload?.bodyText || 'Roastly delivered the truth I needed.';
+        const runwayDays = Number(payload?.runwayDays);
+        const amountText = amount > 0 ? `RM${amount.toFixed(0)}` : 'This move';
+        const runwayText = Number.isFinite(runwayDays) ? `${Math.max(0, Math.floor(runwayDays))} days` : 'watch your runway';
+        const punchLine = stripToPunchyLine(payload?.bodyText);
 
         if (severity === 'light') {
             return [
-                `I almost spent ${amountText} today.`,
-                `Roastly gave me a clean reality check.`,
-                `${rootLine}`,
-                '',
+                `${amountText} move detected.`,
+                `Runway: ${runwayText}.`,
+                'Clean save by Roastly.',
                 'Try it → roastly.my'
             ].join('\n');
         }
 
         if (severity === 'brutal') {
             return [
-                `I was about to make a ${amountText} decision…`,
-                'Roastly said no.',
-                rootLine,
-                '',
-                'Saved myself from financial collapse today.',
+                `${amountText} move detected.`,
+                `Runway: ${runwayText}.`,
+                `${punchLine}.`,
                 'Try it → roastly.my'
             ].join('\n');
         }
 
         return [
-            `Almost made a ${amountText} move today.`,
-            `Roastly flagged it instantly.`,
-            rootLine,
-            '',
+            `${amountText} move detected.`,
+            `Runway: ${runwayText}.`,
+            "That's tight.",
             'Try it → roastly.my'
         ].join('\n');
     }

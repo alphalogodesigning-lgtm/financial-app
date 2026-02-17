@@ -1,4 +1,4 @@
-const { useState, useEffect, useMemo, useRef } = React;
+const { useState, useEffect, useRef } = React;
 
 const {
     loadBudgetData,
@@ -28,6 +28,8 @@ const {
             const [shareImageBlob, setShareImageBlob] = useState(null);
             const [shareCaption, setShareCaption] = useState('');
             const [shareStatusMessage, setShareStatusMessage] = useState('');
+            const [sharePreviewUrl, setSharePreviewUrl] = useState('');
+            const [showManualShareOptions, setShowManualShareOptions] = useState(false);
             const shareObjectUrlRef = useRef(null);
 
             const premiumBlurStyle = entitlements.isFree
@@ -104,13 +106,22 @@ const {
 
             const brutalSeverity = roastLevel === 'gentle' ? 'light' : roastLevel === 'honest' ? 'medium' : 'brutal';
 
-            const sharePreviewUrl = useMemo(() => {
-                if (!shareImageBlob) return '';
+            useEffect(() => {
+                if (!shareImageBlob) {
+                    if (shareObjectUrlRef.current) {
+                        URL.revokeObjectURL(shareObjectUrlRef.current);
+                        shareObjectUrlRef.current = null;
+                    }
+                    setSharePreviewUrl('');
+                    return;
+                }
+
                 if (shareObjectUrlRef.current) {
                     URL.revokeObjectURL(shareObjectUrlRef.current);
                 }
-                shareObjectUrlRef.current = URL.createObjectURL(shareImageBlob);
-                return shareObjectUrlRef.current;
+                const nextUrl = URL.createObjectURL(shareImageBlob);
+                shareObjectUrlRef.current = nextUrl;
+                setSharePreviewUrl(nextUrl);
             }, [shareImageBlob]);
 
             useEffect(() => () => {
@@ -121,13 +132,15 @@ const {
 
             const handleGenerateShareCard = async () => {
                 setShareStatusMessage('');
+                setShowManualShareOptions(false);
                 setIsShareModalOpen(true);
                 setIsGeneratingShare(true);
                 try {
                     const caption = window.RoastlyShareUtils.generateCaption({
                         severityLevel: brutalSeverity,
                         amount: regretMoney,
-                        bodyText: brutalTruth
+                        bodyText: brutalTruth,
+                        runwayDays: Math.max(0, Math.floor(healthScore / 10))
                     });
                     setShareCaption(caption);
                     const blob = await window.RoastlyShareUtils.generateShareImage('insights-share-card-capture');
@@ -146,7 +159,8 @@ const {
                 const supportsFiles = hasNativeShare && (!navigator.canShare || navigator.canShare({ files: [file] }));
 
                 if (!supportsFiles) {
-                    setShareStatusMessage('Direct share is not supported on this device. Use download + platform links below.');
+                    setShowManualShareOptions(true);
+                    setShareStatusMessage('Direct sharing is unavailable on this device.');
                     return;
                 }
 
@@ -158,7 +172,7 @@ const {
                     });
                 } catch (error) {
                     if (error?.name !== 'AbortError') {
-                        setShareStatusMessage('Share failed. Try download instead.');
+                        setShareStatusMessage('Share failed. Use download instead.');
                     }
                 }
             };
@@ -174,9 +188,9 @@ const {
             const handleCopyCaption = async () => {
                 try {
                     await navigator.clipboard.writeText(shareCaption);
-                    setShareStatusMessage('Caption copied. Paste it with your post.');
+                    setShareStatusMessage('Caption copied.');
                 } catch (error) {
-                    setShareStatusMessage('Copy failed. Select and copy manually.');
+                    setShareStatusMessage('Copy failed.');
                 }
             };
 
@@ -191,11 +205,11 @@ const {
                     return;
                 }
                 if (platform === 'instagram') {
-                    setShareStatusMessage('Instagram Stories requires manual upload. Download image and upload via Instagram app.');
+                    setShareStatusMessage('Instagram Stories: upload from camera roll.');
                     return;
                 }
                 if (platform === 'tiktok') {
-                    setShareStatusMessage('TikTok requires manual upload. Download image and upload from your camera roll.');
+                    setShareStatusMessage('TikTok: upload from camera roll.');
                 }
             };
 
@@ -327,7 +341,7 @@ const {
                                 e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.42)';
                             }}
                         >
-                            ⤴ Share this roast
+                            🔥 Share
                         </button>
                     </div>
 
@@ -504,7 +518,7 @@ const {
                                 height: '1920px',
                                 background: '#0A0A0A',
                                 color: '#F2F2F2',
-                                padding: '110px 88px',
+                                padding: '150px 92px 120px',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'space-between',
@@ -516,25 +530,25 @@ const {
                                 <p style={{ color: '#D4AF37', fontSize: '30px', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '36px' }}>
                                     Therapy Session
                                 </p>
-                                <h2 style={{ fontSize: '98px', lineHeight: 1.05, letterSpacing: '-0.04em', marginBottom: '42px' }}>
+                                <h2 style={{ fontSize: '122px', lineHeight: 0.98, letterSpacing: '-0.05em', marginBottom: '56px' }}>
                                     {gradeInfo.grade} / 100
                                 </h2>
-                                <p style={{ fontSize: '58px', lineHeight: 1.24, fontWeight: 600, color: '#FFFFFF' }}>
+                                <p style={{ fontSize: '54px', lineHeight: 1.22, fontWeight: 600, color: '#FFFFFF', maxWidth: '840px' }}>
                                     {brutalTruth}
                                 </p>
                             </div>
                             <div>
-                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.18)', paddingTop: '36px', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '18px', marginBottom: '36px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '26px', marginBottom: '56px' }}>
                                     <div>
                                         <p style={{ color: '#8A8A8A', fontSize: '24px', marginBottom: '8px' }}>Savings Rate</p>
-                                        <p style={{ fontSize: '44px', fontWeight: 700 }}>{savingsRate.toFixed(1)}%</p>
+                                        <p style={{ fontSize: '58px', lineHeight: 1, fontWeight: 780 }}>{savingsRate.toFixed(1)}%</p>
                                     </div>
                                     <div>
                                         <p style={{ color: '#8A8A8A', fontSize: '24px', marginBottom: '8px' }}>Regret Money</p>
-                                        <p style={{ fontSize: '44px', fontWeight: 700 }}>RM{regretMoney.toFixed(0)}</p>
+                                        <p style={{ fontSize: '72px', lineHeight: 1, fontWeight: 800 }}>RM{regretMoney.toFixed(0)}</p>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: entitlements.isPremium ? 0 : 0.62 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', opacity: entitlements.isPremium ? 0 : 0.62 }}>
                                     <span style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '0.02em' }}>Roastly</span>
                                     <span style={{ width: '30px', height: '30px', borderRadius: '8px', border: '2px solid rgba(212,175,55,0.8)', display: 'inline-block' }} />
                                 </div>
@@ -545,34 +559,33 @@ const {
                     {isShareModalOpen && (
                         <div className="modal-overlay" onClick={() => setIsShareModalOpen(false)}>
                             <div className="modal-content" style={{ maxWidth: '720px', width: 'calc(100% - 24px)' }} onClick={(e) => e.stopPropagation()}>
-                                <h2 className="modal-title" style={{ marginBottom: '8px' }}>Share this roast</h2>
-                                <p className="modal-subtitle" style={{ marginBottom: '18px' }}>Fast export, clean format, ready for Stories and status posts.</p>
-
                                 {isGeneratingShare && <p style={{ color: '#A8A8A8', marginBottom: '14px' }}>Generating image…</p>}
 
                                 {sharePreviewUrl && (
-                                    <img src={sharePreviewUrl} alt="Share preview" style={{ width: '100%', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.12)', marginBottom: '16px' }} />
+                                    <img src={sharePreviewUrl} alt="Share preview" style={{ width: '100%', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.12)', marginBottom: '14px' }} />
                                 )}
-
-                                <textarea readOnly value={shareCaption} style={{ width: '100%', minHeight: '112px', resize: 'vertical', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)', background: '#111', color: '#EEE', padding: '12px 14px', marginBottom: '12px' }} />
 
                                 {shareStatusMessage && <p style={{ color: '#D4AF37', marginBottom: '10px', fontSize: '0.9rem' }}>{shareStatusMessage}</p>}
 
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
-                                    <button className="btn btn-primary" onClick={handleNativeShare} disabled={!shareImageBlob || isGeneratingShare}>Share now</button>
-                                    <button className="btn btn-secondary" onClick={handleDownloadShare} disabled={!shareImageBlob}>Download image</button>
-                                    <button className="btn btn-secondary" onClick={handleCopyCaption}>Copy caption</button>
+                                <button className="btn btn-primary" style={{ width: '100%', marginBottom: '10px' }} onClick={handleNativeShare} disabled={!shareImageBlob || isGeneratingShare}>🔥 Share</button>
+
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: showManualShareOptions ? '10px' : 0 }}>
+                                    <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.84rem' }} onClick={handleDownloadShare} disabled={!shareImageBlob}>Download</button>
+                                    <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.84rem' }} onClick={handleCopyCaption}>Copy caption</button>
                                 </div>
 
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                                    <button className="btn btn-secondary" onClick={() => openShareLink('whatsapp')}>WhatsApp</button>
-                                    <button className="btn btn-secondary" onClick={() => openShareLink('instagram')}>Instagram Stories</button>
-                                    <button className="btn btn-secondary" onClick={() => openShareLink('x')}>X (Twitter)</button>
-                                    <button className="btn btn-secondary" onClick={() => openShareLink('tiktok')}>TikTok</button>
-                                </div>
+                                {showManualShareOptions && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('whatsapp')}>WhatsApp</button>
+                                        <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('instagram')}>Instagram</button>
+                                        <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('x')}>X</button>
+                                        <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('tiktok')}>TikTok</button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
+
 
                     {/* Settings Modal */}
                     {showSettings && (

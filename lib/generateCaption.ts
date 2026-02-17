@@ -3,38 +3,42 @@ export type SeverityLevel = 'light' | 'medium' | 'brutal';
 type CaptionInput = {
   severityLevel: SeverityLevel;
   amount?: number;
+  runwayDays?: number;
   bodyText?: string;
 };
 
-export function generateCaption({ severityLevel, amount = 0, bodyText = 'Roastly delivered the truth I needed.' }: CaptionInput): string {
-  const amountText = amount > 0 ? `RM${amount.toFixed(0)}` : 'that';
+const stripToPunchyLine = (line: string): string => {
+  if (!line) return 'Reality check delivered.';
+  return line.split(/[.!?]/)[0].trim() || 'Reality check delivered.';
+};
+
+export function generateCaption({ severityLevel, amount = 0, runwayDays, bodyText = 'Roastly delivered the truth.' }: CaptionInput): string {
+  const amountText = amount > 0 ? `RM${amount.toFixed(0)}` : 'this move';
+  const runwayText = Number.isFinite(runwayDays) ? `${Math.max(0, Math.floor(runwayDays))} days` : 'watch your runway';
+  const punchLine = stripToPunchyLine(bodyText);
 
   if (severityLevel === 'light') {
     return [
-      `I almost spent ${amountText} today.`,
-      'Roastly gave me a clean reality check.',
-      bodyText,
-      '',
+      `${amountText} move detected.`,
+      `Runway: ${runwayText}.`,
+      'Clean save by Roastly.',
       'Try it → roastly.my'
     ].join('\n');
   }
 
   if (severityLevel === 'brutal') {
     return [
-      `I was about to make a ${amountText} decision…`,
-      'Roastly said no.',
-      bodyText,
-      '',
-      'Saved myself from financial collapse today.',
+      `${amountText} move detected.`,
+      `Runway: ${runwayText}.`,
+      `${punchLine}.`,
       'Try it → roastly.my'
     ].join('\n');
   }
 
   return [
-    `Almost made a ${amountText} move today.`,
-    'Roastly flagged it instantly.',
-    bodyText,
-    '',
+    `${amountText} move detected.`,
+    `Runway: ${runwayText}.`,
+    "That's tight.",
     'Try it → roastly.my'
   ].join('\n');
 }
