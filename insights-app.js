@@ -116,6 +116,7 @@ const {
                 savingsAmount,
                 netWorth,
                 savingsRate,
+                lifetimeIncomeAdded,
                 regretMoney,
                 regretRatio,
                 avgWeekendSpend,
@@ -345,26 +346,6 @@ const {
                             </div>
                         </div>
 
-                        <div className="insight-card">
-                            <div className="insight-icon">💀</div>
-                            <div className="insight-title">Net Worth</div>
-                            <div className="insight-description">
-                                Your net worth this month is <strong style={{ color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B' }}>
-                                RM{netWorth.toFixed(2)}</strong>.
-                                That's your income minus everything you've spent.
-                            </div>
-                            <div className="insight-stat" style={{ color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B' }}>
-                                RM{netWorth.toFixed(2)}
-                            </div>
-                            <div className="insight-recommendation" style={{
-                                borderColor: netWorth >= 0 ? '#66BB6A' : '#FF6B6B',
-                                color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B'
-                            }}>
-                                {netWorth >= 0
-                                    ? '💡 Positive net worth. Keep stacking assets and protect this momentum.'
-                                    : '💡 Negative net worth means liabilities are winning. Cut spending and close the gap.'}
-                            </div>
-                        </div>
                     </div>
 
                     {/* Achievements */}
@@ -408,6 +389,10 @@ const {
                             <div className="fun-stat">
                                 <div className="fun-stat-value gold-text">RM{biggestPurchase.toFixed(2)}</div>
                                 <div className="fun-stat-label">Biggest Single Purchase</div>
+                            </div>
+                            <div className="fun-stat">
+                                <div className="fun-stat-value" style={{ color: '#D4AF37' }}>RM{lifetimeIncomeAdded.toFixed(2)}</div>
+                                <div className="fun-stat-label">Net Worth</div>
                             </div>
                         </div>
                     </div>
