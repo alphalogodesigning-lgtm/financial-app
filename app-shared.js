@@ -587,6 +587,7 @@
     const totalVariableSpent = data.variableExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
     const totalSpent = totalFixedExpenses + totalVariableSpent;
     const savingsAmount = income - totalSpent;
+    const netWorth = savingsAmount;
     const savingsRate = income > 0 ? (savingsAmount / income) * 100 : 0;
 
     const regretExpenses = data.variableExpenses.filter((exp) => exp.is_regret || exp.regret);
@@ -643,6 +644,7 @@
       totalVariableSpent,
       totalSpent,
       savingsAmount,
+      netWorth,
       savingsRate,
       regretMoney,
       regretRatio,

@@ -114,6 +114,7 @@ const {
                 totalVariableSpent,
                 totalSpent,
                 savingsAmount,
+                netWorth,
                 savingsRate,
                 regretMoney,
                 regretRatio,
@@ -316,6 +317,27 @@ const {
                                 {savingsRate >= 20 
                                     ? '💡 Excellent! Keep this up and you\'ll be financially secure.' 
                                     : '💡 Try to increase your savings rate. Future you will be grateful.'}
+                            </div>
+                        </div>
+
+                        <div className="insight-card">
+                            <div className="insight-icon">💀</div>
+                            <div className="insight-title">Net Worth</div>
+                            <div className="insight-description">
+                                Your net worth this month is <strong style={{ color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B' }}>
+                                RM{netWorth.toFixed(2)}</strong>.
+                                That's your income minus everything you've spent.
+                            </div>
+                            <div className="insight-stat" style={{ color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B' }}>
+                                RM{netWorth.toFixed(2)}
+                            </div>
+                            <div className="insight-recommendation" style={{
+                                borderColor: netWorth >= 0 ? '#66BB6A' : '#FF6B6B',
+                                color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B'
+                            }}>
+                                {netWorth >= 0
+                                    ? '💡 Positive net worth. Keep stacking assets and protect this momentum.'
+                                    : '💡 Negative net worth means liabilities are winning. Cut spending and close the gap.'}
                             </div>
                         </div>
                     </div>
