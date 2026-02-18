@@ -114,6 +114,7 @@ const {
                 totalVariableSpent,
                 totalSpent,
                 savingsAmount,
+                netWorth,
                 savingsRate,
                 regretMoney,
                 regretRatio,
@@ -164,6 +165,31 @@ const {
                             <span>{ROAST_LEVELS[roastLevel].name}</span>
                         </button>
                     </nav>
+
+                    <div style={{
+                        marginBottom: '24px',
+                        padding: '18px 20px',
+                        borderRadius: '14px',
+                        border: `1px solid ${netWorth >= 0 ? 'rgba(102, 187, 106, 0.45)' : 'rgba(255, 107, 107, 0.45)'}`,
+                        background: netWorth >= 0 ? 'rgba(102, 187, 106, 0.08)' : 'rgba(255, 107, 107, 0.08)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                    }}>
+                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.05rem' }}>💀 Net Worth</div>
+                        <div style={{
+                            fontWeight: 900,
+                            fontSize: '1.5rem',
+                            color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B'
+                        }}>
+                            RM{netWorth.toFixed(2)}
+                        </div>
+                        <div style={{ width: '100%', color: '#bbb', fontSize: '0.92rem' }}>
+                            Income - total spent. {netWorth >= 0 ? 'You're in the green.' : 'You're in the red.'}
+                        </div>
+                    </div>
 
                     <div style={{ position: 'relative' }}>
                     <div style={premiumBlurStyle}>
@@ -316,6 +342,27 @@ const {
                                 {savingsRate >= 20 
                                     ? '💡 Excellent! Keep this up and you\'ll be financially secure.' 
                                     : '💡 Try to increase your savings rate. Future you will be grateful.'}
+                            </div>
+                        </div>
+
+                        <div className="insight-card">
+                            <div className="insight-icon">💀</div>
+                            <div className="insight-title">Net Worth</div>
+                            <div className="insight-description">
+                                Your net worth this month is <strong style={{ color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B' }}>
+                                RM{netWorth.toFixed(2)}</strong>.
+                                That's your income minus everything you've spent.
+                            </div>
+                            <div className="insight-stat" style={{ color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B' }}>
+                                RM{netWorth.toFixed(2)}
+                            </div>
+                            <div className="insight-recommendation" style={{
+                                borderColor: netWorth >= 0 ? '#66BB6A' : '#FF6B6B',
+                                color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B'
+                            }}>
+                                {netWorth >= 0
+                                    ? '💡 Positive net worth. Keep stacking assets and protect this momentum.'
+                                    : '💡 Negative net worth means liabilities are winning. Cut spending and close the gap.'}
                             </div>
                         </div>
                     </div>
