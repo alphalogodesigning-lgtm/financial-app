@@ -588,6 +588,7 @@
     const totalSpent = totalFixedExpenses + totalVariableSpent;
     const savingsAmount = income - totalSpent;
     const savingsRate = income > 0 ? (savingsAmount / income) * 100 : 0;
+    const lifetimeIncomeAdded = (data.incomeEntries || []).reduce((sum, entry) => sum + (entry.amount || 0), 0);
 
     const regretExpenses = data.variableExpenses.filter((exp) => exp.is_regret || exp.regret);
     const regretMoney = regretExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
@@ -644,6 +645,7 @@
       totalSpent,
       savingsAmount,
       savingsRate,
+      lifetimeIncomeAdded,
       regretMoney,
       regretRatio,
       avgWeekendSpend,

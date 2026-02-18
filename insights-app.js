@@ -115,6 +115,7 @@ const {
                 totalSpent,
                 savingsAmount,
                 savingsRate,
+                lifetimeIncomeAdded,
                 regretMoney,
                 regretRatio,
                 avgWeekendSpend,
@@ -318,6 +319,7 @@ const {
                                     : '💡 Try to increase your savings rate. Future you will be grateful.'}
                             </div>
                         </div>
+
                     </div>
 
                     {/* Achievements */}
@@ -361,6 +363,10 @@ const {
                             <div className="fun-stat">
                                 <div className="fun-stat-value gold-text">RM{biggestPurchase.toFixed(2)}</div>
                                 <div className="fun-stat-label">Biggest Single Purchase</div>
+                            </div>
+                            <div className="fun-stat">
+                                <div className="fun-stat-value" style={{ color: '#D4AF37' }}>RM{lifetimeIncomeAdded.toFixed(2)}</div>
+                                <div className="fun-stat-label">Net Worth</div>
                             </div>
                         </div>
                     </div>
