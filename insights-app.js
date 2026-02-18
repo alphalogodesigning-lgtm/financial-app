@@ -114,6 +114,7 @@ const {
                 totalVariableSpent,
                 totalSpent,
                 savingsAmount,
+                netWorth,
                 savingsRate,
                 lifetimeIncomeAdded,
                 regretMoney,
@@ -165,6 +166,31 @@ const {
                             <span>{ROAST_LEVELS[roastLevel].name}</span>
                         </button>
                     </nav>
+
+                    <div style={{
+                        marginBottom: '24px',
+                        padding: '18px 20px',
+                        borderRadius: '14px',
+                        border: `1px solid ${netWorth >= 0 ? 'rgba(102, 187, 106, 0.45)' : 'rgba(255, 107, 107, 0.45)'}`,
+                        background: netWorth >= 0 ? 'rgba(102, 187, 106, 0.08)' : 'rgba(255, 107, 107, 0.08)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                    }}>
+                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.05rem' }}>💀 Net Worth</div>
+                        <div style={{
+                            fontWeight: 900,
+                            fontSize: '1.5rem',
+                            color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B'
+                        }}>
+                            RM{netWorth.toFixed(2)}
+                        </div>
+                        <div style={{ width: '100%', color: '#bbb', fontSize: '0.92rem' }}>
+                            Income - total spent. {netWorth >= 0 ? 'You're in the green.' : 'You're in the red.'}
+                        </div>
+                    </div>
 
                     <div style={{ position: 'relative' }}>
                     <div style={premiumBlurStyle}>

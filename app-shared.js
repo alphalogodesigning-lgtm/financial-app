@@ -587,6 +587,7 @@
     const totalVariableSpent = data.variableExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
     const totalSpent = totalFixedExpenses + totalVariableSpent;
     const savingsAmount = income - totalSpent;
+    const netWorth = savingsAmount;
     const savingsRate = income > 0 ? (savingsAmount / income) * 100 : 0;
     const lifetimeIncomeAdded = (data.incomeEntries || []).reduce((sum, entry) => sum + (entry.amount || 0), 0);
 
@@ -644,6 +645,7 @@
       totalVariableSpent,
       totalSpent,
       savingsAmount,
+      netWorth,
       savingsRate,
       lifetimeIncomeAdded,
       regretMoney,
