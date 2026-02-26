@@ -47,6 +47,13 @@ function ProgressRing({ progress, size = 120, strokeWidth = 8, color = '#D4AF37'
 
 function BarChart({ data }) {
   const maxValue = Math.max(1, ...data.map((item) => item.amount));
+  const formatBurnAmount = (amount) => {
+    const safeAmount = Number.isFinite(amount) ? amount : 0;
+    return safeAmount.toLocaleString('en-MY', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    });
+  };
 
   return (
     <div className="chart-container">
@@ -60,7 +67,7 @@ function BarChart({ data }) {
             }}
           >
             {item.amount > 0 && (
-              <span className="bar-value">RM{item.amount}</span>
+              <span className="bar-value">RM{formatBurnAmount(item.amount)}</span>
             )}
           </div>
           <span className="bar-label">{item.day}</span>
