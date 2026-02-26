@@ -1,6 +1,6 @@
 const { useState, useEffect } = React;
 
-const { supabaseClient, loadBudgetData } = window.AppShared;
+const { supabaseClient, loadBudgetData, getAuthenticatedUser, clearAuthCache } = window.AppShared;
 
         function AuthPage() {
             const [mode, setMode] = useState('login');
@@ -15,10 +15,8 @@ const { supabaseClient, loadBudgetData } = window.AppShared;
                 if (!supabaseClient) return;
 
                 let active = true;
-                supabaseClient.auth.getUser().then(async ({ data }) => {
+                getAuthenticatedUser().then(async (user) => {
                     if (!active) return;
-
-                    const user = data.user || null;
                     setCurrentUser(user);
 
                     if (user) {
@@ -79,7 +77,8 @@ const { supabaseClient, loadBudgetData } = window.AppShared;
                 if (mode === 'login') {
                     setStatusMessage('Welcome back! Taking you to your dashboard...', 'success');
                     setTimeout(async () => {
-                        await loadBudgetData({ redirect: false, localFallback: false });
+                        const authContext = { user: data.user || null, session: data.session || null };
+                        await loadBudgetData({ redirect: false, localFallback: false, authContext });
                         window.location.href = 'index.html';
                     }, 650);
                 } else {
@@ -98,6 +97,7 @@ const { supabaseClient, loadBudgetData } = window.AppShared;
 
             const handleLogout = async () => {
                 if (!supabaseClient) return;
+                clearAuthCache();
                 await supabaseClient.auth.signOut();
                 setCurrentUser(null);
                 setStatusMessage('You’re signed out for now.', 'success');

@@ -4,6 +4,8 @@ const {
     loadBudgetData,
     readBudgetDataFromLocal,
     saveBudgetData,
+    getAuthenticatedUser,
+    resolveAuthSession,
     getInitialData,
     ROAST_LEVELS,
     calculateInsightsMetrics,
@@ -67,19 +69,14 @@ const {
 
             useEffect(() => {
                 let isMounted = true;
-                Promise.all([
-                    loadBudgetData({
-                        onRemoteData: (saved) => {
-                            if (!isMounted || !saved) return;
-                            setData(saved);
-                            const savedRoastLevel = saved.roast_level || 'honest';
-                            setRoastLevel(savedRoastLevel);
-                            setTempRoastLevel(savedRoastLevel);
-                            setIsRefreshing(false);
-                        }
-                    }),
-                    getCurrentUserEntitlements()
-                ]).then(([saved, access]) => {
+                (async () => {
+                    const user = await getAuthenticatedUser();
+                    const session = await resolveAuthSession({ authContext: { user } });
+                    const authContext = { user, session };
+                    const [saved, access] = await Promise.all([
+                        loadBudgetData({ authContext }),
+                        getCurrentUserEntitlements({ authContext })
+                    ]);
                     if (!isMounted) return;
                     if (saved) {
                         setData(saved);
@@ -92,7 +89,7 @@ const {
                     }
                     setIsRefreshing(false);
                     setIsEntitlementsReady(true);
-                });
+                })();
                 return () => {
                     isMounted = false;
                 };

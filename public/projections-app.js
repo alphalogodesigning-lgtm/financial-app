@@ -2,7 +2,8 @@ const { useState, useEffect } = React;
 
 const {
     loadBudgetData,
-    readBudgetDataFromLocal,
+    getAuthenticatedUser,
+    resolveAuthSession,
     getCurrentUserEntitlements,
     getInitialData,
     START_MESSAGE,
@@ -70,22 +71,20 @@ function Projections() {
 
     useEffect(() => {
         let isMounted = true;
-        Promise.all([
-            loadBudgetData({
-                onRemoteData: (saved) => {
-                    if (!isMounted || !saved) return;
-                    setData(saved);
-                    setIsRefreshing(false);
-                }
-            }),
-            getCurrentUserEntitlements()
-        ]).then(([saved, access]) => {
+        (async () => {
+            const user = await getAuthenticatedUser();
+            const session = await resolveAuthSession({ authContext: { user } });
+            const authContext = { user, session };
+            const [saved, access] = await Promise.all([
+                loadBudgetData({ authContext }),
+                getCurrentUserEntitlements({ authContext })
+            ]);
             if (!isMounted) return;
             if (saved) setData(saved);
             if (access) setEntitlements(access);
             setIsRefreshing(false);
             setIsEntitlementsReady(true);
-        });
+        })();
         return () => { isMounted = false; };
     }, []);
 
