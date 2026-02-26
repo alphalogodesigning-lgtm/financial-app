@@ -1,6 +1,6 @@
 const { useState, useEffect } = React;
 
-const { supabaseClient } = window.AppShared;
+const { supabaseClient, loadBudgetData } = window.AppShared;
 
         function AuthPage() {
             const [mode, setMode] = useState('login');
@@ -78,7 +78,8 @@ const { supabaseClient } = window.AppShared;
 
                 if (mode === 'login') {
                     setStatusMessage('Welcome back! Taking you to your dashboard...', 'success');
-                    setTimeout(() => {
+                    setTimeout(async () => {
+                        await loadBudgetData({ redirect: false, localFallback: false });
                         window.location.href = 'index.html';
                     }, 650);
                 } else {
