@@ -3,9 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "npm run build:legacy-pages && next dev",
+    "build": "npm run build:legacy-pages && next build",
+    "start": "next start",
+    "build:legacy-pages": "node scripts/build-legacy-pages.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
