@@ -1,5 +1,5 @@
-import LegacyFeatureFrame from '../../../components/LegacyFeatureFrame';
+import { redirect } from 'next/navigation';
 
 export default function InsightsPage() {
-  return <LegacyFeatureFrame src="/insights.html?legacy=1" title="Insights" />;
+  redirect('/insights.html');
 }
