@@ -1,5 +1,5 @@
-import LegacyFeatureFrame from '../../../components/LegacyFeatureFrame';
+import { redirect } from 'next/navigation';
 
 export default function ProjectionsPage() {
-  return <LegacyFeatureFrame src="/projections.html?legacy=1" title="Projections" />;
+  redirect('/projections.html');
 }

@@ -1,5 +1,5 @@
-import LegacyFeatureFrame from '../../../components/LegacyFeatureFrame';
+import { redirect } from 'next/navigation';
 
 export default function HelpCenterPage() {
-  return <LegacyFeatureFrame src="/help-center.html?legacy=1" title="Help Center" />;
+  redirect('/help-center.html');
 }
