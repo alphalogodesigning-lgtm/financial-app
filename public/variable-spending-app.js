@@ -59,9 +59,35 @@ const {
                 ? expenses 
                 : expenses.filter(e => e.category === filterCategory);
 
+            const getExpenseDateInfo = (expense) => {
+                if (expense?.date) {
+                    return {
+                        date: expense.date,
+                        time: expense.time || '00:00'
+                    };
+                }
+
+                if (expense?.created_at) {
+                    const dateInfo = dateTime.formatUiDateTimeFromUTC(expense.created_at);
+                    if (dateInfo?.date) {
+                        return {
+                            date: dateInfo.date,
+                            time: dateInfo.time || '00:00'
+                        };
+                    }
+                }
+
+                return {
+                    date: '',
+                    time: expense?.time || '00:00'
+                };
+            };
+
             // Sort by date (newest first)
             const sortedExpenses = [...filteredExpenses].sort((a, b) => {
-                return dateTime.compareDateTimeStringsDesc(a.date, a.time, b.date, b.time);
+                const aInfo = getExpenseDateInfo(a);
+                const bInfo = getExpenseDateInfo(b);
+                return dateTime.compareDateTimeStringsDesc(aInfo.date, aInfo.time, bInfo.date, bInfo.time);
             });
 
             // Heatmap data (last 30 days)
@@ -109,14 +135,6 @@ const {
             const lastWeekTotal = lastWeekExpenses.reduce((sum, e) => sum + e.amount, 0);
             const weekDiff = thisWeekTotal - lastWeekTotal;
             const weekDiffPercent = lastWeekTotal > 0 ? ((weekDiff / lastWeekTotal) * 100) : 0;
-
-            const getExpenseDateLabel = (expense) => {
-                if (expense.created_at) {
-                    const dateInfo = dateTime.formatUiDateTimeFromUTC(expense.created_at);
-                    if (dateInfo?.date) return dateInfo.date;
-                }
-                return expense.date;
-            };
 
             const handleAddExpense = () => {
                 if (!newExpense.name || !newExpense.amount) return;
@@ -317,7 +335,7 @@ const {
                                                     <div className="expense-amount">RM{expense.amount.toFixed(2)}</div>
                                                 </div>
                                                 <div className="expense-meta">
-                                                    <span>📅 {getExpenseDateLabel(expense)}</span>
+                                                    <span>📅 {getExpenseDateInfo(expense).date}</span>
                                                     <span>🕐 {expense.time}</span>
                                                     <span>📂 {expense.category}</span>
                                                     {expense.merchant && <span>🏪 {expense.merchant}</span>}
@@ -417,7 +435,7 @@ const {
                                                 <div className="expense-amount">RM{expense.amount.toFixed(2)}</div>
                                             </div>
                                             <div className="expense-meta">
-                                                <span>📅 {getExpenseDateLabel(expense)}</span>
+                                                <span>📅 {getExpenseDateInfo(expense).date}</span>
                                                 <span>🏪 {expense.merchant}</span>
                                             </div>
                                             {expense.notes && (
