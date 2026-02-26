@@ -188,7 +188,7 @@ const {
                             RM{netWorth.toFixed(2)}
                         </div>
                         <div style={{ width: '100%', color: '#bbb', fontSize: '0.92rem' }}>
-                            Income - total spent. {netWorth >= 0 ? 'You're in the green.' : 'You're in the red.'}
+                            Income - total spent. {netWorth >= 0 ? "You're in the green." : "You're in the red."}
                         </div>
                     </div>
 
