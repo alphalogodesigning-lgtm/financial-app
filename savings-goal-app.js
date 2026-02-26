@@ -1,6 +1,6 @@
 const { useEffect, useMemo, useState } = React;
 
-const { loadBudgetData, saveBudgetData, getInitialData, dateTime } = window.AppShared;
+const { loadBudgetData, readBudgetDataFromLocal, saveBudgetData, getInitialData, dateTime } = window.AppShared;
 
 const EXAMPLE_GOAL = { name: 'Dream Phone', targetAmount: 5999 };
 const DOPAMINE_LINES = [
@@ -33,14 +33,25 @@ const getDopamineLine = (goal, progress) => {
 };
 
 function SavingsGoalPage() {
-  const [data, setData] = useState(getInitialData('savings-goal'));
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [data, setData] = useState(() => ({ ...getInitialData('savings-goal'), ...(readBudgetDataFromLocal({ localFallback: true }) || {}) }));
+  const [isRefreshing, setIsRefreshing] = useState(true);
   const [goalName, setGoalName] = useState('');
   const [goalTarget, setGoalTarget] = useState('');
 
   useEffect(() => {
     let active = true;
-    loadBudgetData().then((saved) => {
+    loadBudgetData({
+      onRemoteData: (saved) => {
+        if (!active || !saved) return;
+        setData((prev) => ({
+          ...prev,
+          ...saved,
+          savingsGoals: saved.savingsGoals || [],
+          linkedSimulatorGoalId: saved.linkedSimulatorGoalId || null
+        }));
+        setIsRefreshing(false);
+      }
+    }).then((saved) => {
       if (!active) return;
       if (saved) {
         setData((prev) => ({
@@ -50,7 +61,7 @@ function SavingsGoalPage() {
           linkedSimulatorGoalId: saved.linkedSimulatorGoalId || null
         }));
       }
-      setIsHydrated(true);
+      setIsRefreshing(false);
     });
     return () => { active = false; };
   }, []);
@@ -74,7 +85,7 @@ function SavingsGoalPage() {
       linkedSimulatorGoalId: linkedStillValid ? nextLinkedSimulatorGoalId : null
     };
     setData(next);
-    saveBudgetData(next);
+    saveBudgetData(next, { debounce: true });
   };
 
   const createGoal = (event) => {
@@ -170,14 +181,6 @@ function SavingsGoalPage() {
     persist(nextGoals);
   };
 
-  if (!isHydrated) {
-    return (
-      <div className="container">
-        <div className="empty-state">Loading savings goals...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="container">
       <nav className="main-nav">
@@ -192,6 +195,7 @@ function SavingsGoalPage() {
 
       <header className="page-header">
         <h1>Savings Goals</h1>
+        {isRefreshing ? <p className="helper">Refreshing latest data…</p> : null}
         <p>Create clear targets, add or deduct funds anytime, and track exactly how close you are to each goal.</p>
       </header>
 

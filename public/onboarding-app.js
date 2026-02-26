@@ -5,6 +5,8 @@ const {
   getAuthenticatedUser,
   resolveAuthSession,
   loadBudgetData,
+  readBudgetDataFromLocal,
+  refreshBudgetDataFromSupabase,
   saveBudgetData,
   ROAST_LEVELS,
   CLEAN_STATE
@@ -17,12 +19,26 @@ function OnboardingPage() {
   const [income, setIncome] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const roastOptions = useMemo(() => Object.values(ROAST_LEVELS), []);
 
   useEffect(() => {
     let active = true;
+
+    const savedLocal = readBudgetDataFromLocal({ redirect: false, localFallback: true });
+    if (savedLocal?.onboarding_complete === true) {
+      window.location.replace('index.html');
+      return () => {
+        active = false;
+      };
+    }
+    setName(savedLocal?.user_name || '');
+    if (savedLocal?.roast_level) {
+      setRoastLevel(savedLocal.roast_level);
+    }
+    if (savedLocal?.income > 0) {
+      setIncome(String(savedLocal.income));
+    }
 
     const bootstrap = async () => {
       try {
@@ -51,8 +67,6 @@ function OnboardingPage() {
         }
       } catch (err) {
         window.location.replace('auth.html');
-      } finally {
-        if (active) setIsLoading(false);
       }
     };
 
@@ -212,14 +226,6 @@ function OnboardingPage() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <main className="card">
-        <span className="chip">Budget Tracker Setup</span>
-        <p className="subtitle">Loading your setup wizard...</p>
-      </main>
-    );
-  }
 
   return (
     <main className="card">

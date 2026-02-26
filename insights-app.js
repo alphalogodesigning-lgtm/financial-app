@@ -2,6 +2,7 @@ const { useState, useEffect } = React;
 
 const {
     loadBudgetData,
+    readBudgetDataFromLocal,
     saveBudgetData,
     getAuthenticatedUser,
     resolveAuthSession,
@@ -18,8 +19,8 @@ const {
 } = window.AppShared;
 
         function App() {
-            const [data, setData] = useState(getInitialData('insights'));
-            const [isHydrated, setIsHydrated] = useState(false);
+            const [data, setData] = useState(() => ({ ...getInitialData('insights'), ...(readBudgetDataFromLocal({ localFallback: true }) || {}) }));
+            const [isRefreshing, setIsRefreshing] = useState(true);
             const [showSettings, setShowSettings] = useState(false);
             const [roastLevel, setRoastLevel] = useState('honest');
             const [tempRoastLevel, setTempRoastLevel] = useState('honest');
@@ -86,7 +87,7 @@ const {
                     if (access) {
                         setEntitlements(access);
                     }
-                    setIsHydrated(true);
+                    setIsRefreshing(false);
                     setIsEntitlementsReady(true);
                 })();
                 return () => {
@@ -102,15 +103,15 @@ const {
                 setData(updatedData);
                 setRoastLevel(tempRoastLevel);
                 setShowSettings(false);
-                await saveBudgetData(updatedData, { redirect: false });
+                await saveBudgetData(updatedData, { redirect: false, flush: true });
             };
 
-            if (!isHydrated || !isEntitlementsReady) {
+            if (!isEntitlementsReady) {
                 return (
                     <div className="container">
                         <div className="empty-state">
                             <div className="empty-emoji">⏳</div>
-                            <div className="empty-title">Loading...</div>
+                            <div className="empty-title">Checking access...</div>
                         </div>
                     </div>
                 );
@@ -176,6 +177,7 @@ const {
                         </button>
                     </nav>
 
+                    {isRefreshing ? <p className="helper" style={{ marginBottom: "12px" }}>Showing cached data while syncing…</p> : null}
                     <div style={{
                         marginBottom: '24px',
                         padding: '18px 20px',
@@ -197,7 +199,7 @@ const {
                             RM{netWorth.toFixed(2)}
                         </div>
                         <div style={{ width: '100%', color: '#bbb', fontSize: '0.92rem' }}>
-                            Income - total spent. {netWorth >= 0 ? 'You're in the green.' : 'You're in the red.'}
+                            Income - total spent. {netWorth >= 0 ? "You're in the green." : "You're in the red."}
                         </div>
                     </div>
 

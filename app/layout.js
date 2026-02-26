@@ -1,4 +1,5 @@
 import ServiceWorkerRegister from './sw-register';
+import './globals.css';
 
 export const metadata = {
   title: 'Budget Tracker',

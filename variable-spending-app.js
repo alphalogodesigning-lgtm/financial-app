@@ -49,7 +49,7 @@ const {
 
             useEffect(() => {
                 if (!isHydrated) return;
-                saveBudgetData(data);
+                saveBudgetData(data, { debounce: true });
             }, [data, isHydrated]);
 
             const { totalSpent, regretSpent, avgPerDay, topCategory } = calculateVariableSummary(expenses);

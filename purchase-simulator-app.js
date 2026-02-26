@@ -145,8 +145,8 @@ function calculateSimulation(currentBalance, dailyBurn, purchaseAmount) {
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────
 function PurchaseSimulator() {
-    const [data, setData] = useState(null);
-    const [isHydrated, setIsHydrated] = useState(false);
+    const [data, setData] = useState(() => window.AppShared?.readBudgetDataFromLocal?.({ localFallback: true }) || null);
+    const [isRefreshing, setIsRefreshing] = useState(true);
     const [purchaseAmount, setPurchaseAmount] = useState('');
     const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
     const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
@@ -198,7 +198,7 @@ function PurchaseSimulator() {
         const entitlementFn = window.AppShared?.getCurrentUserEntitlements;
 
         Promise.all([
-            loadFn ? loadFn() : Promise.resolve(null),
+            loadFn ? loadFn({ onRemoteData: (saved) => { if (!isMounted || !saved) return; setData(saved); setIsRefreshing(false); } }) : Promise.resolve(null),
             entitlementFn ? entitlementFn() : Promise.resolve({ isPremium: false, isFree: true })
         ]).then(([saved, access]) => {
             if (!isMounted) return;
@@ -208,7 +208,7 @@ function PurchaseSimulator() {
             if (access) {
                 setEntitlements(access);
             }
-            setIsHydrated(true);
+            setIsRefreshing(false);
             setIsEntitlementsReady(true);
         });
 
@@ -285,12 +285,12 @@ function PurchaseSimulator() {
     }, [simulation, data, purchaseAmount]);
 
     // Empty state if no data
-    if (!isHydrated || !isEntitlementsReady) {
+    if (!isEntitlementsReady) {
         return (
             <div className="container">
                 <div className="empty-state">
                     <div className="empty-emoji">⏳</div>
-                    <div className="empty-title">Loading...</div>
+                    <div className="empty-title">Checking access...</div>
                 </div>
             </div>
         );
@@ -350,6 +350,7 @@ function PurchaseSimulator() {
                 <p className="header-subtitle">
                     Simulate the real impact of a purchase before you sign that receipt
                 </p>
+                {isRefreshing ? <p className="helper">Using cached data while syncing…</p> : null}
             </div>
 
             {/* Current Financial State */}
