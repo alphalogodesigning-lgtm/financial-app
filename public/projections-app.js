@@ -95,17 +95,6 @@ function Projections() {
         setScenarioVariableSpend(currentVariableTotal > 0 ? 100 : 100);
     }, [data, isRefreshing]);
 
-    if (!isEntitlementsReady) {
-        return (
-            <div className="container">
-                <div className="empty-state">
-                    <div className="empty-emoji">⏳</div>
-                    <div className="empty-title">Checking access...</div>
-                </div>
-            </div>
-        );
-    }
-
     /* ── Empty state ─────────────────────────────────────── */
     if (!incomeSet && !entitlements.isFree) {
         return (

@@ -106,17 +106,6 @@ const {
                 await saveBudgetData(updatedData, { redirect: false, flush: true });
             };
 
-            if (!isEntitlementsReady) {
-                return (
-                    <div className="container">
-                        <div className="empty-state">
-                            <div className="empty-emoji">⏳</div>
-                            <div className="empty-title">Checking access...</div>
-                        </div>
-                    </div>
-                );
-            }
-
             const metrics = calculateInsightsMetrics(data);
             const {
                 income,

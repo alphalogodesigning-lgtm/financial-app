@@ -139,8 +139,8 @@ function calculateSimulation(currentBalance, dailyBurn, purchaseAmount) {
 }
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────
 function PurchaseSimulator() {
-    const [data, setData] = useState(null);
-    const [isHydrated, setIsHydrated] = useState(false);
+    const [data, setData] = useState(() => window.AppShared?.readBudgetDataFromLocal?.({ localFallback: true }) || null);
+    const [isRefreshing, setIsRefreshing] = useState(true);
     const [purchaseAmount, setPurchaseAmount] = useState('');
     const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
     const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
@@ -189,7 +189,8 @@ function PurchaseSimulator() {
         const loadFn = window.AppShared?.loadBudgetData;
         const entitlementFn = window.AppShared?.getCurrentUserEntitlements;
         Promise.all([
-            loadFn ? loadFn() : Promise.resolve(null),
+            loadFn ? loadFn({ onRemoteData: (saved) => { if (!isMounted || !saved)
+                    return; setData(saved); setIsRefreshing(false); } }) : Promise.resolve(null),
             entitlementFn ? entitlementFn() : Promise.resolve({ isPremium: false, isFree: true })
         ]).then(([saved, access]) => {
             if (!isMounted)
@@ -200,7 +201,7 @@ function PurchaseSimulator() {
             if (access) {
                 setEntitlements(access);
             }
-            setIsHydrated(true);
+            setIsRefreshing(false);
             setIsEntitlementsReady(true);
         });
         return () => { isMounted = false; };
@@ -264,12 +265,6 @@ function PurchaseSimulator() {
         };
     }, [simulation, data, purchaseAmount]);
     // Empty state if no data
-    if (!isHydrated || !isEntitlementsReady) {
-        return (React.createElement("div", { className: "container" },
-            React.createElement("div", { className: "empty-state" },
-                React.createElement("div", { className: "empty-emoji" }, "\u23F3"),
-                React.createElement("div", { className: "empty-title" }, "Loading..."))));
-    }
     if ((!data || !data.income) && !entitlements.isFree) {
         return (React.createElement("div", { className: "container" },
             React.createElement("nav", { className: "main-nav" },
@@ -308,7 +303,8 @@ function PurchaseSimulator() {
                     React.createElement("h1", { className: "header-title" },
                         "Reality ",
                         React.createElement("span", null, "Check")),
-                    React.createElement("p", { className: "header-subtitle" }, "Simulate the real impact of a purchase before you sign that receipt")),
+                    React.createElement("p", { className: "header-subtitle" }, "Simulate the real impact of a purchase before you sign that receipt"),
+                    isRefreshing ? React.createElement("p", { className: "helper" }, "Using cached data while syncing\u2026") : null),
                 React.createElement("div", { className: "card" },
                     React.createElement("h2", { className: "card-title" }, "Your Current Financial State"),
                     React.createElement("p", { className: "card-subtitle" }, "This is where you stand right now"),

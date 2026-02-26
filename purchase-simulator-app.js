@@ -285,17 +285,6 @@ function PurchaseSimulator() {
     }, [simulation, data, purchaseAmount]);
 
     // Empty state if no data
-    if (!isEntitlementsReady) {
-        return (
-            <div className="container">
-                <div className="empty-state">
-                    <div className="empty-emoji">⏳</div>
-                    <div className="empty-title">Checking access...</div>
-                </div>
-            </div>
-        );
-    }
-
     if ((!data || !data.income) && !entitlements.isFree) {
         return (
             <div className="container">
