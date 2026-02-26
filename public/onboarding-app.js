@@ -47,7 +47,7 @@ function OnboardingPage() {
           setIncome(String(saved.income));
         }
       } catch (err) {
-        setError('Could not load onboarding right now. Please refresh and try again.');
+        window.location.replace('auth.html');
       } finally {
         if (active) setIsLoading(false);
       }

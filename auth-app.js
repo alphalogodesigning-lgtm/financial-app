@@ -37,9 +37,7 @@ const { supabaseClient, loadBudgetData } = window.AppShared;
             };
 
             const redirectSignedInUser = async () => {
-                const userData = await loadBudgetData({ redirect: false, localFallback: false });
-                const hasCompletedOnboarding = Boolean(userData) && userData.onboarding_complete !== false;
-                window.location.replace(hasCompletedOnboarding ? 'index.html' : 'onboarding.html');
+                window.location.replace('index.html');
             };
 
             const handleSubmit = async (e) => {
@@ -80,10 +78,9 @@ const { supabaseClient, loadBudgetData } = window.AppShared;
 
                 if (mode === 'login') {
                     setStatusMessage('Welcome back! Taking you to your dashboard...', 'success');
-                    const userData = await loadBudgetData({ redirect: false, localFallback: false });
-                    const hasCompletedOnboarding = Boolean(userData) && userData.onboarding_complete !== false;
-                    setTimeout(() => {
-                        window.location.href = hasCompletedOnboarding ? 'index.html' : 'onboarding.html';
+                    setTimeout(async () => {
+                        await loadBudgetData({ redirect: false, localFallback: false });
+                        window.location.href = 'index.html';
                     }, 650);
                 } else {
                     if (data?.session) {

@@ -3,6 +3,7 @@ const { useState, useEffect } = React;
 const {
   loadBudgetData,
   saveBudgetData,
+  getAuthenticatedUser,
   CATEGORIES,
   CLEAN_STATE,
   START_MESSAGE,
@@ -231,10 +232,17 @@ function Dashboard() {
 
   useEffect(() => {
     let isMounted = true;
-    loadBudgetData({ replace: true }).then((saved) => {
+    loadBudgetData({ replace: true }).then(async (saved) => {
       if (!isMounted) return;
       if (!saved || saved.onboarding_complete === false) {
-        window.location.replace('onboarding.html');
+        let user = null;
+        try {
+          user = await getAuthenticatedUser();
+        } catch (error) {
+          user = null;
+        }
+        if (!isMounted) return;
+        window.location.replace(user ? 'onboarding.html' : 'auth.html');
         return;
       }
       if (saved) {
