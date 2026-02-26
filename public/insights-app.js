@@ -1,7 +1,8 @@
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect } = React;
 
 const {
     loadBudgetData,
+    readBudgetDataFromLocal,
     saveBudgetData,
     getInitialData,
     ROAST_LEVELS,
@@ -16,21 +17,13 @@ const {
 } = window.AppShared;
 
         function App() {
-            const [data, setData] = useState(getInitialData('insights'));
-            const [isHydrated, setIsHydrated] = useState(false);
+            const [data, setData] = useState(() => ({ ...getInitialData('insights'), ...(readBudgetDataFromLocal({ localFallback: true }) || {}) }));
+            const [isRefreshing, setIsRefreshing] = useState(true);
             const [showSettings, setShowSettings] = useState(false);
             const [roastLevel, setRoastLevel] = useState('honest');
             const [tempRoastLevel, setTempRoastLevel] = useState('honest');
             const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
             const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
-            const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-            const [isGeneratingShare, setIsGeneratingShare] = useState(false);
-            const [shareImageBlob, setShareImageBlob] = useState(null);
-            const [shareCaption, setShareCaption] = useState('');
-            const [shareStatusMessage, setShareStatusMessage] = useState('');
-            const [sharePreviewUrl, setSharePreviewUrl] = useState('');
-            const [showManualShareOptions, setShowManualShareOptions] = useState(false);
-            const shareObjectUrlRef = useRef(null);
 
             const premiumBlurStyle = entitlements.isFree
                 ? { filter: 'blur(10px)', opacity: 0.35, pointerEvents: 'none', userSelect: 'none' }
@@ -74,7 +67,19 @@ const {
 
             useEffect(() => {
                 let isMounted = true;
-                Promise.all([loadBudgetData(), getCurrentUserEntitlements()]).then(([saved, access]) => {
+                Promise.all([
+                    loadBudgetData({
+                        onRemoteData: (saved) => {
+                            if (!isMounted || !saved) return;
+                            setData(saved);
+                            const savedRoastLevel = saved.roast_level || 'honest';
+                            setRoastLevel(savedRoastLevel);
+                            setTempRoastLevel(savedRoastLevel);
+                            setIsRefreshing(false);
+                        }
+                    }),
+                    getCurrentUserEntitlements()
+                ]).then(([saved, access]) => {
                     if (!isMounted) return;
                     if (saved) {
                         setData(saved);
@@ -85,7 +90,7 @@ const {
                     if (access) {
                         setEntitlements(access);
                     }
-                    setIsHydrated(true);
+                    setIsRefreshing(false);
                     setIsEntitlementsReady(true);
                 });
                 return () => {
@@ -104,136 +109,12 @@ const {
                 await saveBudgetData(updatedData, { redirect: false });
             };
 
-            const brutalSeverity = roastLevel === 'gentle' ? 'light' : roastLevel === 'honest' ? 'medium' : 'brutal';
-
-            useEffect(() => {
-                if (!shareImageBlob) {
-                    if (shareObjectUrlRef.current) {
-                        URL.revokeObjectURL(shareObjectUrlRef.current);
-                        shareObjectUrlRef.current = null;
-                    }
-                    setSharePreviewUrl('');
-                    return;
-                }
-
-                if (shareObjectUrlRef.current) {
-                    URL.revokeObjectURL(shareObjectUrlRef.current);
-                }
-                const nextUrl = URL.createObjectURL(shareImageBlob);
-                shareObjectUrlRef.current = nextUrl;
-                setSharePreviewUrl(nextUrl);
-            }, [shareImageBlob]);
-
-            useEffect(() => () => {
-                if (shareObjectUrlRef.current) {
-                    URL.revokeObjectURL(shareObjectUrlRef.current);
-                }
-            }, []);
-
-            const handleGenerateShareCard = async () => {
-                setShareStatusMessage('');
-                setShowManualShareOptions(false);
-                setIsShareModalOpen(true);
-                setIsGeneratingShare(true);
-                try {
-                    const caption = window.RoastlyShareUtils.generateCaption({
-                        severityLevel: brutalSeverity,
-                        amount: regretMoney,
-                        bodyText: brutalTruth,
-                        runwayDays: Math.max(0, Math.floor(healthScore / 10))
-                    });
-                    setShareCaption(caption);
-                    const blob = await window.RoastlyShareUtils.generateShareImage('insights-share-card-capture');
-                    setShareImageBlob(blob);
-                } catch (error) {
-                    setShareStatusMessage('Could not generate image. Please try again.');
-                } finally {
-                    setIsGeneratingShare(false);
-                }
-            };
-
-            const handleNativeShare = async () => {
-                if (!shareImageBlob) return;
-                const file = window.RoastlyShareUtils.blobToFile(shareImageBlob, 'roastly-insight-roast.png');
-                const hasNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
-                const supportsFiles = hasNativeShare && (!navigator.canShare || navigator.canShare({ files: [file] }));
-
-                if (!supportsFiles) {
-                    setShowManualShareOptions(true);
-                    setShareStatusMessage('Direct sharing is unavailable on this device.');
-                    return;
-                }
-
-                try {
-                    await navigator.share({
-                        files: [file],
-                        text: shareCaption,
-                        title: 'Roastly Therapy Session'
-                    });
-                } catch (error) {
-                    if (error?.name !== 'AbortError') {
-                        setShareStatusMessage('Share failed. Use download instead.');
-                    }
-                }
-            };
-
-            const handleDownloadShare = () => {
-                if (!sharePreviewUrl) return;
-                const link = document.createElement('a');
-                link.href = sharePreviewUrl;
-                link.download = 'roastly-insight-roast.png';
-                link.click();
-            };
-
-            const handleCopyCaption = async () => {
-                try {
-                    await navigator.clipboard.writeText(shareCaption);
-                    setShareStatusMessage('Caption copied.');
-                } catch (error) {
-                    setShareStatusMessage('Copy failed.');
-                }
-            };
-
-            const openShareLink = (platform) => {
-                const encodedCaption = encodeURIComponent(shareCaption || 'Roastly gave me an expensive truth bomb.');
-                if (platform === 'whatsapp') {
-                    window.open(`https://wa.me/?text=${encodedCaption}`, '_blank', 'noopener,noreferrer');
-                    return;
-                }
-                if (platform === 'x') {
-                    window.open(`https://twitter.com/intent/tweet?text=${encodedCaption}`, '_blank', 'noopener,noreferrer');
-                    return;
-                }
-                if (platform === 'instagram') {
-                    setShareStatusMessage('Instagram Stories: upload from camera roll.');
-                    return;
-                }
-                if (platform === 'tiktok') {
-                    setShareStatusMessage('TikTok: upload from camera roll.');
-                }
-            };
-
-            const shareButtonStyle = {
-                marginTop: '18px',
-                border: '2px solid rgba(212, 175, 55, 0.58)',
-                borderRadius: '999px',
-                background: 'linear-gradient(135deg, rgba(212,175,55,0.26) 0%, rgba(212,175,55,0.12) 100%)',
-                color: '#F5D87A',
-                padding: '13px 22px',
-                fontSize: '1rem',
-                fontWeight: 800,
-                letterSpacing: '0.01em',
-                boxShadow: '0 8px 20px rgba(212, 175, 55, 0.24)',
-                cursor: 'pointer',
-                transition: 'transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease'
-            };
-
-            if (!isHydrated || !isEntitlementsReady) {
+            if (!isEntitlementsReady) {
                 return (
                     <div className="container">
                         <div className="empty-state">
                             <div className="empty-emoji">⏳</div>
-                            <div className="empty-title">Loading...</div>
+                            <div className="empty-title">Checking access...</div>
                         </div>
                     </div>
                 );
@@ -246,7 +127,9 @@ const {
                 totalVariableSpent,
                 totalSpent,
                 savingsAmount,
+                netWorth,
                 savingsRate,
+                lifetimeIncomeAdded,
                 regretMoney,
                 regretRatio,
                 avgWeekendSpend,
@@ -297,6 +180,32 @@ const {
                         </button>
                     </nav>
 
+                    {isRefreshing ? <p className="helper" style={{ marginBottom: "12px" }}>Showing cached data while syncing…</p> : null}
+                    <div style={{
+                        marginBottom: '24px',
+                        padding: '18px 20px',
+                        borderRadius: '14px',
+                        border: `1px solid ${netWorth >= 0 ? 'rgba(102, 187, 106, 0.45)' : 'rgba(255, 107, 107, 0.45)'}`,
+                        background: netWorth >= 0 ? 'rgba(102, 187, 106, 0.08)' : 'rgba(255, 107, 107, 0.08)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                    }}>
+                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.05rem' }}>💀 Net Worth</div>
+                        <div style={{
+                            fontWeight: 900,
+                            fontSize: '1.5rem',
+                            color: netWorth >= 0 ? '#66BB6A' : '#FF6B6B'
+                        }}>
+                            RM{netWorth.toFixed(2)}
+                        </div>
+                        <div style={{ width: '100%', color: '#bbb', fontSize: '0.92rem' }}>
+                            Income - total spent. {netWorth >= 0 ? 'You're in the green.' : 'You're in the red.'}
+                        </div>
+                    </div>
+
                     <div style={{ position: 'relative' }}>
                     <div style={premiumBlurStyle}>
                     <div className="header">
@@ -330,24 +239,6 @@ const {
                         <div className="brutal-text">
                             {brutalTruth}
                         </div>
-                        <button
-                            style={shareButtonStyle}
-                            onClick={handleGenerateShareCard}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-1px)';
-                                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.34) 0%, rgba(212,175,55,0.16) 100%)';
-                                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.8)';
-                                e.currentTarget.style.boxShadow = '0 12px 24px rgba(212, 175, 55, 0.28)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.26) 0%, rgba(212,175,55,0.12) 100%)';
-                                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.58)';
-                                e.currentTarget.style.boxShadow = '0 8px 20px rgba(212, 175, 55, 0.24)';
-                            }}
-                        >
-                            🔥 Share
-                        </button>
                     </div>
 
                     {/* Spending Personality */}
@@ -468,6 +359,7 @@ const {
                                     : '💡 Try to increase your savings rate. Future you will be grateful.'}
                             </div>
                         </div>
+
                     </div>
 
                     {/* Achievements */}
@@ -512,85 +404,12 @@ const {
                                 <div className="fun-stat-value gold-text">RM{biggestPurchase.toFixed(2)}</div>
                                 <div className="fun-stat-label">Biggest Single Purchase</div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div style={{ position: 'fixed', left: '-99999px', top: 0, pointerEvents: 'none' }}>
-                        <div
-                            id="insights-share-card-capture"
-                            style={{
-                                width: '1080px',
-                                height: '1080px',
-                                background: '#0A0A0A',
-                                color: '#F2F2F2',
-                                padding: '150px 92px 120px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'space-between',
-                                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-                                border: '1px solid rgba(255,255,255,0.08)'
-                            }}
-                        >
-                            <div>
-                                <p style={{ color: '#D4AF37', fontSize: '30px', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '36px' }}>
-                                    Therapy Session
-                                </p>
-                                <h2 style={{ fontSize: '122px', lineHeight: 0.98, letterSpacing: '-0.05em', marginBottom: '56px' }}>
-                                    {gradeInfo.grade} / 100
-                                </h2>
-                                <p style={{ fontSize: '54px', lineHeight: 1.22, fontWeight: 600, color: '#FFFFFF', maxWidth: '840px' }}>
-                                    {brutalTruth}
-                                </p>
-                            </div>
-                            <div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '26px', marginBottom: '56px' }}>
-                                    <div>
-                                        <p style={{ color: '#8A8A8A', fontSize: '24px', marginBottom: '8px' }}>Savings Rate</p>
-                                        <p style={{ fontSize: '58px', lineHeight: 1, fontWeight: 780 }}>{savingsRate.toFixed(1)}%</p>
-                                    </div>
-                                    <div>
-                                        <p style={{ color: '#8A8A8A', fontSize: '24px', marginBottom: '8px' }}>Regret Money</p>
-                                        <p style={{ fontSize: '72px', lineHeight: 1, fontWeight: 800 }}>RM{regretMoney.toFixed(0)}</p>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', opacity: entitlements.isPremium ? 0 : 0.62 }}>
-                                    <span style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '0.02em' }}>Roastly</span>
-                                    <span style={{ width: '30px', height: '30px', borderRadius: '8px', border: '2px solid rgba(212,175,55,0.8)', display: 'inline-block' }} />
-                                </div>
+                            <div className="fun-stat">
+                                <div className="fun-stat-value" style={{ color: '#D4AF37' }}>RM{lifetimeIncomeAdded.toFixed(2)}</div>
+                                <div className="fun-stat-label">Net Worth</div>
                             </div>
                         </div>
                     </div>
-
-                    {isShareModalOpen && (
-                        <div className="modal-overlay" onClick={() => setIsShareModalOpen(false)}>
-                            <div className="modal-content" style={{ maxWidth: '720px', width: 'calc(100% - 24px)' }} onClick={(e) => e.stopPropagation()}>
-                                {isGeneratingShare && <p style={{ color: '#A8A8A8', marginBottom: '14px' }}>Generating image…</p>}
-
-                                {sharePreviewUrl && (
-                                    <img src={sharePreviewUrl} alt="Share preview" style={{ width: '100%', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.12)', marginBottom: '14px' }} />
-                                )}
-
-                                {shareStatusMessage && <p style={{ color: '#D4AF37', marginBottom: '10px', fontSize: '0.9rem' }}>{shareStatusMessage}</p>}
-
-                                <button className="btn btn-primary" style={{ width: '100%', marginBottom: '12px', minHeight: '52px', fontSize: '1.02rem', fontWeight: 800, borderRadius: '14px', background: 'linear-gradient(135deg, #D4AF37 0%, #E8C75A 100%)', color: '#111', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 10px 26px rgba(212,175,55,0.28)' }} onClick={handleNativeShare} disabled={!shareImageBlob || isGeneratingShare}>🔥 Share</button>
-
-                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: showManualShareOptions ? '10px' : 0 }}>
-                                    <button className="btn btn-secondary" style={{ padding: '10px 14px', minHeight: '42px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', color: '#E8D7A2', border: '1px solid rgba(212,175,55,0.34)', background: 'rgba(212,175,55,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} onClick={handleDownloadShare} disabled={!shareImageBlob}>Download</button>
-                                    <button className="btn btn-secondary" style={{ padding: '10px 14px', minHeight: '42px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', color: '#E8D7A2', border: '1px solid rgba(212,175,55,0.34)', background: 'rgba(212,175,55,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} onClick={handleCopyCaption}>Copy caption</button>
-                                </div>
-
-                                {showManualShareOptions && (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                        <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('whatsapp')}>WhatsApp</button>
-                                        <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('instagram')}>Instagram</button>
-                                        <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('x')}>X</button>
-                                        <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.82rem' }} onClick={() => openShareLink('tiktok')}>TikTok</button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
 
                     {/* Settings Modal */}
                     {showSettings && (

@@ -205,18 +205,26 @@
     }
   };
 
-  const loadBudgetData = async (options = {}) => {
+  const readBudgetDataFromLocal = (options = {}) => {
     const allowLocalFallback = options.localFallback !== false;
-    const fallback = localStorage.getItem(STORAGE_KEY);
-    const parsedFallback = allowLocalFallback && fallback ? JSON.parse(fallback) : null;
-    if (!supabaseClient) {
-      return parsedFallback;
+    if (!allowLocalFallback) return null;
+    try {
+      const fallback = localStorage.getItem(STORAGE_KEY);
+      return fallback ? JSON.parse(fallback) : null;
+    } catch (err) {
+      console.warn('Failed to parse local budget data.', err);
+      return null;
     }
+  };
+
+  const refreshBudgetDataFromSupabase = async (options = {}) => {
+    const parsedFallback = readBudgetDataFromLocal(options);
+    if (!supabaseClient) return parsedFallback;
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
         const hasLocalData = Boolean(parsedFallback);
-        if (options.redirect !== false && !hasLocalData) {
+        if (options.redirect === true && !hasLocalData) {
           redirectToAuth(options);
         }
         return parsedFallback;
@@ -909,6 +917,8 @@
     resolveAuthSession,
     getAuthenticatedUser,
     getCurrentUserEntitlements,
+    readBudgetDataFromLocal,
+    refreshBudgetDataFromSupabase,
     loadBudgetData,
     saveBudgetData,
     CATEGORIES,
