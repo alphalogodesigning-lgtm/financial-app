@@ -3,10 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "npm run build:legacy-pages && next dev",
-    "build": "npm run build:legacy-pages && next build",
-    "start": "next start",
-    "build:legacy-pages": "node scripts/build-legacy-pages.mjs"
+    "dev": "next dev",
+    "check:conflicts": "! git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- . ':(exclude)node_modules'",
+    "build": "npm run check:conflicts && next build",
+    "start": "next start"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
