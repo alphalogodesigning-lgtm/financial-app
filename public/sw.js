@@ -1,4 +1,4 @@
-const CACHE_NAME = 'budget-tracker-v3';
+const CACHE_NAME = 'budget-tracker-v4';
 const STATIC_ASSETS = [
   '/',
   '/landing.html',
@@ -40,12 +40,10 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) return;
 
-  const isAppShellRequest =
-    event.request.mode === 'navigate' ||
-    requestUrl.pathname.endsWith('.html') ||
-    requestUrl.pathname.endsWith('.js');
+  const isNavigationRequest =
+    event.request.mode === 'navigate' || requestUrl.pathname.endsWith('.html');
 
-  if (isAppShellRequest) {
+  if (isNavigationRequest) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -71,7 +69,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           return response;
         })
-        .catch(() => caches.match('/index.html'));
+        .catch(() => cached || Response.error());
     })
   );
 });
