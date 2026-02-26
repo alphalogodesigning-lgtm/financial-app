@@ -122,7 +122,7 @@ function OnboardingPage() {
         roast_level: roastLevel,
         user_name: name.trim(),
         onboarding_complete: true
-      }, { redirect: false });
+      }, { redirect: false, flush: true });
 
       if (supabaseClient) {
         await supabaseClient.auth.updateUser({

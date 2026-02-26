@@ -229,6 +229,7 @@
       if (error) throw error;
       if (data?.data) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data.data));
+        remotePersistence.lastSyncedSignature = createDataSignature(data.data);
         return data.data;
       }
     } catch (err) {
@@ -237,9 +238,38 @@
     return parsedFallback;
   };
 
-  const saveBudgetData = async (nextData, options = {}) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
+  const DEBOUNCED_UPSERT_MS = 1000;
+  const remotePersistence = {
+    timer: null,
+    pending: null,
+    lastSyncedSignature: null
+  };
+
+  const stableSerialize = (value) => {
+    if (Array.isArray(value)) {
+      return `[${value.map(stableSerialize).join(',')}]`;
+    }
+    if (value && typeof value === 'object') {
+      const keys = Object.keys(value).sort();
+      return `{${keys.map((key) => `${JSON.stringify(key)}:${stableSerialize(value[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(value);
+  };
+
+  const hashString = (input) => {
+    let hash = 0;
+    for (let index = 0; index < input.length; index += 1) {
+      hash = ((hash << 5) - hash) + input.charCodeAt(index);
+      hash |= 0;
+    }
+    return String(hash);
+  };
+
+  const createDataSignature = (payload) => hashString(stableSerialize(payload));
+
+  const upsertBudgetData = async ({ payload, signature }) => {
     if (!supabaseClient) return;
+    if (remotePersistence.lastSyncedSignature === signature) return;
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
@@ -249,13 +279,55 @@
         .from(STORAGE_TABLE)
         .upsert({
           user_id: user.id,
-          data: nextData,
+          data: payload,
           updated_at: dateTime.nowUtcISOString()
         }, { onConflict: 'user_id' });
       if (error) throw error;
+      remotePersistence.lastSyncedSignature = signature;
     } catch (err) {
       console.warn('Supabase save failed, kept local data.', err);
     }
+  };
+
+  const flushBudgetData = async () => {
+    if (!remotePersistence.pending) return;
+    if (remotePersistence.timer) {
+      clearTimeout(remotePersistence.timer);
+      remotePersistence.timer = null;
+    }
+    const pendingSave = remotePersistence.pending;
+    remotePersistence.pending = null;
+    await upsertBudgetData(pendingSave);
+  };
+
+  const queueDebouncedBudgetData = (payload, signature, delayMs = DEBOUNCED_UPSERT_MS) => {
+    if (!supabaseClient) return;
+    if (remotePersistence.lastSyncedSignature === signature) return;
+    remotePersistence.pending = { payload, signature };
+    if (remotePersistence.timer) {
+      clearTimeout(remotePersistence.timer);
+    }
+    remotePersistence.timer = setTimeout(() => {
+      flushBudgetData();
+    }, delayMs);
+  };
+
+  const saveBudgetData = async (nextData, options = {}) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
+    if (!supabaseClient) return;
+    const signature = createDataSignature(nextData);
+    const shouldFlushNow = options.flush === true || options.debounce === false;
+    if (shouldFlushNow) {
+      remotePersistence.pending = null;
+      if (remotePersistence.timer) {
+        clearTimeout(remotePersistence.timer);
+        remotePersistence.timer = null;
+      }
+      await upsertBudgetData({ payload: nextData, signature });
+      return;
+    }
+    const debounceMs = Number.isFinite(options.debounceMs) ? options.debounceMs : DEBOUNCED_UPSERT_MS;
+    queueDebouncedBudgetData(nextData, signature, debounceMs);
   };
 
   const CATEGORIES = {
