@@ -1,5 +1,5 @@
-import LegacyFeatureFrame from '../../../components/LegacyFeatureFrame';
+import { redirect } from 'next/navigation';
 
 export default function DashboardPage() {
-  return <LegacyFeatureFrame src="/index.html?legacy=1" title="Dashboard" />;
+  redirect('/index.html');
 }

@@ -1,5 +1,5 @@
-import LegacyFeatureFrame from '../../../components/LegacyFeatureFrame';
+import { redirect } from 'next/navigation';
 
 export default function VariableSpendingPage() {
-  return <LegacyFeatureFrame src="/variable-spending.html?legacy=1" title="Variable Spending" />;
+  redirect('/variable-spending.html');
 }

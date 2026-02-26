@@ -1,5 +1,5 @@
-import LegacyFeatureFrame from '../../../components/LegacyFeatureFrame';
+import { redirect } from 'next/navigation';
 
 export default function PurchaseSimulatorPage() {
-  return <LegacyFeatureFrame src="/purchase-simulator.html?legacy=1" title="Purchase Simulator" />;
+  redirect('/purchase-simulator.html');
 }

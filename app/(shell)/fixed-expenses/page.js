@@ -1,5 +1,5 @@
-import LegacyFeatureFrame from '../../../components/LegacyFeatureFrame';
+import { redirect } from 'next/navigation';
 
 export default function FixedExpensesPage() {
-  return <LegacyFeatureFrame src="/fixed-expenses.html?legacy=1" title="Fixed Expenses" />;
+  redirect('/fixed-expenses.html');
 }
