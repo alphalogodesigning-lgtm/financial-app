@@ -324,7 +324,7 @@ function Dashboard() {
 
   useEffect(() => {
     if (!isHydrated) return;
-    saveBudgetData(data, { replace: true });
+    saveBudgetData(data, { replace: true, debounce: true });
   }, [data, isHydrated]);
 
   const {
@@ -725,7 +725,7 @@ function Dashboard() {
     localStorage.removeItem('budgetTrackerData');
 
     try {
-      await saveBudgetData(resetData, { redirect: false });
+      await saveBudgetData(resetData, { redirect: false, flush: true });
       window.alert('Budget data cleared.');
     } catch (error) {
       window.alert('Local data was cleared, but cloud sync may still contain older data.');

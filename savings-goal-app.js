@@ -85,7 +85,7 @@ function SavingsGoalPage() {
       linkedSimulatorGoalId: linkedStillValid ? nextLinkedSimulatorGoalId : null
     };
     setData(next);
-    saveBudgetData(next);
+    saveBudgetData(next, { debounce: true });
   };
 
   const createGoal = (event) => {

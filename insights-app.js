@@ -106,7 +106,7 @@ const {
                 setData(updatedData);
                 setRoastLevel(tempRoastLevel);
                 setShowSettings(false);
-                await saveBudgetData(updatedData, { redirect: false });
+                await saveBudgetData(updatedData, { redirect: false, flush: true });
             };
 
             if (!isEntitlementsReady) {

@@ -50,7 +50,7 @@ const formatCurrency = (value) => {
 
             useEffect(() => {
                 if (!isHydrated) return;
-                saveBudgetData(data);
+                saveBudgetData(data, { debounce: true });
             }, [data, isHydrated]);
 
             useEffect(() => {
