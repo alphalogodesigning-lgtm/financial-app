@@ -2,6 +2,7 @@ const { useState, useEffect } = React;
 
 const {
     loadBudgetData,
+    readBudgetDataFromLocal,
     getCurrentUserEntitlements,
     getInitialData,
     START_MESSAGE,
@@ -12,8 +13,8 @@ const {
 } = window.AppShared;
 
 function Projections() {
-    const [data, setData] = useState(getInitialData('projections'));
-    const [isHydrated, setIsHydrated] = useState(false);
+    const [data, setData] = useState(() => ({ ...getInitialData('projections'), ...(readBudgetDataFromLocal({ localFallback: true }) || {}) }));
+    const [isRefreshing, setIsRefreshing] = useState(true);
     const [entitlements, setEntitlements] = useState({ isPremium: false, isFree: true });
     const [isEntitlementsReady, setIsEntitlementsReady] = useState(false);
 
@@ -69,29 +70,38 @@ function Projections() {
 
     useEffect(() => {
         let isMounted = true;
-        Promise.all([loadBudgetData(), getCurrentUserEntitlements()]).then(([saved, access]) => {
+        Promise.all([
+            loadBudgetData({
+                onRemoteData: (saved) => {
+                    if (!isMounted || !saved) return;
+                    setData(saved);
+                    setIsRefreshing(false);
+                }
+            }),
+            getCurrentUserEntitlements()
+        ]).then(([saved, access]) => {
             if (!isMounted) return;
             if (saved) setData(saved);
             if (access) setEntitlements(access);
-            setIsHydrated(true);
+            setIsRefreshing(false);
             setIsEntitlementsReady(true);
         });
         return () => { isMounted = false; };
     }, []);
 
     useEffect(() => {
-        if (!isHydrated) return;
+        if (isRefreshing) return;
         if (Number.isFinite(data.income) && data.income > 0) setScenarioIncome(data.income);
         const currentVariableTotal = (data.variableExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         setScenarioVariableSpend(currentVariableTotal > 0 ? 100 : 100);
-    }, [data, isHydrated]);
+    }, [data, isRefreshing]);
 
-    if (!isHydrated || !isEntitlementsReady) {
+    if (!isEntitlementsReady) {
         return (
             <div className="container">
                 <div className="empty-state">
                     <div className="empty-emoji">⏳</div>
-                    <div className="empty-title">Loading...</div>
+                    <div className="empty-title">Checking access...</div>
                 </div>
             </div>
         );
@@ -114,6 +124,7 @@ function Projections() {
                     <p className="header-eyebrow">Projections</p>
                     <h1 className="header-title">The Crystal <span>Ball</span></h1>
                     <p className="header-subtitle">Play with scenarios and see your financial future</p>
+                {isRefreshing ? <p className="helper">Showing cached data while syncing…</p> : null}
                 </div>
                 <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
                     <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🔮</div>
@@ -184,6 +195,7 @@ function Projections() {
                 <p className="header-eyebrow">Projections</p>
                 <h1 className="header-title">The Crystal <span>Ball</span></h1>
                 <p className="header-subtitle">Play with scenarios and see how they reshape your financial future</p>
+                {isRefreshing ? <p className="helper">Showing cached data while syncing…</p> : null}
             </div>
 
             {/* ── What-If Scenarios ─────────────────────────── */}

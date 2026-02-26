@@ -205,18 +205,26 @@
     }
   };
 
-  const loadBudgetData = async (options = {}) => {
+  const readBudgetDataFromLocal = (options = {}) => {
     const allowLocalFallback = options.localFallback !== false;
-    const fallback = localStorage.getItem(STORAGE_KEY);
-    const parsedFallback = allowLocalFallback && fallback ? JSON.parse(fallback) : null;
-    if (!supabaseClient) {
-      return parsedFallback;
+    if (!allowLocalFallback) return null;
+    try {
+      const fallback = localStorage.getItem(STORAGE_KEY);
+      return fallback ? JSON.parse(fallback) : null;
+    } catch (err) {
+      console.warn('Failed to parse local budget data.', err);
+      return null;
     }
+  };
+
+  const refreshBudgetDataFromSupabase = async (options = {}) => {
+    const parsedFallback = readBudgetDataFromLocal(options);
+    if (!supabaseClient) return parsedFallback;
     try {
       const user = await getAuthenticatedUser();
       if (!user) {
         const hasLocalData = Boolean(parsedFallback);
-        if (options.redirect !== false && !hasLocalData) {
+        if (options.redirect === true && !hasLocalData) {
           redirectToAuth(options);
         }
         return parsedFallback;
@@ -229,10 +237,27 @@
       if (error) throw error;
       if (data?.data) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data.data));
+        if (typeof options.onRemoteData === 'function') {
+          options.onRemoteData(data.data);
+        }
         return data.data;
       }
     } catch (err) {
       console.warn('Supabase load failed, using local data.', err);
+    }
+    return parsedFallback;
+  };
+
+  const loadBudgetData = async (options = {}) => {
+    const parsedFallback = readBudgetDataFromLocal(options);
+    const shouldHydrateFromRemote = options.hydrateFromRemote !== false;
+    if (!shouldHydrateFromRemote) {
+      return refreshBudgetDataFromSupabase(options);
+    }
+    if (supabaseClient) {
+      refreshBudgetDataFromSupabase(options).catch((err) => {
+        console.warn('Supabase refresh failed in background.', err);
+      });
     }
     return parsedFallback;
   };
@@ -837,6 +862,8 @@
     resolveAuthSession,
     getAuthenticatedUser,
     getCurrentUserEntitlements,
+    readBudgetDataFromLocal,
+    refreshBudgetDataFromSupabase,
     loadBudgetData,
     saveBudgetData,
     CATEGORIES,
