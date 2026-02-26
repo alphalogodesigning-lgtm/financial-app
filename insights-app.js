@@ -3,6 +3,8 @@ const { useState, useEffect } = React;
 const {
     loadBudgetData,
     saveBudgetData,
+    getAuthenticatedUser,
+    resolveAuthSession,
     getInitialData,
     ROAST_LEVELS,
     calculateInsightsMetrics,
@@ -66,7 +68,14 @@ const {
 
             useEffect(() => {
                 let isMounted = true;
-                Promise.all([loadBudgetData(), getCurrentUserEntitlements()]).then(([saved, access]) => {
+                (async () => {
+                    const user = await getAuthenticatedUser();
+                    const session = await resolveAuthSession({ authContext: { user } });
+                    const authContext = { user, session };
+                    const [saved, access] = await Promise.all([
+                        loadBudgetData({ authContext }),
+                        getCurrentUserEntitlements({ authContext })
+                    ]);
                     if (!isMounted) return;
                     if (saved) {
                         setData(saved);
@@ -79,7 +88,7 @@ const {
                     }
                     setIsHydrated(true);
                     setIsEntitlementsReady(true);
-                });
+                })();
                 return () => {
                     isMounted = false;
                 };

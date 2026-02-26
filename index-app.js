@@ -3,6 +3,8 @@ const { useState, useEffect } = React;
 const {
   loadBudgetData,
   saveBudgetData,
+  clearAuthCache,
+  resolveAuthSession,
   getAuthenticatedUser,
   CATEGORIES,
   CLEAN_STATE,
@@ -254,14 +256,8 @@ function Dashboard() {
 
   useEffect(() => {
     let active = true;
-    const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
-    if (!supabaseClient) return () => {
-      active = false;
-    };
-
-    supabaseClient.auth.getUser().then(({ data: authData }) => {
-      if (!active || !authData?.user) return;
-      const user = authData.user;
+    getAuthenticatedUser().then((user) => {
+      if (!active || !user) return;
       setProfile({
         fullName: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'You',
         email: user.email || 'Not connected',
@@ -287,15 +283,12 @@ function Dashboard() {
 
   useEffect(() => {
     let isMounted = true;
-    loadBudgetData({ replace: true }).then(async (saved) => {
+    (async () => {
+      const user = await getAuthenticatedUser();
+      const authContext = { user };
+      const saved = await loadBudgetData({ replace: true, authContext });
       if (!isMounted) return;
       if (!saved || saved.onboarding_complete === false) {
-        let user = null;
-        try {
-          user = await getAuthenticatedUser();
-        } catch (error) {
-          user = null;
-        }
         if (!isMounted) return;
         window.location.replace(user ? 'onboarding.html' : 'auth.html');
         return;
@@ -316,7 +309,7 @@ function Dashboard() {
         });
       }
       setIsHydrated(true);
-    });
+    })();
     return () => {
       isMounted = false;
     };
@@ -505,15 +498,15 @@ function Dashboard() {
     setSubscriptionError('');
 
     try {
-      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-      if (sessionError || !sessionData?.session?.access_token) {
+      const session = await resolveAuthSession();
+      if (!session?.access_token) {
         throw new Error('Please sign in again to view subscription details.');
       }
 
       const response = await fetch('/api/create-portal-session', {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
@@ -554,8 +547,8 @@ function Dashboard() {
     setSubscriptionError('');
 
     try {
-      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-      if (sessionError || !sessionData?.session?.access_token) {
+      const session = await resolveAuthSession();
+      if (!session?.access_token) {
         throw new Error('Please sign in again to manage your subscription.');
       }
 
@@ -563,7 +556,7 @@ function Dashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionData.session.access_token}`
+          Authorization: `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ flow })
       });
@@ -665,8 +658,8 @@ function Dashboard() {
     setAccountStatus({ type: 'info', message: 'Verifying current password...' });
 
     try {
-      const { data: authData } = await supabaseClient.auth.getUser();
-      const email = authData?.user?.email;
+      const user = await getAuthenticatedUser();
+      const email = user?.email;
 
       if (!email) {
         setAccountStatus({ type: 'error', message: 'Unable to verify account email. Please sign in again.' });
@@ -707,6 +700,7 @@ function Dashboard() {
   const handleLogout = async () => {
     const supabaseClient = window.SUPABASE_CONFIG?.supabaseClient;
     if (supabaseClient) {
+      clearAuthCache();
       await supabaseClient.auth.signOut();
     }
     window.location.href = 'auth.html';
@@ -757,6 +751,7 @@ function Dashboard() {
     }
 
     localStorage.removeItem('budgetTrackerData');
+    clearAuthCache();
     await supabaseClient.auth.signOut();
     window.location.href = 'auth.html';
   };

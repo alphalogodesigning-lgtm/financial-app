@@ -6,6 +6,16 @@
   const PROFILE_TABLE = SUPABASE_CONFIG.PROFILE_TABLE || 'profiles';
   const PROFILE_USER_COLUMN = SUPABASE_CONFIG.PROFILE_USER_COLUMN || 'id';
   const waitForAuthSession = SUPABASE_CONFIG.waitForAuthSession || (async () => null);
+  const AUTH_CACHE_TTL_MS = 10000;
+  const authCache = {
+    session: null,
+    user: null,
+    sessionFetchedAt: 0,
+    userFetchedAt: 0,
+    inFlightSession: null,
+    inFlightUser: null,
+    isSubscribedToAuthChanges: false
+  };
   const DEFAULT_TIME_ZONE = 'Asia/Kuala_Lumpur';
   const DATE_KEY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
     timeZone: DEFAULT_TIME_ZONE,
@@ -114,25 +124,125 @@
     window.location.href = target;
   };
 
-  const resolveAuthSession = async () => {
-    if (!supabaseClient) return null;
-    const { data, error } = await supabaseClient.auth.getSession();
-    if (error) throw error;
-    if (data?.session) return data.session;
-    const refreshed = await supabaseClient.auth.refreshSession();
-    if (refreshed?.data?.session) return refreshed.data.session;
-    return waitForAuthSession();
+  const isFreshAuthCache = (fetchedAt) => Date.now() - fetchedAt < AUTH_CACHE_TTL_MS;
+
+  const clearAuthCache = () => {
+    authCache.session = null;
+    authCache.user = null;
+    authCache.sessionFetchedAt = 0;
+    authCache.userFetchedAt = 0;
+    authCache.inFlightSession = null;
+    authCache.inFlightUser = null;
   };
 
-  const getAuthenticatedUser = async () => {
+  const updateSessionCache = (session) => {
+    authCache.session = session || null;
+    authCache.sessionFetchedAt = Date.now();
+    if (session?.user) {
+      authCache.user = session.user;
+      authCache.userFetchedAt = Date.now();
+    }
+  };
+
+  const updateUserCache = (user) => {
+    authCache.user = user || null;
+    authCache.userFetchedAt = Date.now();
+  };
+
+  const ensureAuthCacheSyncSubscription = () => {
+    if (!supabaseClient || authCache.isSubscribedToAuthChanges) return;
+    authCache.isSubscribedToAuthChanges = true;
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      clearAuthCache();
+      if (session) {
+        updateSessionCache(session);
+      }
+    });
+  };
+
+  const resolveAuthSession = async (options = {}) => {
+    if (!supabaseClient) return null;
+    ensureAuthCacheSyncSubscription();
+
+    const authContext = options.authContext || null;
+    if (authContext?.session !== undefined) {
+      updateSessionCache(authContext.session);
+      return authContext.session;
+    }
+
+    const forceRefresh = options.forceRefresh === true;
+    if (!forceRefresh && isFreshAuthCache(authCache.sessionFetchedAt)) {
+      return authCache.session;
+    }
+
+    if (!forceRefresh && authCache.inFlightSession) {
+      return authCache.inFlightSession;
+    }
+
+    authCache.inFlightSession = (async () => {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) throw error;
+      if (data?.session) {
+        updateSessionCache(data.session);
+        return data.session;
+      }
+
+      const refreshed = await supabaseClient.auth.refreshSession();
+      if (refreshed?.data?.session) {
+        updateSessionCache(refreshed.data.session);
+        return refreshed.data.session;
+      }
+
+      const waitedSession = await waitForAuthSession();
+      updateSessionCache(waitedSession || null);
+      return waitedSession || null;
+    })();
+
+    try {
+      return await authCache.inFlightSession;
+    } finally {
+      authCache.inFlightSession = null;
+    }
+  };
+
+  const getAuthenticatedUser = async (options = {}) => {
     if (!supabaseClient) return null;
 
-    const session = await resolveAuthSession();
-    if (session?.user) return session.user;
+    ensureAuthCacheSyncSubscription();
 
-    const { data, error } = await supabaseClient.auth.getUser();
-    if (error) throw error;
-    return data?.user || null;
+    const authContext = options.authContext || null;
+    if (authContext?.user !== undefined) {
+      updateUserCache(authContext.user);
+      return authContext.user;
+    }
+
+    const forceRefresh = options.forceRefresh === true;
+    if (!forceRefresh && isFreshAuthCache(authCache.userFetchedAt)) {
+      return authCache.user;
+    }
+
+    if (!forceRefresh && authCache.inFlightUser) {
+      return authCache.inFlightUser;
+    }
+
+    authCache.inFlightUser = (async () => {
+      const session = await resolveAuthSession(options);
+      if (session?.user) {
+        updateUserCache(session.user);
+        return session.user;
+      }
+
+      const { data, error } = await supabaseClient.auth.getUser();
+      if (error) throw error;
+      updateUserCache(data?.user || null);
+      return data?.user || null;
+    })();
+
+    try {
+      return await authCache.inFlightUser;
+    } finally {
+      authCache.inFlightUser = null;
+    }
   };
 
   async function syncEntitlementsFromServer() {
@@ -154,7 +264,7 @@
     }
   }
 
-  const getCurrentUserEntitlements = async () => {
+  const getCurrentUserEntitlements = async (options = {}) => {
     const fallback = {
       subscriptionStatus: null,
       isPremium: false,
@@ -164,12 +274,12 @@
     if (!supabaseClient) return fallback;
 
     try {
-      const user = await getAuthenticatedUser();
+      const user = await getAuthenticatedUser(options);
       if (!user) return fallback;
 
       if (typeof fetch === 'function') {
         try {
-          const sessionForSync = await resolveAuthSession();
+          const sessionForSync = await resolveAuthSession(options);
           const accessToken = sessionForSync?.access_token;
 
           if (accessToken) {
@@ -213,7 +323,7 @@
       return parsedFallback;
     }
     try {
-      const user = await getAuthenticatedUser();
+      const user = await getAuthenticatedUser(options);
       if (!user) {
         const hasLocalData = Boolean(parsedFallback);
         if (options.redirect !== false && !hasLocalData) {
@@ -241,7 +351,7 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
     if (!supabaseClient) return;
     try {
-      const user = await getAuthenticatedUser();
+      const user = await getAuthenticatedUser(options);
       if (!user) {
         return;
       }
@@ -834,6 +944,7 @@
     DEFAULT_TIME_ZONE,
     dateTime,
     redirectToAuth,
+    clearAuthCache,
     resolveAuthSession,
     getAuthenticatedUser,
     getCurrentUserEntitlements,

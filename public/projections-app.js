@@ -2,6 +2,8 @@ const { useState, useEffect } = React;
 
 const {
     loadBudgetData,
+    getAuthenticatedUser,
+    resolveAuthSession,
     getCurrentUserEntitlements,
     getInitialData,
     START_MESSAGE,
@@ -69,13 +71,20 @@ function Projections() {
 
     useEffect(() => {
         let isMounted = true;
-        Promise.all([loadBudgetData(), getCurrentUserEntitlements()]).then(([saved, access]) => {
+        (async () => {
+            const user = await getAuthenticatedUser();
+            const session = await resolveAuthSession({ authContext: { user } });
+            const authContext = { user, session };
+            const [saved, access] = await Promise.all([
+                loadBudgetData({ authContext }),
+                getCurrentUserEntitlements({ authContext })
+            ]);
             if (!isMounted) return;
             if (saved) setData(saved);
             if (access) setEntitlements(access);
             setIsHydrated(true);
             setIsEntitlementsReady(true);
-        });
+        })();
         return () => { isMounted = false; };
     }, []);
 

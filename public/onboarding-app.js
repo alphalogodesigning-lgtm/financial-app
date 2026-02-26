@@ -3,6 +3,7 @@ const { useEffect, useMemo, useState } = React;
 const {
   supabaseClient,
   getAuthenticatedUser,
+  resolveAuthSession,
   loadBudgetData,
   saveBudgetData,
   ROAST_LEVELS,
@@ -26,12 +27,14 @@ function OnboardingPage() {
     const bootstrap = async () => {
       try {
         const user = await getAuthenticatedUser();
+        const session = await resolveAuthSession({ authContext: { user } });
+        const authContext = { user, session };
         if (!user) {
           window.location.replace('auth.html');
           return;
         }
 
-        const saved = await loadBudgetData({ redirect: false, localFallback: false });
+        const saved = await loadBudgetData({ redirect: false, localFallback: false, authContext });
         if (!active) return;
 
         if (saved?.onboarding_complete === true) {
@@ -106,7 +109,10 @@ function OnboardingPage() {
     setIsSubmitting(true);
 
     try {
-      const currentData = await loadBudgetData({ redirect: false, localFallback: false }) || {};
+      const user = await getAuthenticatedUser();
+      const session = await resolveAuthSession({ authContext: { user } });
+      const authContext = { user, session };
+      const currentData = await loadBudgetData({ redirect: false, localFallback: false, authContext }) || {};
       const normalizedData = {
         ...CLEAN_STATE,
         ...currentData,
