@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "check:conflicts": "! git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- . ':(exclude)node_modules'",
+    "build": "npm run check:conflicts && next build",
     "start": "next start"
   },
   "dependencies": {
