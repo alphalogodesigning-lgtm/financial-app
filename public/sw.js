@@ -1,4 +1,4 @@
-const CACHE_NAME = 'budget-tracker-v4';
+const CACHE_NAME = 'budget-tracker-v5';
 const STATIC_ASSETS = [
   '/',
   '/landing.html',
